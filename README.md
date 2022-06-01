@@ -68,7 +68,7 @@ Race.destroy_all; Route.destroy_all; Leg.destroy_all; Location.destroy_all; Leg.
 Prerequisites
 
 - [Xcode](https://itunes.apple.com/us/app/xcode/id497799835),
-  [Docker](https://docs.pie.apple.com/artifactory/docker.html), [Homebrew](https://brew.sh/)
+  [Docker](https://www.docker.com), [Homebrew](https://brew.sh/)
 
 Install rbenv & Ruby
 
