@@ -4,7 +4,7 @@ locations = [
   ['Five Star Bar', '1424 W Chicago Ave', 'Chicago', 'IL', 60642, 'USA', 300, 200],
   ['Phyllis Musical Inn', '1800 W Division St', 'Chicago', 'IL', 60622, 'USA', 200, 150],
   ['Roots Pizza', '1924 W Chicago Ave', 'Chicago', 'IL', 60622, 'USA', 400, 250],
-  ['Irish Nobleman', '1367 W Erie St', 'Chicago', 'IL', 60642, 'USA', 800, 600]
+  ['Midwest Coast Brewing', '2137 W Walnut St', 'Chicago', 'IL', 60612, 'USA', 500, 400]
 ]
 
 locations.each do |loc|
@@ -20,7 +20,7 @@ end
 
 cobra = Location.find_by(name: "Cobra Lounge")
 
-race = Race.create(name: "CHIditarod XV",
+race = Race.create(name: "CHIditarod XX",
                    start: cobra,
                    finish: cobra,
                    locations: Location.all,
