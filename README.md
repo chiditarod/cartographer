@@ -27,7 +27,7 @@ Your Google Cloud Platform account and associated [API key](https://console.clou
 
 ```bash
 bundle exec rake db:seed
-GOOGLE_API_KEY=... bundle exec rails c
+DISABLE_SPRING=true GOOGLE_API_KEY=... bundle exec rails c
 ```
 
 ### Generate all Legs using Google Maps API
@@ -63,7 +63,7 @@ Race.destroy_all; Route.destroy_all; Leg.destroy_all; Location.destroy_all; Leg.
 
 ## Developer Setup
 
-*Tested using OSX Mojave 10.14.2*.
+*Tested using MacOS Sequoia 15.1.1*.
 
 Prerequisites
 
@@ -83,10 +83,14 @@ Install Gems
 ```bash
 brew install libffi libpq
 
-bundle config --local build.ffi --with-ldflags="-L/usr/local/opt/libffi/lib"
-bundle config --local build.pg --with-opt-dir="/usr/local/opt/libpq"
-export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/libffi/lib/pkgconfig"
+bundle config --local build.ffi --with-ldflags="-L/opt/homebrew/opt/libffi/lib"
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/opt/homebrew/opt/libffi/lib/pkgconfig"
+
+bundle config --local build.pg --with-opt-dir="/opt/homebrew/opt/libpq"
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/opt/homebrew/opt/libpq/lib/pkgconfig"
 
 bundle install
+
+bundle exec rails db:migrate
 ```
 
