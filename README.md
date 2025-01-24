@@ -3,7 +3,7 @@
 Ruby on Rails app that finds viable routes for the CHIditarod, based on
 customizable criteria like leg length, overall race length, etc.
 
-[![CI Build Status](https://dl.circleci.com/status-badge/img/gh/chiditarod/cartographer/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/chiditarod/cartographer/tree/master)
+[![CI Build Status](https://dl.circleci.com/status-badge/img/gh/chiditarod/cartographer/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/chiditarod/cartographer/tree/master) [![Maintainability](https://api.codeclimate.com/v1/badges/0f8b7b85f89b0024665a/maintainability)](https://codeclimate.com/github/chiditarod/cartographer/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/0f8b7b85f89b0024665a/test_coverage)](https://codeclimate.com/github/chiditarod/cartographer/test_coverage)
 
 ## Google API Setup
 
