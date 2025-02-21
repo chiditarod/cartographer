@@ -38,6 +38,9 @@ BulkLegCreator.perform_now(Location.pluck(:id))
 
 ### Generate Routes
 
+Ensure the first column, the ID, remains present when handing off the routes. We need the ID to know
+which routes to name.
+
 ```ruby
 RouteGenerator.call(Race.first)
 winners = Route.complete
@@ -53,6 +56,67 @@ selected.map(&:to_csv)
 ```ruby
 GeocodeLocationJob.perform_now(Location.pluck(:id))
 ```
+
+### Create Route Maps
+
+After you have selected the routes you want to use, you need to name them, then you can generate and print route maps using the Google Maps API.
+
+For example, if we have a set of route IDs and labels we want to name them, set the names as follows.
+
+```ruby
+names = [
+  [771,"A"],[778,"H"],[806,"J"],[809,"K"],[816,"L"],[890,"G"],
+  [931,"I"],[991,"D"],[1013,"B"],[1051,"C"],[1058,"E"],[1134,"F"]
+]
+
+names.each do |n|
+  r = Route.find(n[0])
+  r.name = n[1]
+  r.save
+  r.reload
+  puts "Route ID #{r.id} now has name #{r.name}"
+end
+```
+
+After the Route names have been updated, you can generate the maps. Get a list of urls for the IDs you want.
+
+```ruby
+names = [
+  [771,"A"],[778,"H"],[806,"J"],[809,"K"],[816,"L"],[890,"G"],
+  [931,"I"],[991,"D"],[1013,"B"],[1051,"C"],[1058,"E"],[1134,"F"]
+]
+
+to_print = winners.select do |w|
+  if names.map{|n|n.first}.include?(w.id)
+    true
+  else
+    false
+  end
+end
+
+to_print.each do |w|
+  puts "/races/#{w.race_id}/routes/#{w.id}"
+end
+```
+
+```
+/races/3/routes/771
+/races/3/routes/778
+...
+```
+
+Boot the rails server
+```sh
+DISABLE_SPRING=true GOOGLE_API_KEY=... bundle exec rails s
+```
+
+Generate a route map using one of the Routes you care about.
+
+```
+http://localhost:3000/races/3/routes/771
+```
+
+Save to PDF, and repeat for the remaining maps.
 
 ### Clean things up
 

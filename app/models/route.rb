@@ -155,7 +155,7 @@ class Route < ApplicationRecord
     legs_arr = legs.to_a
 
     start_leg = legs_arr.slice!(0)
-    prefix = "#{legs.size},#{target_leg_count},#{distance.round(2)},#{race.distance_unit}"
+    prefix = "#{self.id},#{legs.size},#{target_leg_count},#{distance.round(2)},#{race.distance_unit}"
     legs_arr.inject("#{prefix},#{start_leg.to_csv(race.distance_unit)}") do |memo, leg|
       memo + ",#{Distances.m_to_s(leg.distance, race.distance_unit)},#{leg.finish}"
     end
