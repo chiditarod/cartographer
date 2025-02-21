@@ -1,7 +1,11 @@
 <div class="text-center">
   <div class="routemap">
-    <h1 class="display-4"><%= @race.name %></h1>
-    <h2>Route <%= @route.name %></h4>
+    <h1 class="display-4">
+      <span class="material-symbols-outlined">shopping_cart</span>
+      <%= @race.name %>
+      <span class="material-symbols-outlined">shopping_cart</span>
+      </h1>
+    <h2>Route <%= @route.name %></h2>
 
     <img src="<%= @route.to_google_map(ENV['MOCK_MAP']) %>"/>
 

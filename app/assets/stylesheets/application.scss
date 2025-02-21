@@ -1,14 +1,45 @@
 // Custom bootstrap variables must be set or imported *before* bootstrap.
 @import "bootstrap";
 
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24
+}
+
+.galindo-regular {
+    font-family: "Galindo", serif;
+    font-weight: 400;
+    font-style: normal;
+}
+.monoton-regular {
+    font-family: "Monoton", serif;
+    font-weight: 400;
+    font-style: normal;
+}
+.alata-regular {
+    font-family: "Alata", serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.routemap {
+    font-family: "Alata", serif;
+    font-optical-sizing: auto;
+    font-weight: 400; // Use a value from 100 to 900
+    font-style: normal;
+}
+
 .routemap h1 {
-    font-size: 3.5rem;
-    font-weight: 400!important;
-    line-height: 1.2;
+    font-family: "Galindo", serif;
+    font-weight: 400;
+    font-style: normal;
 }
 
 .routemap h2 {
-    font-size: 3.0rem;
-    font-weight: 300!important;
-    line-height: 1.2;
+    font-family: "Galindo", serif;
+    font-weight: 400;
+    font-style: normal;
 }
