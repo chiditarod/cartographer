@@ -24,9 +24,15 @@ module Api
 
       def destroy
         race = Race.find(params[:race_id])
-        route = race.routes.find(params[:id])
-        route.destroy!
-        render json: { message: "Route deleted" }
+        if params[:id] == 'all'
+          count = race.routes.count
+          race.routes.destroy_all
+          render json: { message: "Deleted #{count} routes" }
+        else
+          route = race.routes.find(params[:id])
+          route.destroy!
+          render json: { message: "Route deleted" }
+        end
       end
 
       private

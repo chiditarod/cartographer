@@ -47,4 +47,17 @@ RSpec.describe 'Api::V1::Routes', type: :request do
       expect(response).to have_http_status(:ok)
     end
   end
+
+  describe 'DELETE /api/v1/races/:race_id/routes/all' do
+    it 'deletes all routes for the race' do
+      FactoryBot.create(:sequential_route, race: race)
+      expect(race.routes.count).to be >= 2
+      expect {
+        delete "/api/v1/races/#{race.id}/routes/all"
+      }.to change { race.routes.count }.to(0)
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['message']).to match(/Deleted \d+ routes/)
+    end
+  end
 end

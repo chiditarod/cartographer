@@ -50,4 +50,23 @@ test.describe('Routes', () => {
       }
     });
   });
+
+  test('deletes all routes', async ({ page }) => {
+    await test.step('navigate to routes list', async () => {
+      await page.goto('/races');
+      await page.getByRole('link', { name: 'View' }).first().click();
+      await page.locator('#view-all-routes-link').click();
+      await expect(page.locator('#routes-page-title')).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step('click delete all and confirm', async () => {
+      await page.locator('#delete-all-routes-btn').click();
+      await expect(page.getByText('This cannot be undone')).toBeVisible();
+      await page.locator('#confirm-delete-all-routes-btn').click();
+    });
+
+    await test.step('verify empty state', async () => {
+      await expect(page.getByText('No routes')).toBeVisible({ timeout: 10000 });
+    });
+  });
 });

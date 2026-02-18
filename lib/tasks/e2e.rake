@@ -18,7 +18,7 @@ namespace :e2e do
     created_locations = locations_data.map { |data| Location.create!(data) }
     cobra = created_locations.first
 
-    Race.create!(
+    race = Race.create!(
       name: "E2E Race #{short_id}",
       start: cobra,
       finish: cobra,
@@ -32,6 +32,21 @@ namespace :e2e do
       max_leg_distance: 1.75,
       distance_unit: 'mi'
     )
+
+    # Create legs between consecutive locations (distance ~0.8 mi = 1287m each)
+    # Route: Cobra → Output → Five Star → Phyllis → Roots → Midwest Coast → Cobra
+    leg_distance = 1287 # meters (~0.8 mi, within [0.4, 1.75] mi)
+    chain = created_locations + [cobra] # close the loop back to start
+    legs = chain.each_cons(2).map do |start_loc, finish_loc|
+      Leg.find_or_create_by!(start: start_loc, finish: finish_loc) do |l|
+        l.distance = leg_distance
+      end
+    end
+
+    # Build a complete route
+    route = Route.create!(race: race, name: "E2E Route #{short_id}")
+    legs.each { |leg| route.legs << leg }
+    route.save! # trigger set_complete_bool callback
 
     puts "E2E seed complete (unique_id: #{unique_id}, short: #{short_id})"
   end
