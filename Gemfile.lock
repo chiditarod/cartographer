@@ -131,11 +131,10 @@ GEM
     ffi (1.17.3-x86_64-linux-musl)
     globalid (1.3.0)
       activesupport (>= 6.1)
-    google_maps_service (0.4.2)
-      hurley (~> 0.1)
-      multi_json (~> 1.11)
-      retriable (~> 2.0)
-    hurley (0.2)
+    google_maps_service_ruby (0.7.0)
+      base64
+      multi_json (~> 1.15)
+      retriable (~> 3.1)
     i18n (1.14.8)
       concurrent-ruby (~> 1.0)
     io-console (0.8.2)
@@ -269,7 +268,7 @@ GEM
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
-    retriable (2.1.0)
+    retriable (3.1.2)
     rexml (3.4.4)
     rspec-core (3.13.6)
       rspec-support (~> 3.13.0)
@@ -372,7 +371,7 @@ DEPENDENCIES
   coffee-script
   factory_bot_rails
   faker
-  google_maps_service
+  google_maps_service_ruby
   jbuilder (~> 2.7)
   jquery-rails
   listen (~> 3.3)
@@ -441,8 +440,7 @@ CHECKSUMS
   ffi (1.17.3-x86_64-linux-gnu) sha256=3746b01f677aae7b16dc1acb7cb3cc17b3e35bdae7676a3f568153fb0e2c887f
   ffi (1.17.3-x86_64-linux-musl) sha256=086b221c3a68320b7564066f46fed23449a44f7a1935f1fe5a245bd89d9aea56
   globalid (1.3.0) sha256=05c639ad6eb4594522a0b07983022f04aa7254626ab69445a0e493aa3786ff11
-  google_maps_service (0.4.2) sha256=e89a761ac7a95f2b8a4b0b0ca80e61dbe057675a86a9fee857e9fa712e10028d
-  hurley (0.2) sha256=6f44cd30f47141ef3c5dbc799c6613e45d52ce9c1a499dc64bc165db9692ee92
+  google_maps_service_ruby (0.7.0) sha256=05a627eeaf2f716686308229fb1ed72b558d70516ae6e9220605291e651224c7
   i18n (1.14.8) sha256=285778639134865c5e0f6269e0b818256017e8cde89993fdfcbfb64d088824a5
   io-console (0.8.2) sha256=d6e3ae7a7cc7574f4b8893b4fca2162e57a825b223a177b7afa236c5ef9814cc
   irb (1.17.0) sha256=168c4ddb93d8a361a045c41d92b2952c7a118fa73f23fe14e55609eb7a863aae
@@ -501,7 +499,7 @@ CHECKSUMS
   rdoc (7.2.0) sha256=8650f76cd4009c3b54955eb5d7e3a075c60a57276766ebf36f9085e8c9f23192
   regexp_parser (2.11.3) sha256=ca13f381a173b7a93450e53459075c9b76a10433caadcb2f1180f2c741fc55a4
   reline (0.6.3) sha256=1198b04973565b36ec0f11542ab3f5cfeeec34823f4e54cebde90968092b1835
-  retriable (2.1.0) sha256=c1e309cd29ca451e9e8aea7685368db0da490d519ced16f79867fae12b9e4384
+  retriable (3.1.2) sha256=0a5a5d0ca4ba61a76fb31a17ab8f7f80281beb040c329d34dfc137a1398688e0
   rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
   rspec-core (3.13.6) sha256=a8823c6411667b60a8bca135364351dda34cd55e44ff94c4be4633b37d828b2d
   rspec-expectations (3.13.5) sha256=33a4d3a1d95060aea4c94e9f237030a8f9eae5615e9bd85718fe3a09e4b58836

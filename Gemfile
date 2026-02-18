@@ -24,7 +24,7 @@ gem 'jbuilder', '~> 2.7'
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.12.0', require: false
 
-gem 'google_maps_service'
+gem 'google_maps_service_ruby'
 gem 'rack-cors'
 
 group :development, :test do
