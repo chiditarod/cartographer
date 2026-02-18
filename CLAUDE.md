@@ -53,10 +53,13 @@
 - `POST /api/v1/races/:id/duplicate` duplicates a race with locations (not routes), prepends "Copy of " to name — uses `ActiveRecord#dup`
 - Sidebar has two sections: main nav (Dashboard, Locations, Races) at top and Help pinned at bottom — add new primary nav to `navItems` array, secondary nav to the bottom `div`
 - Race detail card "Checkpoint Position Usage" heat-map table uses `RouteSummary.location_sequence` — index 0 is start, last index is finish, intermediate indices are checkpoint positions (CP 1..N where N = `num_stops`)
+- `RankRoutesJob` computes rarity scores for complete routes — uses `update_column(:rarity_score, ...)` to bypass Route validations/callbacks
+- Rarity algorithm: for each intermediate CP position, score = 1 - (freq/N); normalize sum across positions to 0-100 scale
+- Job pattern: wrap `Race.find` inside `begin...rescue` so `job_status.fail!` is called even if the race isn't found
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (163 tests, all passing, ~82% coverage)
+- `bundle exec rspec` — Run all RSpec tests (167 tests, all passing, ~82% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
 - `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (19 tests: 18 seeded + 1 fresh)
