@@ -17,7 +17,7 @@ export function RouteDetailRoute() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
-          Route {route.name || `#${route.id}`}
+          {route.name || `Route #${route.id}`}
         </h1>
         <Link to={`/races/${raceIdParam}/routes`}>
           <Button variant="secondary">Back to Routes</Button>
