@@ -162,8 +162,8 @@ RSpec.describe Route, type: :model do
       route = FactoryBot.create(:route)
       result = route.to_csv
       lines = result.split("\n")
-      expect(lines[0]).to eq("Route ID,Leg Count,Target Leg Count,Unit")
-      expect(lines[1]).to eq("0,0,0,#{route.race.distance_unit}")
+      expect(lines[0]).to eq("Route ID,Leg Count,Target Leg Count,Rarity Score,Unit")
+      expect(lines[1]).to eq("0,0,0,,#{route.race.distance_unit}")
     end
 
     it 'returns header row followed by data row' do
@@ -171,7 +171,7 @@ RSpec.describe Route, type: :model do
       result = route.to_csv
       lines = result.split("\n")
       expect(lines.size).to eq(2)
-      expect(lines[0]).to start_with("Route ID,Leg Count,Target Leg Count,Total Distance,Unit,Start")
+      expect(lines[0]).to start_with("Route ID,Leg Count,Target Leg Count,Total Distance,Rarity Score,Unit,Start")
       expect(lines[1]).to include(route.id.to_s)
       expect(lines[1]).to include(route.race.distance_unit)
     end

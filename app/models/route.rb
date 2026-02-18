@@ -152,21 +152,23 @@ class Route < ApplicationRecord
   end
 
   def to_csv(unit=nil)
+    score = rarity_score.nil? ? '' : rarity_score
+
     if legs.size.zero?
-      header = "Route ID,Leg Count,Target Leg Count,Unit"
-      return "#{header}\n0,0,0,#{race.distance_unit}"
+      header = "Route ID,Leg Count,Target Leg Count,Rarity Score,Unit"
+      return "#{header}\n0,0,0,#{score},#{race.distance_unit}"
     end
 
     legs_arr = legs.to_a
     start_leg = legs_arr.slice!(0)
 
-    header_parts = ["Route ID", "Leg Count", "Target Leg Count", "Total Distance", "Unit", "Start"]
+    header_parts = ["Route ID", "Leg Count", "Target Leg Count", "Total Distance", "Rarity Score", "Unit", "Start"]
     (1..legs.size).each do |i|
       header_parts << "Leg #{i} Distance"
       header_parts << (i == legs.size ? "Finish" : "Stop #{i}")
     end
 
-    prefix = "#{self.id},#{legs.size},#{target_leg_count},#{distance.round(2)},#{race.distance_unit}"
+    prefix = "#{self.id},#{legs.size},#{target_leg_count},#{distance.round(2)},#{score},#{race.distance_unit}"
     data = legs_arr.inject("#{prefix},#{start_leg.to_csv(race.distance_unit)}") do |memo, leg|
       memo + ",#{Distances.m_to_s(leg.distance, race.distance_unit)},#{leg.finish}"
     end
