@@ -13,7 +13,7 @@ class Race < ApplicationRecord
   has_and_belongs_to_many :locations
   has_many :routes
 
-  enum distance_unit: { mi: 0, km: 1 }
+  enum :distance_unit, { mi: 0, km: 1 }
 
   def to_s
     "#{name}; stops: #{num_stops}; race min/max #{min_total_distance}/#{max_total_distance} #{distance_unit}; leg min/max #{min_leg_distance}/#{max_leg_distance} #{distance_unit}"
