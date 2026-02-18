@@ -1,14 +1,13 @@
 import type { Race } from '@/types/api';
 import { Card, CardHeader, CardBody } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { buildLocationColorMap } from '@/utils/location';
 
 interface RaceDetailProps {
   race: Race;
+  locationColorMap: Map<number, string>;
 }
 
-export function RaceDetail({ race }: RaceDetailProps) {
-  const locationColorMap = race.locations ? buildLocationColorMap(race.locations) : new Map();
+export function RaceDetail({ race, locationColorMap }: RaceDetailProps) {
 
   return (
     <Card>

@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Modal } from '@/components/ui/modal';
 import { Notification } from '@/components/ui/notification';
 import { useQueryClient } from '@tanstack/react-query';
+import { buildLocationColorMap } from '@/utils/location';
 
 export function RaceRoute() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +26,8 @@ export function RaceRoute() {
 
   if (isLoading) return <Spinner />;
   if (!race) return <p>Race not found</p>;
+
+  const locationColorMap = race.locations ? buildLocationColorMap(race.locations) : new Map();
 
   return (
     <div>
@@ -88,7 +91,7 @@ export function RaceRoute() {
       </div>
 
       <div className="space-y-6">
-        <RaceDetail race={race} />
+        <RaceDetail race={race} locationColorMap={locationColorMap} />
 
         <OperationPanel
           raceId={raceId}
@@ -103,11 +106,31 @@ export function RaceRoute() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Complete Routes</h2>
-            <Link to={`/races/${id}/routes`} id="view-all-routes-link">
-              <Button variant="secondary" size="sm">View All Routes</Button>
-            </Link>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  fetch(`/api/v1/races/${raceId}/routes/export_csv`)
+                    .then((res) => res.blob())
+                    .then((blob) => {
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = `race-${raceId}-routes.csv`;
+                      link.click();
+                      URL.revokeObjectURL(url);
+                    });
+                }}
+              >
+                Export CSV
+              </Button>
+              <Link to={`/races/${id}/routes`} id="view-all-routes-link">
+                <Button variant="secondary" size="sm">View All Routes</Button>
+              </Link>
+            </div>
           </div>
-          <RoutesList raceId={raceId} />
+          <RoutesList raceId={raceId} locationColorMap={locationColorMap} />
         </div>
       </div>
     </div>
