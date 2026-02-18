@@ -5,8 +5,56 @@ require 'rails_helper'
 RSpec.describe Leg, type: :model do
   let(:test_mode) { {min: 0.3, max: 0.5} }
 
-  describe '.fetch_distance' do
-    it 'fetches distance from Google Maps API'
+  describe '#fetch_distance' do
+    let(:start_loc) { FactoryBot.create(:location) }
+    let(:finish_loc) { FactoryBot.create(:location) }
+
+    let(:api_response) do
+      {
+        rows: [
+          {
+            elements: [
+              { distance: { value: 3218 } }
+            ]
+          }
+        ]
+      }
+    end
+
+    let(:mock_client) { double('GoogleMapsService::Client') }
+    let(:mock_api_client) { double('GoogleApiClient', client: mock_client) }
+
+    before do
+      allow(GoogleApiClient).to receive(:new).and_return(mock_api_client)
+      allow(mock_client).to receive(:distance_matrix).and_return(api_response)
+    end
+
+    it 'fetches distance from Google Maps API and sets it on the leg' do
+      leg = Leg.create!(start: start_loc, finish: finish_loc)
+      expect(leg.distance).to eq(3218)
+      expect(mock_client).to have_received(:distance_matrix)
+    end
+  end
+
+  describe '#to_s' do
+    it 'returns formatted string with start, distance, finish' do
+      leg = FactoryBot.build(:leg, distance: 1609)
+      result = leg.to_s('mi')
+      expect(result).to include(leg.start.name)
+      expect(result).to include(leg.finish.name)
+      expect(result).to include('mi')
+    end
+  end
+
+  describe '#to_csv' do
+    it 'returns CSV-formatted string' do
+      leg = FactoryBot.build(:leg, distance: 1609)
+      result = leg.to_csv('mi')
+      parts = result.split(',')
+      expect(parts[0]).to eq(leg.start.name)
+      expect(parts[-1]).to eq(leg.finish.name)
+      expect(result).to include('mi')
+    end
   end
 
   describe '.save' do
@@ -20,6 +68,16 @@ RSpec.describe Leg, type: :model do
 
       expect(Leg.where(start: start, finish: finish).size).to eq(1)
       expect(Leg.where(start: finish, finish: start).size).to eq(1)
+    end
+
+    it 'does not create a mirror leg when one already exists' do
+      Leg.create!(start: start, finish: finish, distance: 1.0) # creates mirror too
+
+      expect do
+        Leg.create!(start: start, finish: finish, distance: 2.0)
+      rescue ActiveRecord::RecordNotUnique
+        # unique index prevents duplicate start/finish pair
+      end.not_to change(Leg, :count)
     end
   end
 
