@@ -158,16 +158,22 @@ RSpec.describe Route, type: :model do
   end
 
   describe '#to_csv' do
-    it 'returns zero-value CSV when route has no legs' do
+    it 'returns header and zero-value CSV when route has no legs' do
       route = FactoryBot.create(:route)
-      expect(route.to_csv).to eq("0,0,0,#{route.race.distance_unit}")
+      result = route.to_csv
+      lines = result.split("\n")
+      expect(lines[0]).to eq("Route ID,Leg Count,Target Leg Count,Unit")
+      expect(lines[1]).to eq("0,0,0,#{route.race.distance_unit}")
     end
 
-    it 'returns CSV with route info and legs' do
+    it 'returns header row followed by data row' do
       route = FactoryBot.create(:sequential_route)
       result = route.to_csv
-      expect(result).to include(route.id.to_s)
-      expect(result).to include(route.race.distance_unit)
+      lines = result.split("\n")
+      expect(lines.size).to eq(2)
+      expect(lines[0]).to start_with("Route ID,Leg Count,Target Leg Count,Total Distance,Unit,Start")
+      expect(lines[1]).to include(route.id.to_s)
+      expect(lines[1]).to include(route.race.distance_unit)
     end
   end
 
