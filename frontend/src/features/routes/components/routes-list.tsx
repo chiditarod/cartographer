@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useRoutes } from '@/features/routes/api/get-routes';
@@ -6,6 +6,10 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Spinner } from '@/components/ui/spinner';
 import { Badge } from '@/components/ui/badge';
 import { abbreviateLocation } from '@/utils/location';
+import type { RouteSummary } from '@/types/api';
+
+type SortKey = 'name' | 'distance' | 'leg_count' | 'rarity_score';
+type SortDir = 'asc' | 'desc';
 
 interface RoutesListProps {
   raceId: number;
@@ -14,8 +18,50 @@ interface RoutesListProps {
   onSelectionChange?: (ids: Set<number>) => void;
 }
 
+function SortIndicator({ sortKey, current, direction }: { sortKey: SortKey; current: SortKey | null; direction: SortDir }) {
+  if (current !== sortKey) {
+    return <span className="ml-1 text-gray-300">&#8597;</span>;
+  }
+  return <span className="ml-1">{direction === 'asc' ? '\u2191' : '\u2193'}</span>;
+}
+
+function sortRoutes(routes: RouteSummary[], key: SortKey | null, dir: SortDir): RouteSummary[] {
+  if (!key) return routes;
+  return [...routes].sort((a, b) => {
+    let cmp = 0;
+    switch (key) {
+      case 'name': {
+        const aName = (a.name || `Route #${a.id}`).toLowerCase();
+        const bName = (b.name || `Route #${b.id}`).toLowerCase();
+        cmp = aName.localeCompare(bName);
+        break;
+      }
+      case 'distance':
+        cmp = a.distance - b.distance;
+        break;
+      case 'leg_count':
+        cmp = a.leg_count - b.leg_count;
+        break;
+      case 'rarity_score': {
+        const aScore = a.rarity_score ?? -1;
+        const bScore = b.rarity_score ?? -1;
+        cmp = aScore - bScore;
+        break;
+      }
+    }
+    return dir === 'asc' ? cmp : -cmp;
+  });
+}
+
 export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionChange }: RoutesListProps) {
   const { data: routes, isLoading, isError } = useRoutes(raceId);
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const sortedRoutes = useMemo(
+    () => sortRoutes(routes ?? [], sortKey, sortDir),
+    [routes, sortKey, sortDir],
+  );
 
   if (isLoading) {
     return (
@@ -62,6 +108,17 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
     }
   };
 
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const thClass = 'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700';
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
@@ -78,17 +135,17 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
                 />
               </th>
             )}
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Name
+            <th className={thClass} onClick={() => handleSort('name')}>
+              Name<SortIndicator sortKey="name" current={sortKey} direction={sortDir} />
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Distance
+            <th className={thClass} onClick={() => handleSort('distance')}>
+              Distance<SortIndicator sortKey="distance" current={sortKey} direction={sortDir} />
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Legs
+            <th className={thClass} onClick={() => handleSort('leg_count')}>
+              Legs<SortIndicator sortKey="leg_count" current={sortKey} direction={sortDir} />
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Rarity
+            <th className={thClass} onClick={() => handleSort('rarity_score')}>
+              Rarity<SortIndicator sortKey="rarity_score" current={sortKey} direction={sortDir} />
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
@@ -96,7 +153,7 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {routes.map((route) => (
+          {sortedRoutes.map((route) => (
             <React.Fragment key={route.id}>
               <tr>
                 {selectable && (
