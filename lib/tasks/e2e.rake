@@ -38,9 +38,7 @@ namespace :e2e do
 
   desc "Clean E2E test data"
   task clean: :environment do
-    # legs_routes has no primary key, so must delete_all first
-    LegsRoute.delete_all
-    Route.delete_all
+    Route.destroy_all
     Leg.delete_all
     Race.destroy_all
     Location.destroy_all

@@ -25,9 +25,7 @@ module Api
       def destroy
         race = Race.find(params[:race_id])
         route = race.routes.find(params[:id])
-        # legs_routes has no primary key, so delete join records via SQL
-        LegsRoute.where(route_id: route.id).delete_all
-        route.delete
+        route.destroy!
         render json: { message: "Route deleted" }
       end
 

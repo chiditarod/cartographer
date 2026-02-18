@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_17_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_17_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -36,7 +36,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_17_000001) do
     t.index ["start_id", "finish_id"], name: "index_legs_on_start_id_and_finish_id", unique: true
   end
 
-  create_table "legs_routes", id: false, force: :cascade do |t|
+  create_table "legs_routes", force: :cascade do |t|
     t.bigint "leg_id", null: false
     t.bigint "route_id", null: false
     t.integer "order", null: false

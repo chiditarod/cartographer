@@ -5,6 +5,7 @@
 - Use dogtag (`../dogtag`) for Playwright integration test patterns ONLY — NOT for UI style, UX, or design inspiration.
 - Ensure the React app follows Bulletproof React standard (https://github.com/alan2207/bulletproof-react).
 - Put key learnings into CLAUDE.md after every iteration.
+- Once you finish a task, automatically commit all changes that your work made with a concise and descriptive message. ensure you do not commit changes that you did not make as part of that task.
 
 ## Tech Stack
 
@@ -19,7 +20,7 @@
 
 ## Key Gotchas
 
-- `legs_routes` join table has NO primary key (`id: false`) — use `LegsRoute.where(route_id: route.id).delete_all` then `route.delete` instead of `route.destroy!`
+- `legs_routes` join table now has a primary key (added via migration) — `route.destroy!` works normally
 - Project does NOT include `FactoryBot::Syntax::Methods` — always use `FactoryBot.create(:factory)`, not bare `create`
 - Race model uses enum for `distance_unit` (`mi: 0, km: 1`)
 - Keep `root 'home#index'` for existing specs; SPA catch-all only handles unmatched paths
@@ -28,7 +29,7 @@
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (151 tests, all passing, 85% coverage)
+- `bundle exec rspec` — Run all RSpec tests (151 tests, all passing, ~92% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
 - `cd e2e && npx playwright test --reporter=list` — Run Playwright E2E tests
