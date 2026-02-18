@@ -36,6 +36,22 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      <div className="px-3 py-4 border-t border-gray-800">
+        <NavLink
+          id="nav-help"
+          to="/help"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+              isActive
+                ? 'bg-gray-800 text-white'
+                : 'hover:bg-gray-800 hover:text-white'
+            }`
+          }
+        >
+          <span className="text-lg">?</span>
+          Help
+        </NavLink>
+      </div>
     </aside>
   );
 }
