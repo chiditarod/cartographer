@@ -51,6 +51,24 @@ test.describe('Routes', () => {
     });
   });
 
+  test('downloads route PDF', async ({ page }) => {
+    await test.step('navigate to route detail', async () => {
+      await page.goto('/races');
+      await page.getByRole('link', { name: 'View' }).first().click();
+      await page.locator('#view-all-routes-link').click();
+      const viewLinks = page.getByRole('link', { name: 'View' });
+      await viewLinks.first().click();
+      await expect(page.locator('#route-name')).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step('click Download PDF and verify download', async () => {
+      const downloadPromise = page.waitForEvent('download');
+      await page.getByRole('button', { name: 'Download PDF' }).click();
+      const download = await downloadPromise;
+      expect(download.suggestedFilename()).toMatch(/\.pdf$/);
+    });
+  });
+
   test('deletes all routes', async ({ page }) => {
     await test.step('navigate to race detail', async () => {
       await page.goto('/races');

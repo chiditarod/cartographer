@@ -113,6 +113,15 @@ RSpec.describe 'Api::V1::Routes', type: :request do
     end
   end
 
+  describe 'GET /api/v1/races/:race_id/routes/:id/export_pdf' do
+    it 'returns a PDF' do
+      get "/api/v1/races/#{race.id}/routes/#{route.id}/export_pdf"
+      expect(response).to have_http_status(:ok)
+      expect(response.content_type).to include('application/pdf')
+      expect(response.body).to start_with('%PDF')
+    end
+  end
+
   describe 'DELETE /api/v1/races/:race_id/routes/all' do
     it 'deletes all routes for the race' do
       FactoryBot.create(:sequential_route, race: race)

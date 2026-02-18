@@ -2,17 +2,24 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/api-client';
 import { Race } from '@/types/api';
+import { buildRaceBody } from '@/features/races/utils/build-race-form-data';
+
+interface UpdateRaceVars {
+  id: number;
+  data: Partial<Race>;
+  logoFile?: File | null;
+  deleteLogo?: boolean;
+}
 
 export function updateRace({
   id,
   data,
-}: {
-  id: number;
-  data: Partial<Race>;
-}): Promise<Race> {
+  logoFile,
+  deleteLogo,
+}: UpdateRaceVars): Promise<Race> {
   return apiFetch<Race>(`/races/${id}`, {
     method: 'PATCH',
-    body: JSON.stringify({ race: data }),
+    body: buildRaceBody({ data, logoFile, deleteLogo }),
   });
 }
 

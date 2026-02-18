@@ -95,5 +95,84 @@ RSpec.describe 'Api::V1::Races', type: :request do
       expect(json['location_ids']).to match_array(race.location_ids)
       expect(json['route_count']).to eq(0)
     end
+
+    it 'duplicates a race with logo' do
+      race = FactoryBot.create(:race, name: 'Logo Race')
+      race.logo.attach(
+        io: StringIO.new(File.binread(Rails.root.join('public', 'mock-route-map.png'))),
+        filename: 'logo.png',
+        content_type: 'image/png'
+      )
+
+      post "/api/v1/races/#{race.id}/duplicate"
+      expect(response).to have_http_status(:created)
+      json = JSON.parse(response.body)
+      copy = Race.find(json['id'])
+      expect(copy.logo).to be_attached
+      expect(json['logo_url']).to be_present
+    end
+  end
+
+  describe 'logo upload' do
+    it 'uploads a logo with race creation' do
+      start_loc = FactoryBot.create(:location)
+      finish_loc = FactoryBot.create(:location)
+      logo = fixture_file_upload(Rails.root.join('public', 'mock-route-map.png'), 'image/png')
+
+      post '/api/v1/races', params: {
+        race: {
+          name: 'Logo Race',
+          num_stops: 2,
+          max_teams: 5,
+          people_per_team: 5,
+          min_total_distance: 2.5,
+          max_total_distance: 3.5,
+          min_leg_distance: 0.8,
+          max_leg_distance: 1.2,
+          start_id: start_loc.id,
+          finish_id: finish_loc.id,
+          distance_unit: 'mi',
+          location_ids: [start_loc.id, finish_loc.id],
+          logo: logo
+        }
+      }
+      expect(response).to have_http_status(:created)
+      json = JSON.parse(response.body)
+      expect(json['logo_url']).to be_present
+    end
+
+    it 'deletes a logo' do
+      race = FactoryBot.create(:race)
+      race.logo.attach(
+        io: StringIO.new(File.binread(Rails.root.join('public', 'mock-route-map.png'))),
+        filename: 'logo.png',
+        content_type: 'image/png'
+      )
+      expect(race.logo).to be_attached
+
+      patch "/api/v1/races/#{race.id}", params: { race: { delete_logo: 'true' } }
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['logo_url']).to be_nil
+    end
+
+    it 'returns logo_url in serialization' do
+      race = FactoryBot.create(:race)
+      get "/api/v1/races/#{race.id}"
+      json = JSON.parse(response.body)
+      expect(json).to have_key('logo_url')
+      expect(json['logo_url']).to be_nil
+    end
+
+    it 'rejects invalid file types' do
+      race = FactoryBot.create(:race)
+      race.logo.attach(
+        io: StringIO.new("not an image"),
+        filename: 'bad.txt',
+        content_type: 'text/plain'
+      )
+      expect(race).not_to be_valid
+      expect(race.errors[:logo]).to include('must be a PNG or JPEG')
+    end
   end
 end

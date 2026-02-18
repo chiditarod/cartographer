@@ -31,6 +31,19 @@ export function RouteDetail({ route, raceId }: RouteDetailProps) {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportPdf = async () => {
+    const res = await fetch(
+      `/api/v1/races/${raceId}/routes/${route.id}/export_pdf`,
+    );
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `route-${route.id}.pdf`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -39,9 +52,14 @@ export function RouteDetail({ route, raceId }: RouteDetailProps) {
             <h2 id="route-name" className="text-lg font-semibold text-gray-900">
               {route.name || `Route #${route.id}`}
             </h2>
-            <Button variant="secondary" size="sm" onClick={handleExportCsv}>
-              Export CSV
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={handleExportPdf}>
+                Download PDF
+              </Button>
+              <Button variant="secondary" size="sm" onClick={handleExportCsv}>
+                Export CSV
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardBody>

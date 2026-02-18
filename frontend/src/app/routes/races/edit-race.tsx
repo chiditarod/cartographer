@@ -21,9 +21,9 @@ export function EditRaceRoute() {
       <div className="max-w-2xl">
         <RaceForm
           initialData={race}
-          onSubmit={(data) => {
+          onSubmit={(data, logoFile, deleteLogo) => {
             updateMutation.mutate(
-              { id: raceId, data },
+              { id: raceId, data, logoFile, deleteLogo },
               { onSuccess: () => navigate(`/races/${id}`) },
             );
           }}

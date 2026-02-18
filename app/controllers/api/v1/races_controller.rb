@@ -22,6 +22,7 @@ module Api
 
       def update
         race = Race.find(params[:id])
+        race.logo.purge if params[:race]&.dig(:delete_logo) == "true" || params[:race]&.dig(:delete_logo) == true
         race.update!(race_params)
         assign_locations(race) if params[:race]&.key?(:location_ids)
         render json: serialize_race(race)
@@ -39,6 +40,13 @@ module Api
         copy.name = "Copy of #{original.name}"
         copy.save!
         copy.locations = original.locations
+        if original.logo.attached?
+          copy.logo.attach(
+            io: StringIO.new(original.logo.download),
+            filename: original.logo.filename.to_s,
+            content_type: original.logo.content_type
+          )
+        end
         render json: serialize_race(copy), status: :created
       end
 
@@ -53,7 +61,7 @@ module Api
           :name, :num_stops, :max_teams, :people_per_team,
           :min_total_distance, :max_total_distance,
           :min_leg_distance, :max_leg_distance,
-          :start_id, :finish_id, :distance_unit
+          :start_id, :finish_id, :distance_unit, :logo
         )
       end
 
@@ -73,6 +81,7 @@ module Api
           distance_unit: r.distance_unit,
           location_ids: r.location_ids,
           route_count: r.routes.where(complete: true).count,
+          logo_url: r.logo.attached? ? rails_blob_path(r.logo, only_path: true) : nil,
           created_at: r.created_at,
           updated_at: r.updated_at
         }

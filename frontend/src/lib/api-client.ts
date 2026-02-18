@@ -21,7 +21,7 @@ export async function apiFetch<T>(
     ...((options.headers as Record<string, string>) || {}),
   };
 
-  if (options.body) {
+  if (options.body && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
 

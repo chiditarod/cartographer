@@ -12,8 +12,8 @@ export function NewRaceRoute() {
       <h1 className="text-2xl font-bold text-gray-900 mb-6">New Race</h1>
       <div className="max-w-2xl">
         <RaceForm
-          onSubmit={(data) => {
-            createMutation.mutate(data, {
+          onSubmit={(data, logoFile) => {
+            createMutation.mutate({ data, logoFile }, {
               onSuccess: (race) => {
                 navigate(`/races/${race.id}`);
               },

@@ -31,6 +31,7 @@ export interface Race {
   distance_unit: 'mi' | 'km';
   location_ids: number[];
   route_count: number;
+  logo_url: string | null;
   start?: { id: number; name: string };
   finish?: { id: number; name: string };
   locations?: { id: number; name: string; street_address: string }[];

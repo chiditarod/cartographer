@@ -22,6 +22,16 @@ module Api
         render json: serialize_route(route)
       end
 
+      def export_pdf
+        race = Race.find(params[:race_id])
+        route = race.routes.find(params[:id])
+        pdf_data = RoutePdfService.call(route)
+        send_data pdf_data,
+                  filename: "route-#{route.id}.pdf",
+                  type: "application/pdf",
+                  disposition: "attachment"
+      end
+
       def export_csv
         race = Race.find(params[:race_id])
         routes = race.routes.complete.includes(legs: [:start, :finish])

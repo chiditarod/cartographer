@@ -8,6 +8,7 @@ Rails.application.routes.draw do
       resources :races do
         resources :routes, only: [:index, :show, :update, :destroy] do
           get 'export_csv', on: :collection
+          get 'export_pdf', on: :member
         end
         post 'generate_legs', to: 'operations#generate_legs'
         post 'generate_routes', to: 'operations#generate_routes'

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 
 import type { Race } from '@/types/api';
 import { Input } from '@/components/ui/input';
@@ -24,7 +24,7 @@ interface RaceFormData {
 
 interface RaceFormProps {
   initialData?: Race;
-  onSubmit: (data: Partial<Race>) => void;
+  onSubmit: (data: Partial<Race>, logoFile?: File | null, deleteLogo?: boolean) => void;
   isSubmitting: boolean;
   error?: string | null;
 }
@@ -76,6 +76,20 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const { data: locations } = useLocations();
 
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(
+    initialData?.logo_url ?? null,
+  );
+  const [deleteLogo, setDeleteLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!logoFile) return;
+    const url = URL.createObjectURL(logoFile);
+    setLogoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [logoFile]);
+
   const handleChange = (field: keyof Omit<RaceFormData, 'location_ids'>) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
@@ -87,6 +101,21 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
     value: loc.id,
     label: loc.name,
   }));
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    if (file) {
+      setLogoFile(file);
+      setDeleteLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    setDeleteLogo(true);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -111,7 +140,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
       finish_id: Number(form.finish_id),
       location_ids: form.location_ids,
     };
-    onSubmit(data);
+    onSubmit(data, logoFile, deleteLogo);
   };
 
   const displayError = validationErrors.length > 0 ? validationErrors.join(' ') : error;
@@ -131,6 +160,36 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
         onChange={handleChange('name')}
         required
       />
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Race Logo
+        </label>
+        <input
+          ref={fileInputRef}
+          id="race-logo"
+          type="file"
+          accept="image/png,image/jpeg"
+          onChange={handleLogoChange}
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+        />
+        {logoPreview && (
+          <div className="mt-2 flex items-center gap-3">
+            <img
+              src={logoPreview}
+              alt="Logo preview"
+              className="h-12 w-auto rounded border border-gray-200"
+            />
+            <button
+              type="button"
+              onClick={handleRemoveLogo}
+              className="text-sm text-red-600 hover:text-red-800"
+            >
+              Remove
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-3 gap-4">
         <Input
