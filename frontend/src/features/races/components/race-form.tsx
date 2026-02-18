@@ -26,6 +26,7 @@ interface RaceFormProps {
   initialData?: Race;
   onSubmit: (data: Partial<Race>) => void;
   isSubmitting: boolean;
+  error?: string | null;
 }
 
 function toFormData(race?: Race): RaceFormData {
@@ -45,14 +46,41 @@ function toFormData(race?: Race): RaceFormData {
   };
 }
 
-export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps) {
+function validateForm(form: RaceFormData): string[] {
+  const errors: string[] = [];
+
+  if (!form.start_id) errors.push('Start location is required.');
+  if (!form.finish_id) errors.push('Finish location is required.');
+
+  const minTotal = Number(form.min_total_distance);
+  const maxTotal = Number(form.max_total_distance);
+  if (minTotal && maxTotal && maxTotal < minTotal) {
+    errors.push('Max total distance must be greater than min total distance.');
+  }
+
+  const minLeg = Number(form.min_leg_distance);
+  const maxLeg = Number(form.max_leg_distance);
+  if (minLeg && maxLeg && maxLeg < minLeg) {
+    errors.push('Max leg distance must be greater than min leg distance.');
+  }
+
+  if (form.location_ids.length === 0) {
+    errors.push('At least one location must be in the pool.');
+  }
+
+  return errors;
+}
+
+export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFormProps) {
   const [form, setForm] = useState<RaceFormData>(() => toFormData(initialData));
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const { data: locations } = useLocations();
 
   const handleChange = (field: keyof Omit<RaceFormData, 'location_ids'>) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    if (validationErrors.length > 0) setValidationErrors([]);
   };
 
   const locationOptions = (locations ?? []).map((loc) => ({
@@ -62,6 +90,13 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    const errors = validateForm(form);
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+    setValidationErrors([]);
+
     const data: Partial<Race> = {
       name: form.name,
       num_stops: Number(form.num_stops),
@@ -79,8 +114,16 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
     onSubmit(data);
   };
 
+  const displayError = validationErrors.length > 0 ? validationErrors.join(' ') : error;
+
   return (
     <form id="race-form" onSubmit={handleSubmit} className="space-y-4">
+      {displayError && (
+        <div className="rounded-md bg-red-50 border border-red-200 p-3">
+          <p className="text-sm text-red-700">{displayError}</p>
+        </div>
+      )}
+
       <Input
         id="race-name"
         label="Name"
@@ -190,7 +233,10 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
 
       <LocationPicker
         selectedIds={form.location_ids}
-        onChange={(ids) => setForm((prev) => ({ ...prev, location_ids: ids }))}
+        onChange={(ids) => {
+          setForm((prev) => ({ ...prev, location_ids: ids }));
+          if (validationErrors.length > 0) setValidationErrors([]);
+        }}
       />
 
       <div className="pt-2">

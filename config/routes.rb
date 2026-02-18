@@ -12,6 +12,7 @@ Rails.application.routes.draw do
       end
       resources :legs, only: [:index, :destroy]
       post 'geocode', to: 'operations#geocode'
+      get 'geocode_search', to: 'geocode_search#search'
       resources :job_statuses, only: [:show]
       get 'stats', to: 'stats#index'
     end

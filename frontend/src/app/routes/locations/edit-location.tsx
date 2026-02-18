@@ -3,11 +3,13 @@ import { useLocation } from '@/features/locations/api/get-location';
 import { useUpdateLocation } from '@/features/locations/api/update-location';
 import { LocationForm } from '@/features/locations/components/location-form';
 import { Spinner } from '@/components/ui/spinner';
+import { formatMutationError } from '@/utils/format';
 
 export function EditLocationRoute() {
   const { id } = useParams<{ id: string }>();
+  const locationId = Number(id);
   const navigate = useNavigate();
-  const { data: location, isLoading } = useLocation(Number(id));
+  const { data: location, isLoading } = useLocation(locationId);
   const updateMutation = useUpdateLocation();
 
   if (isLoading) return <Spinner />;
@@ -21,11 +23,12 @@ export function EditLocationRoute() {
           initialData={location}
           onSubmit={(data) => {
             updateMutation.mutate(
-              { id: Number(id), data },
+              { id: locationId, data },
               { onSuccess: () => navigate(`/locations/${id}`) },
             );
           }}
           isSubmitting={updateMutation.isPending}
+          error={formatMutationError(updateMutation.error)}
         />
       </div>
     </div>

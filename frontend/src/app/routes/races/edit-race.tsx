@@ -3,11 +3,13 @@ import { useRace } from '@/features/races/api/get-race';
 import { useUpdateRace } from '@/features/races/api/update-race';
 import { RaceForm } from '@/features/races/components/race-form';
 import { Spinner } from '@/components/ui/spinner';
+import { formatMutationError } from '@/utils/format';
 
 export function EditRaceRoute() {
   const { id } = useParams<{ id: string }>();
+  const raceId = Number(id);
   const navigate = useNavigate();
-  const { data: race, isLoading } = useRace(Number(id));
+  const { data: race, isLoading } = useRace(raceId);
   const updateMutation = useUpdateRace();
 
   if (isLoading) return <Spinner />;
@@ -21,11 +23,12 @@ export function EditRaceRoute() {
           initialData={race}
           onSubmit={(data) => {
             updateMutation.mutate(
-              { id: Number(id), data },
+              { id: raceId, data },
               { onSuccess: () => navigate(`/races/${id}`) },
             );
           }}
           isSubmitting={updateMutation.isPending}
+          error={formatMutationError(updateMutation.error)}
         />
       </div>
     </div>

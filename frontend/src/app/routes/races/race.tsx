@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useRace } from '@/features/races/api/get-race';
 import { useDeleteRace } from '@/features/races/api/delete-race';
@@ -6,20 +7,58 @@ import { OperationPanel } from '@/features/operations/components/operation-panel
 import { RoutesList } from '@/features/routes/components/routes-list';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { Modal } from '@/components/ui/modal';
+import { Notification } from '@/components/ui/notification';
 import { useQueryClient } from '@tanstack/react-query';
 
 export function RaceRoute() {
   const { id } = useParams<{ id: string }>();
+  const raceId = Number(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: race, isLoading } = useRace(Number(id));
+  const { data: race, isLoading } = useRace(raceId);
   const deleteMutation = useDeleteRace();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [notification, setNotification] = useState<string | null>(null);
 
   if (isLoading) return <Spinner />;
   if (!race) return <p>Race not found</p>;
 
   return (
     <div>
+      {notification && (
+        <Notification
+          message={notification}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
+
+      <Modal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Race"
+      >
+        <p className="text-sm text-gray-600 mb-4">
+          Are you sure you want to delete <strong>{race.name}</strong> and all its routes? This cannot be undone.
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            loading={deleteMutation.isPending}
+            onClick={() => {
+              deleteMutation.mutate(raceId, {
+                onSuccess: () => navigate('/races'),
+              });
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      </Modal>
+
       <div className="flex items-center justify-between mb-6">
         <h1 id="race-page-title" className="text-2xl font-bold text-gray-900">{race.name}</h1>
         <div className="flex gap-2">
@@ -28,13 +67,7 @@ export function RaceRoute() {
           </Link>
           <Button
             variant="danger"
-            onClick={() => {
-              if (confirm('Delete this race and all its routes?')) {
-                deleteMutation.mutate(Number(id), {
-                  onSuccess: () => navigate('/races'),
-                });
-              }
-            }}
+            onClick={() => setShowDeleteModal(true)}
           >
             Delete
           </Button>
@@ -45,11 +78,12 @@ export function RaceRoute() {
         <RaceDetail race={race} />
 
         <OperationPanel
-          raceId={Number(id)}
+          raceId={raceId}
           onJobComplete={() => {
-            queryClient.invalidateQueries({ queryKey: ['race', Number(id)] });
-            queryClient.invalidateQueries({ queryKey: ['routes', Number(id)] });
+            queryClient.invalidateQueries({ queryKey: ['race', raceId] });
+            queryClient.invalidateQueries({ queryKey: ['routes', raceId] });
             queryClient.invalidateQueries({ queryKey: ['stats'] });
+            setNotification('Operation completed successfully.');
           }}
         />
 
@@ -60,7 +94,7 @@ export function RaceRoute() {
               <Button variant="secondary" size="sm">View All Routes</Button>
             </Link>
           </div>
-          <RoutesList raceId={Number(id)} />
+          <RoutesList raceId={raceId} />
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardBody } from '@/components/ui/card';
@@ -29,7 +29,10 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
   const isAnyRunning =
     legsPoller.isPolling || routesPoller.isPolling || geocodePoller.isPolling;
 
-  const handleGenerateLegs = useCallback(() => {
+  // Track which jobs have already triggered onJobComplete to prevent repeated calls
+  const completedJobsRef = useRef<Set<number>>(new Set());
+
+  const handleGenerateLegs = () => {
     legsPoller.reset();
     generateLegs.mutate(
       { raceId, mock: mockMode },
@@ -39,18 +42,18 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
         },
       },
     );
-  }, [raceId, mockMode, generateLegs, legsPoller]);
+  };
 
-  const handleGenerateRoutes = useCallback(() => {
+  const handleGenerateRoutes = () => {
     routesPoller.reset();
     generateRoutes.mutate(raceId, {
       onSuccess: (data) => {
         routesPoller.startPolling(data.job_status_id);
       },
     });
-  }, [raceId, generateRoutes, routesPoller]);
+  };
 
-  const handleGeocodeLocations = useCallback(() => {
+  const handleGeocodeLocations = () => {
     if (!race) return;
     geocodePoller.reset();
     geocodeLocations.mutate(race.location_ids, {
@@ -58,25 +61,24 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
         geocodePoller.startPolling(data.job_status_id);
       },
     });
-  }, [race, geocodeLocations, geocodePoller]);
+  };
 
-  // Fire the onJobComplete callback when any poller finishes successfully
-  const checkComplete = useCallback(() => {
+  // Fire onJobComplete when any poller finishes - properly in useEffect, not render body
+  useEffect(() => {
     const pollers = [legsPoller, routesPoller, geocodePoller];
     for (const poller of pollers) {
       if (
         poller.jobStatus &&
         poller.jobStatus.status === 'completed' &&
-        !poller.isPolling
+        !poller.isPolling &&
+        !completedJobsRef.current.has(poller.jobStatus.id)
       ) {
+        completedJobsRef.current.add(poller.jobStatus.id);
         onJobComplete?.();
         return;
       }
     }
-  }, [legsPoller, routesPoller, geocodePoller, onJobComplete]);
-
-  // Check after each render cycle
-  checkComplete();
+  }, [legsPoller.jobStatus, routesPoller.jobStatus, geocodePoller.jobStatus, legsPoller.isPolling, routesPoller.isPolling, geocodePoller.isPolling, onJobComplete]);
 
   return (
     <Card>

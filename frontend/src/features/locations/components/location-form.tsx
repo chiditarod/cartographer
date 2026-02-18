@@ -3,6 +3,8 @@ import { useState, type FormEvent } from 'react';
 import type { Location } from '@/types/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { PlaceSearch } from '@/features/locations/components/place-search';
+import type { GeocodeResult } from '@/features/locations/api/geocode-search';
 
 interface LocationFormData {
   name: string;
@@ -21,6 +23,7 @@ interface LocationFormProps {
   initialData?: Location;
   onSubmit: (data: Partial<Location>) => void;
   isSubmitting: boolean;
+  error?: string | null;
 }
 
 function toFormData(location?: Location): LocationFormData {
@@ -38,13 +41,27 @@ function toFormData(location?: Location): LocationFormData {
   };
 }
 
-export function LocationForm({ initialData, onSubmit, isSubmitting }: LocationFormProps) {
+export function LocationForm({ initialData, onSubmit, isSubmitting, error }: LocationFormProps) {
   const [form, setForm] = useState<LocationFormData>(() => toFormData(initialData));
 
   const handleChange = (field: keyof LocationFormData) => (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handlePlaceSelect = (result: GeocodeResult) => {
+    setForm((prev) => ({
+      ...prev,
+      name: prev.name || result.name || '',
+      street_address: result.street_address || '',
+      city: result.city || '',
+      state: result.state || '',
+      zip: result.zip || '',
+      country: result.country || '',
+      lat: result.lat != null ? String(result.lat) : '',
+      lng: result.lng != null ? String(result.lng) : '',
+    }));
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -66,12 +83,22 @@ export function LocationForm({ initialData, onSubmit, isSubmitting }: LocationFo
 
   return (
     <form id="location-form" onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        label="Name"
-        value={form.name}
-        onChange={handleChange('name')}
-        required
-      />
+      {error && (
+        <div className="rounded-md bg-red-50 border border-red-200 p-3">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      <PlaceSearch onSelect={handlePlaceSelect} />
+
+      <div className="border-t border-gray-200 pt-4">
+        <Input
+          label="Name"
+          value={form.name}
+          onChange={handleChange('name')}
+          required
+        />
+      </div>
 
       <Input
         label="Street Address"

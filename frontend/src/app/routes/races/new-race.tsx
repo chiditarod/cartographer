@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { RaceForm } from '@/features/races/components/race-form';
 import { useCreateRace } from '@/features/races/api/create-race';
+import { formatMutationError } from '@/utils/format';
 
 export function NewRaceRoute() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export function NewRaceRoute() {
             });
           }}
           isSubmitting={createMutation.isPending}
+          error={formatMutationError(createMutation.error)}
         />
       </div>
     </div>

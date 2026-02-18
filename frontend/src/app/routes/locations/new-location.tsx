@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { LocationForm } from '@/features/locations/components/location-form';
 import { useCreateLocation } from '@/features/locations/api/create-location';
+import { formatMutationError } from '@/utils/format';
 
 export function NewLocationRoute() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export function NewLocationRoute() {
             });
           }}
           isSubmitting={createMutation.isPending}
+          error={formatMutationError(createMutation.error)}
         />
       </div>
     </div>
