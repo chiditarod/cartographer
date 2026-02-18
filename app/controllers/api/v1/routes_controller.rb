@@ -26,8 +26,10 @@ module Api
         race = Race.find(params[:race_id])
         routes = race.routes.complete.includes(legs: [:start, :finish])
 
-        csv_parts = routes.map(&:to_csv)
-        csv_content = csv_parts.join("\n")
+        csv_lines = routes.map { |r| r.to_csv.split("\n", 2) }
+        header = csv_lines.first&.first || ''
+        data_rows = csv_lines.map(&:last)
+        csv_content = ([header] + data_rows).join("\n")
 
         send_data csv_content, filename: "race-#{race.id}-routes.csv", type: 'text/csv'
       end
