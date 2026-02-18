@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useRace } from '@/features/races/api/get-race';
 import { useDeleteRace } from '@/features/races/api/delete-race';
+import { useDuplicateRace } from '@/features/races/api/duplicate-race';
 import { RaceDetail } from '@/features/races/components/race-detail';
 import { OperationPanel } from '@/features/operations/components/operation-panel';
 import { RoutesList } from '@/features/routes/components/routes-list';
@@ -18,6 +19,7 @@ export function RaceRoute() {
   const queryClient = useQueryClient();
   const { data: race, isLoading } = useRace(raceId);
   const deleteMutation = useDeleteRace();
+  const duplicateMutation = useDuplicateRace();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -65,6 +67,17 @@ export function RaceRoute() {
           <Link to={`/races/${id}/edit`} id="edit-race-link">
             <Button variant="secondary">Edit</Button>
           </Link>
+          <Button
+            variant="secondary"
+            loading={duplicateMutation.isPending}
+            onClick={() => {
+              duplicateMutation.mutate(raceId, {
+                onSuccess: (newRace) => navigate(`/races/${newRace.id}`),
+              });
+            }}
+          >
+            Duplicate
+          </Button>
           <Button
             variant="danger"
             onClick={() => setShowDeleteModal(true)}
