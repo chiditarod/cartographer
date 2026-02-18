@@ -25,6 +25,7 @@ module Api
       def export_csv
         race = Race.find(params[:race_id])
         routes = race.routes.complete.includes(legs: [:start, :finish])
+        routes = routes.where(id: params[:ids].split(',')) if params[:ids].present?
 
         csv_lines = routes.map { |r| r.to_csv.split("\n", 2) }
         header = csv_lines.first&.first || ''
@@ -39,6 +40,11 @@ module Api
         if params[:id] == 'all'
           count = race.routes.count
           race.routes.destroy_all
+          render json: { message: "Deleted #{count} routes" }
+        elsif params[:id] == 'bulk'
+          routes = race.routes.where(id: params[:ids])
+          count = routes.count
+          routes.destroy_all
           render json: { message: "Deleted #{count} routes" }
         else
           route = race.routes.find(params[:id])

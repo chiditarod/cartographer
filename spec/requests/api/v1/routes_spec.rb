@@ -76,6 +76,43 @@ RSpec.describe 'Api::V1::Routes', type: :request do
     end
   end
 
+  describe 'GET /api/v1/races/:race_id/routes/export_csv with ids filter' do
+    it 'returns CSV for only the specified route ids' do
+      route2 = FactoryBot.create(:sequential_route, race: race)
+      get "/api/v1/races/#{race.id}/routes/export_csv?ids=#{route.id}"
+      expect(response).to have_http_status(:ok)
+      expect(response.content_type).to include('text/csv')
+      expect(response.body).to include(route.id.to_s)
+      expect(response.body).not_to include(route2.id.to_s)
+    end
+  end
+
+  describe 'DELETE /api/v1/races/:race_id/routes/bulk' do
+    it 'deletes only the specified routes' do
+      route2 = FactoryBot.create(:sequential_route, race: race)
+      expect {
+        delete "/api/v1/races/#{race.id}/routes/bulk",
+               params: { ids: [route.id] },
+               as: :json
+      }.to change(Route, :count).by(-1)
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['message']).to eq('Deleted 1 routes')
+      expect(Route.exists?(route.id)).to be false
+      expect(Route.exists?(route2.id)).to be true
+    end
+
+    it 'ignores ids not belonging to the race' do
+      other_route = FactoryBot.create(:sequential_route)
+      expect {
+        delete "/api/v1/races/#{race.id}/routes/bulk",
+               params: { ids: [other_route.id] },
+               as: :json
+      }.not_to change(Route, :count)
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
   describe 'DELETE /api/v1/races/:race_id/routes/all' do
     it 'deletes all routes for the race' do
       FactoryBot.create(:sequential_route, race: race)
