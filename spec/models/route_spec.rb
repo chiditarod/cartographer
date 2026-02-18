@@ -112,6 +112,94 @@ RSpec.describe Route, type: :model do
         expect(route).to be_invalid
       end
     end
+
+    describe 'validate_finish_not_used_until_end' do
+      let(:route) { FactoryBot.create :route }
+
+      it 'is invalid when finish location is used mid-route' do
+        leg = FactoryBot.create(:leg, start: route.race.start, finish: route.race.finish)
+        route.race.locations << leg.start << leg.finish
+        route.legs << leg
+        # route is incomplete (has 1 of 3 legs) but uses race finish
+        expect(route).to be_invalid
+        expect(route.errors[:legs].join).to include('cannot be used until the end')
+      end
+    end
+
+    describe 'validate_finish_is_at_end' do
+      it 'is invalid when last leg does not end at race finish' do
+        route = FactoryBot.create(:sequential_route)
+        expect(route).to be_valid
+
+        # Replace the last leg's finish with a different location
+        new_finish = FactoryBot.create(:location)
+        route.race.locations << new_finish
+        last_leg = route.legs.last
+        last_leg.finish = new_finish
+
+        expect(route).to be_invalid
+        expect(route.errors[:legs].join).to include('The last leg needs to finish at')
+      end
+    end
+  end
+
+  describe '#to_s' do
+    it 'returns "EMPTY" when route has no legs' do
+      route = FactoryBot.create(:route)
+      expect(route.to_s).to eq('EMPTY')
+    end
+
+    it 'returns formatted string when route has legs' do
+      route = FactoryBot.create(:sequential_route)
+      result = route.to_s
+      expect(result).to include('legs')
+      expect(result).to include(route.race.distance_unit)
+    end
+  end
+
+  describe '#to_csv' do
+    it 'returns zero-value CSV when route has no legs' do
+      route = FactoryBot.create(:route)
+      expect(route.to_csv).to eq("0,0,0,#{route.race.distance_unit}")
+    end
+
+    it 'returns CSV with route info and legs' do
+      route = FactoryBot.create(:sequential_route)
+      result = route.to_csv
+      expect(result).to include(route.id.to_s)
+      expect(result).to include(route.race.distance_unit)
+    end
+  end
+
+  describe '#distance' do
+    it 'returns total distance in miles for mi race' do
+      route = FactoryBot.create(:sequential_route)
+      route.race.update!(distance_unit: 'mi')
+      total_meters = route.legs.sum(&:distance)
+      expected = Distances.m_to_mi(total_meters).round(2)
+      expect(route.distance).to eq(expected)
+    end
+
+    it 'returns total distance in km for km race' do
+      route = FactoryBot.create(:sequential_route)
+      route.race.update!(distance_unit: 'km')
+      total_meters = route.legs.sum(&:distance)
+      expected = (total_meters / 1000).round(2)
+      expect(route.distance).to eq(expected)
+    end
+  end
+
+  describe '#legs_needed' do
+    it 'returns the difference between target and current leg count' do
+      route = FactoryBot.create(:route)
+      expected = route.target_leg_count - route.legs.size
+      expect(route.legs_needed).to eq(expected)
+    end
+
+    it 'returns 0 when route has all legs' do
+      route = FactoryBot.create(:sequential_route)
+      expect(route.legs_needed).to eq(0)
+    end
   end
 
   describe '.to_google_map' do
@@ -160,12 +248,12 @@ RSpec.describe Route, type: :model do
     def map_url(route, zoom)
       legs_arr = route.legs.to_a
       start_leg = legs_arr.slice!(0)
-  
+
       legs = ""
       legs_arr.each_with_index do |leg, i|
         legs += "&markers=color:white%7Clabel:#{i+1}%7C#{leg.start.lat_lng}"
       end
-  
+
       "https://maps.googleapis.com/maps/api/staticmap?scale=2&zoom=#{zoom}&size=1024x768&style=feature:poi|visibility:off&markers=icon:#{Route::MAP_START_ICON}%7C#{start_leg.start.lat_lng}#{legs}&markers=icon:#{Route::MAP_START_ICON}%7C#{legs_arr.last.finish.lat_lng}&key="
     end
   end

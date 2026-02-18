@@ -41,6 +41,12 @@ RSpec.configure do |config|
   # instead of true.
   config.use_transactional_fixtures = true
 
+  # Reset Faker unique generator between tests so transactional rollbacks
+  # don't cause unique value exhaustion across examples
+  config.before(:each) do
+    Faker::UniqueGenerator.clear
+  end
+
   # RSpec Rails can automatically mix in different behaviours to your tests
   # based on their file location, for example enabling you to call `get` and
   # `post` in specs under `spec/controllers`.
