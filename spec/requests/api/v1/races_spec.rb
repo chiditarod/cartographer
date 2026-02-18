@@ -76,4 +76,24 @@ RSpec.describe 'Api::V1::Races', type: :request do
       expect(response).to have_http_status(:ok)
     end
   end
+
+  describe 'POST /api/v1/races/:id/duplicate' do
+    it 'duplicates a race with locations but not routes' do
+      race = FactoryBot.create(:race, :with_locations, name: 'Original Race')
+      FactoryBot.create(:route, race: race)
+
+      expect {
+        post "/api/v1/races/#{race.id}/duplicate"
+      }.to change(Race, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+      json = JSON.parse(response.body)
+      expect(json['name']).to eq('Copy of Original Race')
+      expect(json['num_stops']).to eq(race.num_stops)
+      expect(json['start_id']).to eq(race.start_id)
+      expect(json['finish_id']).to eq(race.finish_id)
+      expect(json['location_ids']).to match_array(race.location_ids)
+      expect(json['route_count']).to eq(0)
+    end
+  end
 end

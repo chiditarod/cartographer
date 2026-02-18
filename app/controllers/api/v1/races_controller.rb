@@ -33,6 +33,15 @@ module Api
         render json: { message: "Race deleted" }
       end
 
+      def duplicate
+        original = Race.find(params[:id])
+        copy = original.dup
+        copy.name = "Copy of #{original.name}"
+        copy.save!
+        copy.locations = original.locations
+        render json: serialize_race(copy), status: :created
+      end
+
       private
 
       def assign_locations(race)
