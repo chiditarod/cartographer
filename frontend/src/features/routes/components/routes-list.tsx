@@ -40,7 +40,7 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
 
   const selectable = selectedIds !== undefined && onSelectionChange !== undefined;
   const allSelected = selectable && routes.length > 0 && routes.every((r) => selectedIds.has(r.id));
-  const colSpan = selectable ? 5 : 4;
+  const colSpan = selectable ? 6 : 5;
 
   const toggleRoute = (id: number) => {
     if (!onSelectionChange || !selectedIds) return;
@@ -88,6 +88,9 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
               Legs
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Rarity
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
             </th>
           </tr>
@@ -115,6 +118,9 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {route.leg_count} / {route.target_leg_count}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {route.rarity_score !== null ? route.rarity_score : '—'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <Link
