@@ -27,6 +27,11 @@ const steps = [
       'From a race detail page, use the operations panel to generate optimized routes for each team.',
   },
   {
+    title: 'Rank Routes',
+    description:
+      'Score each route by rarity — routes that use less common checkpoint positions receive higher scores.',
+  },
+  {
     title: 'Review Routes',
     description:
       'View generated routes, inspect legs and distances, and export to CSV for race day.',
