@@ -7,6 +7,7 @@ import { JobProgress } from '@/features/operations/components/job-progress';
 import { useGenerateLegs } from '@/features/operations/api/generate-legs';
 import { useGenerateRoutes } from '@/features/operations/api/generate-routes';
 import { useGeocodeLocations } from '@/features/operations/api/geocode-locations';
+import { useRankRoutes } from '@/features/operations/api/rank-routes';
 import { useDeleteAllRoutes } from '@/features/routes/api/delete-all-routes';
 import { useRoutes } from '@/features/routes/api/get-routes';
 import { useJobPoller } from '@/hooks/use-job-poller';
@@ -27,13 +28,15 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
   const generateLegs = useGenerateLegs();
   const generateRoutes = useGenerateRoutes();
   const geocodeLocations = useGeocodeLocations();
+  const rankRoutes = useRankRoutes();
 
   const legsPoller = useJobPoller();
   const routesPoller = useJobPoller();
   const geocodePoller = useJobPoller();
+  const rankPoller = useJobPoller();
 
   const isAnyRunning =
-    legsPoller.isPolling || routesPoller.isPolling || geocodePoller.isPolling;
+    legsPoller.isPolling || routesPoller.isPolling || geocodePoller.isPolling || rankPoller.isPolling;
 
   // Track which jobs have already triggered onJobComplete to prevent repeated calls
   const completedJobsRef = useRef<Set<number>>(new Set());
@@ -69,9 +72,18 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
     });
   };
 
+  const handleRankRoutes = () => {
+    rankPoller.reset();
+    rankRoutes.mutate(raceId, {
+      onSuccess: (data) => {
+        rankPoller.startPolling(data.job_status_id);
+      },
+    });
+  };
+
   // Fire onJobComplete when any poller finishes - properly in useEffect, not render body
   useEffect(() => {
-    const pollers = [legsPoller, routesPoller, geocodePoller];
+    const pollers = [legsPoller, routesPoller, geocodePoller, rankPoller];
     for (const poller of pollers) {
       if (
         poller.jobStatus &&
@@ -84,7 +96,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
         return;
       }
     }
-  }, [legsPoller.jobStatus, routesPoller.jobStatus, geocodePoller.jobStatus, legsPoller.isPolling, routesPoller.isPolling, geocodePoller.isPolling, onJobComplete]);
+  }, [legsPoller.jobStatus, routesPoller.jobStatus, geocodePoller.jobStatus, rankPoller.jobStatus, legsPoller.isPolling, routesPoller.isPolling, geocodePoller.isPolling, rankPoller.isPolling, onJobComplete]);
 
   return (
     <Card>
@@ -107,6 +119,14 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
         <div className="space-y-4">
           <div className="flex flex-wrap gap-3">
             <Button
+              id="btn-geocode"
+              onClick={handleGeocodeLocations}
+              loading={geocodeLocations.isPending}
+              disabled={isAnyRunning || !race}
+            >
+              Geocode Locations
+            </Button>
+            <Button
               id="btn-generate-legs"
               onClick={handleGenerateLegs}
               loading={generateLegs.isPending}
@@ -123,12 +143,12 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
               Generate Routes
             </Button>
             <Button
-              id="btn-geocode"
-              onClick={handleGeocodeLocations}
-              loading={geocodeLocations.isPending}
-              disabled={isAnyRunning || !race}
+              id="btn-rank-routes"
+              onClick={handleRankRoutes}
+              loading={rankRoutes.isPending}
+              disabled={isAnyRunning}
             >
-              Geocode Locations
+              Rank Routes
             </Button>
             {routes && routes.length > 0 && (
               <Button
@@ -168,6 +188,16 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
               <JobProgress
                 jobStatus={geocodePoller.jobStatus}
                 isPolling={geocodePoller.isPolling}
+              />
+            </div>
+          )}
+
+          {(rankPoller.jobStatus || rankPoller.isPolling) && (
+            <div>
+              <p className="text-xs font-medium text-gray-500 mb-1">Rank Routes</p>
+              <JobProgress
+                jobStatus={rankPoller.jobStatus}
+                isPolling={rankPoller.isPolling}
               />
             </div>
           )}
