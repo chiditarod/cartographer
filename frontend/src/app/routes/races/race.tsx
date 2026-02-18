@@ -6,6 +6,7 @@ import { useDuplicateRace } from '@/features/races/api/duplicate-race';
 import { RaceDetail } from '@/features/races/components/race-detail';
 import { OperationPanel } from '@/features/operations/components/operation-panel';
 import { RoutesList } from '@/features/routes/components/routes-list';
+import { useRoutes } from '@/features/routes/api/get-routes';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Modal } from '@/components/ui/modal';
@@ -19,6 +20,7 @@ export function RaceRoute() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: race, isLoading } = useRace(raceId);
+  const { data: routes } = useRoutes(raceId);
   const deleteMutation = useDeleteRace();
   const duplicateMutation = useDuplicateRace();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -91,7 +93,7 @@ export function RaceRoute() {
       </div>
 
       <div className="space-y-6">
-        <RaceDetail race={race} locationColorMap={locationColorMap} />
+        <RaceDetail race={race} locationColorMap={locationColorMap} routes={routes} />
 
         <OperationPanel
           raceId={raceId}

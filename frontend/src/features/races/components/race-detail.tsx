@@ -1,13 +1,23 @@
-import type { Race } from '@/types/api';
+import type { Race, RouteSummary } from '@/types/api';
 import { Card, CardHeader, CardBody } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { abbreviateLocation } from '@/utils/location';
 
 interface RaceDetailProps {
   race: Race;
   locationColorMap: Map<number, string>;
+  routes?: RouteSummary[];
 }
 
-export function RaceDetail({ race, locationColorMap }: RaceDetailProps) {
+export function RaceDetail({ race, locationColorMap, routes }: RaceDetailProps) {
+  const locationUsage = new Map<number, number>();
+  if (routes) {
+    for (const route of routes) {
+      for (const loc of route.location_sequence) {
+        locationUsage.set(loc.id, (locationUsage.get(loc.id) || 0) + 1);
+      }
+    }
+  }
 
   return (
     <Card>
@@ -86,6 +96,19 @@ export function RaceDetail({ race, locationColorMap }: RaceDetailProps) {
               {race.locations.map((loc) => (
                 <Badge key={loc.id} colorClasses={locationColorMap.get(loc.id)}>
                   {loc.name}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {race.locations && race.locations.length > 0 && locationUsage.size > 0 && (
+          <div className="mt-4">
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Location Usage in Routes</h3>
+            <div className="flex flex-wrap gap-2">
+              {race.locations.map((loc) => (
+                <Badge key={loc.id} colorClasses={locationColorMap.get(loc.id)}>
+                  {abbreviateLocation(loc.name)}: {locationUsage.get(loc.id) || 0}
                 </Badge>
               ))}
             </div>
