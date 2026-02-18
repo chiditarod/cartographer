@@ -2,12 +2,13 @@
 
 - Always use sub-agents and parallelism whenever it is safe to do so to increase throughput and reduce token use.
 - Always use Context7 MCP when you need library/API documentation, code generation, setup or configuration steps without user explicitly asking.
+- Always use Playwrite MCP when you need to verify UI changes without user explicitly asking.
 - Use dogtag (`../dogtag`) for Playwright integration test patterns ONLY — NOT for UI style, UX, or design inspiration.
 - Ensure the React app follows Bulletproof React standard (https://github.com/alan2207/bulletproof-react).
 - Put key learnings into CLAUDE.md after every iteration.
 - Once you finish a task, automatically commit all changes that your work made with a concise and descriptive message. ensure you do not commit changes that you did not make as part of that task.
-- When asking the user for permission to execute a command, always select "Always allow" to remember their choice for the session. Do not re-ask for the same type of command.
-- NEVER run `git push`. The user will push manually.
+- When asking the user for permission to execute a command, additionally prompt to "Always allow" to remember their choice for the session. Do not re-ask for the same type of command.
+- NEVER run `git push` or try to open PRs. The user will push manually.
 - After finishing each task, review and update README.md if the task introduced new setup steps, commands, or changed how things work.
 
 ## Tech Stack
@@ -34,6 +35,9 @@
 - Forms should accept `error` prop and display API errors; use `formatMutationError()` from utils
 - Use `Modal` component instead of `window.confirm()` for destructive actions
 - Compute `Number(id)` from `useParams` once at top of component, not inline
+- Route `complete` boolean is set via `before_save` callback — after adding legs via association, must call `route.save!` to trigger it
+- "Delete all" pattern: `params[:id] == 'all'` in destroy action (used by legs and routes controllers)
+- E2E seed must create complete routes (with legs) for route-related E2E tests to work
 
 ## Commands
 
