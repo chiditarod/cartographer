@@ -8,13 +8,15 @@ const variants = {
 
 interface BadgeProps {
   variant?: keyof typeof variants;
+  colorClasses?: string;
   children: React.ReactNode;
 }
 
-export function Badge({ variant = 'gray', children }: BadgeProps) {
+export function Badge({ variant = 'gray', colorClasses, children }: BadgeProps) {
+  const classes = colorClasses || variants[variant];
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${variants[variant]}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${classes}`}
     >
       {children}
     </span>
