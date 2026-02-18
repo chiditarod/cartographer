@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { seededTest as test, expect } from '../../fixtures';
 
 test.describe('Dashboard', () => {
   test('displays the dashboard with stats', async ({ page }) => {

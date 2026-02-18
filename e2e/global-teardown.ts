@@ -1,18 +1,12 @@
-import { execSync } from 'child_process';
-import path from 'path';
-
 export default async function globalTeardown() {
-  const projectRoot = path.resolve(__dirname, '..');
-
-  console.log('E2E Global Teardown: Cleaning data...');
+  // Clean up any leftover test data via the API
   try {
-    execSync('RAILS_ENV=test bundle exec rake e2e:clean', {
-      cwd: projectRoot,
-      stdio: 'pipe',
-    });
+    const res = await fetch('http://localhost:3099/api/v1/e2e/reset', { method: 'POST' });
+    if (res.ok) {
+      console.log('E2E Global Teardown: Cleaned data via API.');
+    }
   } catch {
-    // Ignore cleanup errors
+    // Server may already be shut down — ignore
+    console.log('E2E Global Teardown: Server unavailable, skipping cleanup.');
   }
-
-  console.log('E2E Global Teardown: Done.');
 }

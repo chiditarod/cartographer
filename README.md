@@ -111,9 +111,18 @@ bundle exec rspec
 ### Playwright (E2E)
 
 ```bash
-RAILS_ENV=test bundle exec rake e2e:seed   # seed test data
 cd e2e && npx playwright test --reporter=list
-RAILS_ENV=test bundle exec rake e2e:clean  # clean up after
+```
+
+Tests are organized into two projects:
+- **seeded** (`tests/seeded/`) — Tests that reset + seed the DB before each test
+- **fresh** (`tests/fresh/`) — Tests that reset the DB and create their own data
+
+DB management is handled automatically per-test via fixtures. No manual seeding/cleaning needed.
+
+```bash
+cd e2e && npx playwright test --project=seeded   # run only seeded tests
+cd e2e && npx playwright test --project=fresh     # run only fresh tests
 ```
 
 ### Frontend Build Check

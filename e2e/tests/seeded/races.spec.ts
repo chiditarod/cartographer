@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { seededTest as test, expect } from '../../fixtures';
 
 test.describe('Races', () => {
   test('lists seeded races', async ({ page }) => {
@@ -39,6 +39,16 @@ test.describe('Races', () => {
     await test.step('select start and finish locations', async () => {
       await page.locator('#race-start-location').selectOption({ index: 1 });
       await page.locator('#race-finish-location').selectOption({ index: 1 });
+    });
+
+    await test.step('select locations for pool', async () => {
+      // Check all available location checkboxes in the Location Pool
+      const checkboxes = page.locator('input[type="checkbox"]').filter({ has: page.locator('..') });
+      const poolCheckboxes = page.locator('label').filter({ hasText: /E2E/ }).locator('input[type="checkbox"]');
+      const count = await poolCheckboxes.count();
+      for (let i = 0; i < count; i++) {
+        await poolCheckboxes.nth(i).check();
+      }
     });
 
     await test.step('submit', async () => {

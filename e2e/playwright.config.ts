@@ -24,8 +24,15 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chromium',
+      name: 'seeded',
+      testDir: './tests/seeded',
       use: { browserName: 'chromium' },
+    },
+    {
+      name: 'fresh',
+      testDir: './tests/fresh',
+      use: { browserName: 'chromium' },
+      timeout: 60_000,
     },
   ],
   webServer: [

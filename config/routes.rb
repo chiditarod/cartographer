@@ -15,6 +15,11 @@ Rails.application.routes.draw do
       get 'geocode_search', to: 'geocode_search#search'
       resources :job_statuses, only: [:show]
       get 'stats', to: 'stats#index'
+
+      if Rails.env.test?
+        post 'e2e/reset', to: 'e2e#reset'
+        post 'e2e/seed', to: 'e2e#seed'
+      end
     end
   end
 

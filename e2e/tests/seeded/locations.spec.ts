@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { seededTest as test, expect } from '../../fixtures';
 
 test.describe('Locations', () => {
   test('lists seeded locations', async ({ page }) => {

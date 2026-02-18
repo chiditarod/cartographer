@@ -20,7 +20,7 @@
 - **Routing**: React Router v7
 - **API**: Namespaced `/api/v1/` with dedicated controllers
 - **Async jobs**: Polling via `job_statuses` DB table
-- **E2E tests**: Playwright (sequential, 1 worker, dual webServer: Rails 3099 + Vite 5199)
+- **E2E tests**: Playwright (sequential, 1 worker, dual webServer: Rails 3099 + Vite 5199, per-test DB reset via fixtures)
 
 ## Key Gotchas
 
@@ -38,12 +38,17 @@
 - Route `complete` boolean is set via `before_save` callback — after adding legs via association, must call `route.save!` to trigger it
 - "Delete all" pattern: `params[:id] == 'all'` in destroy action (used by legs and routes controllers)
 - E2E seed must create complete routes (with legs) for route-related E2E tests to work
+- E2E tests use per-test fixtures: `seededTest` (reset + seed) and `freshTest` (reset only) from `e2e/fixtures.ts`
+- E2E tests are organized into `tests/seeded/` (need seed data) and `tests/fresh/` (create own data)
+- DB reset/seed during E2E uses fast API endpoints (`POST /api/v1/e2e/reset` and `/e2e/seed`) instead of slow rake tasks — only available in test env
+- When checking for "completed" text in E2E operations tests, scope to `[data-testid="progress-bar"]` to avoid ambiguity with notification text
+- Race creation in E2E must check location pool checkboxes — form validates `location_ids.length > 0`
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (154 tests, all passing, ~90% coverage)
+- `bundle exec rspec` — Run all RSpec tests (155 tests, all passing, ~81% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
-- `cd e2e && npx playwright test --reporter=list` — Run Playwright E2E tests
-- `RAILS_ENV=test bundle exec rake e2e:seed` — Seed E2E test data
-- `RAILS_ENV=test bundle exec rake e2e:clean` — Clean E2E test data
+- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (17 tests: 16 seeded + 1 fresh)
+- `cd e2e && npx playwright test --project=seeded` — Run only seeded E2E tests
+- `cd e2e && npx playwright test --project=fresh` — Run only fresh E2E tests

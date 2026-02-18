@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { seededTest as test, expect } from '../../fixtures';
 
 test.describe('Operations', () => {
   test('generates legs for a race (mock mode)', async ({ page }) => {
@@ -21,7 +21,7 @@ test.describe('Operations', () => {
 
     await test.step('wait for progress and completion', async () => {
       await expect(page.locator('[data-testid="progress-bar"]')).toBeVisible({ timeout: 10000 });
-      await expect(page.getByText(/completed/i)).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="progress-bar"]').getByText(/completed/i)).toBeVisible({ timeout: 30000 });
     });
   });
 
@@ -37,7 +37,7 @@ test.describe('Operations', () => {
     });
 
     await test.step('wait for completion', async () => {
-      await expect(page.getByText(/completed/i)).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="progress-bar"]').getByText(/completed/i)).toBeVisible({ timeout: 30000 });
     });
   });
 });
