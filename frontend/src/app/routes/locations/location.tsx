@@ -19,7 +19,7 @@ export function LocationRoute() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{location.name}</h1>
         <div className="flex gap-2">
-          <Link to={`/locations/${id}/edit`}>
+          <Link to={`/locations/${id}/edit`} id="edit-location-link">
             <Button variant="secondary">Edit</Button>
           </Link>
           <Button

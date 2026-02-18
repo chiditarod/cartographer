@@ -7,26 +7,26 @@ test.describe('Dashboard', () => {
     });
 
     await test.step('verify stats are displayed', async () => {
-      await expect(page.getByText('Locations')).toBeVisible({ timeout: 10000 });
-      await expect(page.getByText('Races')).toBeVisible();
+      await expect(page.locator('#stat-locations')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('#stat-races')).toBeVisible();
     });
 
     await test.step('verify stat counts are shown', async () => {
       // Seeded data: 6 locations, 1 race
-      await expect(page.getByText('6')).toBeVisible();
-      await expect(page.getByText('1')).toBeVisible();
+      await expect(page.locator('#stat-locations-count')).toHaveText('6');
+      await expect(page.locator('#stat-races-count')).toHaveText('1');
     });
   });
 
   test('navigates to locations via sidebar', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('link', { name: 'Locations' }).click();
+    await page.locator('#nav-locations').click();
     await expect(page).toHaveURL('/locations');
   });
 
   test('navigates to races via sidebar', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('link', { name: 'Races' }).click();
+    await page.locator('#nav-races').click();
     await expect(page).toHaveURL('/races');
   });
 });

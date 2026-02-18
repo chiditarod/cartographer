@@ -8,7 +8,7 @@ export function RaceRoutesRoute() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Routes</h1>
+        <h1 id="routes-page-title" className="text-2xl font-bold text-gray-900">Routes</h1>
         <Link to={`/races/${raceId}`}>
           <Button variant="secondary">Back to Race</Button>
         </Link>

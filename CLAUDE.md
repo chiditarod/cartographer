@@ -1,5 +1,6 @@
 ## Project Conventions
 
+- Always use sub-agents and parallelism whenever it is safe to do so to increase throughput and reduce token use.
 - Always use Context7 MCP when you need library/API documentation, code generation, setup or configuration steps without user explicitly asking.
 - Use dogtag (`../dogtag`) for Playwright integration test patterns ONLY — NOT for UI style, UX, or design inspiration.
 - Ensure the React app follows Bulletproof React standard (https://github.com/alan2207/bulletproof-react).

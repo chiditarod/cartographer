@@ -65,7 +65,7 @@ export function LocationForm({ initialData, onSubmit, isSubmitting }: LocationFo
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form id="location-form" onSubmit={handleSubmit} className="space-y-4">
       <Input
         label="Name"
         value={form.name}
@@ -138,7 +138,7 @@ export function LocationForm({ initialData, onSubmit, isSubmitting }: LocationFo
       </div>
 
       <div className="pt-2">
-        <Button type="submit" loading={isSubmitting}>
+        <Button id="location-submit" type="submit" loading={isSubmitting}>
           {initialData ? 'Update Location' : 'Create Location'}
         </Button>
       </div>

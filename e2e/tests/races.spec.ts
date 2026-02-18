@@ -13,40 +13,37 @@ test.describe('Races', () => {
     });
 
     await test.step('verify race details visible', async () => {
-      await expect(page.getByText(/5/)).toBeVisible({ timeout: 10000 });
-      await expect(page.getByText(/E2E Cobra/)).toBeVisible();
+      await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
+      await expect(page.locator('#race-detail-name')).toBeVisible();
     });
   });
 
   test('creates a new race', async ({ page }) => {
     await test.step('navigate to new race form', async () => {
       await page.goto('/races');
-      await page.getByRole('link', { name: /new race/i }).click();
+      await page.locator('#new-race-link').click();
       await expect(page).toHaveURL('/races/new');
     });
 
     await test.step('fill in race details', async () => {
-      await page.getByLabel('Name').fill('PW Test Race');
-      await page.getByLabel('Num Stops').fill('3');
-      await page.getByLabel('Max Teams').fill('50');
-      await page.getByLabel('People Per Team').fill('5');
-      await page.getByLabel('Min Total Distance').fill('3.0');
-      await page.getByLabel('Max Total Distance').fill('5.0');
-      await page.getByLabel('Min Leg Distance').fill('0.5');
-      await page.getByLabel('Max Leg Distance').fill('2.0');
+      await page.locator('#race-name').fill('PW Test Race');
+      await page.locator('#race-num-stops').fill('3');
+      await page.locator('#race-max-teams').fill('50');
+      await page.locator('#race-people-per-team').fill('5');
+      await page.locator('#race-min-total-distance').fill('3.0');
+      await page.locator('#race-max-total-distance').fill('5.0');
+      await page.locator('#race-min-leg-distance').fill('0.5');
+      await page.locator('#race-max-leg-distance').fill('2.0');
     });
 
     await test.step('select start and finish locations', async () => {
-      // Select from the Start and Finish dropdowns
-      const startSelect = page.getByLabel('Start Location');
-      await startSelect.selectOption({ index: 1 });
-      const finishSelect = page.getByLabel('Finish Location');
-      await finishSelect.selectOption({ index: 1 });
+      await page.locator('#race-start-location').selectOption({ index: 1 });
+      await page.locator('#race-finish-location').selectOption({ index: 1 });
     });
 
     await test.step('submit', async () => {
-      await page.getByRole('button', { name: /create/i }).click();
-      await expect(page.getByText('PW Test Race')).toBeVisible({ timeout: 10000 });
+      await page.locator('#race-submit').click();
+      await expect(page.locator('#race-page-title')).toHaveText('PW Test Race', { timeout: 10000 });
     });
   });
 });

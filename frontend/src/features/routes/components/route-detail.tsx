@@ -36,7 +36,7 @@ export function RouteDetail({ route, raceId }: RouteDetailProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 id="route-name" className="text-lg font-semibold text-gray-900">
               {route.name || `Route #${route.id}`}
             </h2>
             <Button variant="secondary" size="sm" onClick={handleExportCsv}>
@@ -45,16 +45,17 @@ export function RouteDetail({ route, raceId }: RouteDetailProps) {
           </div>
         </CardHeader>
         <CardBody>
-          <form onSubmit={handleSaveName} className="flex items-end gap-3 mb-6">
+          <form id="route-name-form" onSubmit={handleSaveName} className="flex items-end gap-3 mb-6">
             <div className="flex-1">
               <Input
+                id="route-name-input"
                 label="Route Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter a name for this route"
               />
             </div>
-            <Button type="submit" size="sm" loading={updateRoute.isPending}>
+            <Button id="route-save-btn" type="submit" size="sm" loading={updateRoute.isPending}>
               Save
             </Button>
           </form>

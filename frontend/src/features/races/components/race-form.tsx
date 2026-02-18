@@ -80,8 +80,9 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form id="race-form" onSubmit={handleSubmit} className="space-y-4">
       <Input
+        id="race-name"
         label="Name"
         value={form.name}
         onChange={handleChange('name')}
@@ -90,6 +91,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
 
       <div className="grid grid-cols-3 gap-4">
         <Input
+          id="race-num-stops"
           label="Number of Stops"
           type="number"
           value={form.num_stops}
@@ -97,6 +99,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
           required
         />
         <Input
+          id="race-max-teams"
           label="Max Teams"
           type="number"
           value={form.max_teams}
@@ -104,6 +107,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
           required
         />
         <Input
+          id="race-people-per-team"
           label="People per Team"
           type="number"
           value={form.people_per_team}
@@ -114,6 +118,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
 
       <div className="grid grid-cols-2 gap-4">
         <Input
+          id="race-min-total-distance"
           label="Min Total Distance"
           type="number"
           step="any"
@@ -122,6 +127,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
           required
         />
         <Input
+          id="race-max-total-distance"
           label="Max Total Distance"
           type="number"
           step="any"
@@ -133,6 +139,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
 
       <div className="grid grid-cols-2 gap-4">
         <Input
+          id="race-min-leg-distance"
           label="Min Leg Distance"
           type="number"
           step="any"
@@ -141,6 +148,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
           required
         />
         <Input
+          id="race-max-leg-distance"
           label="Max Leg Distance"
           type="number"
           step="any"
@@ -151,6 +159,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
       </div>
 
       <Select
+        id="race-distance-unit"
         label="Distance Unit"
         value={form.distance_unit}
         onChange={handleChange('distance_unit')}
@@ -162,6 +171,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
 
       <div className="grid grid-cols-2 gap-4">
         <Select
+          id="race-start-location"
           label="Start Location"
           value={form.start_id}
           onChange={handleChange('start_id')}
@@ -169,6 +179,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
           placeholder="Select start..."
         />
         <Select
+          id="race-finish-location"
           label="Finish Location"
           value={form.finish_id}
           onChange={handleChange('finish_id')}
@@ -183,7 +194,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting }: RaceFormProps)
       />
 
       <div className="pt-2">
-        <Button type="submit" loading={isSubmitting}>
+        <Button id="race-submit" type="submit" loading={isSubmitting}>
           {initialData ? 'Update Race' : 'Create Race'}
         </Button>
       </div>

@@ -21,9 +21,9 @@ export function RaceRoute() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{race.name}</h1>
+        <h1 id="race-page-title" className="text-2xl font-bold text-gray-900">{race.name}</h1>
         <div className="flex gap-2">
-          <Link to={`/races/${id}/edit`}>
+          <Link to={`/races/${id}/edit`} id="edit-race-link">
             <Button variant="secondary">Edit</Button>
           </Link>
           <Button
@@ -56,7 +56,7 @@ export function RaceRoute() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Complete Routes</h2>
-            <Link to={`/races/${id}/routes`}>
+            <Link to={`/races/${id}/routes`} id="view-all-routes-link">
               <Button variant="secondary" size="sm">View All Routes</Button>
             </Link>
           </div>

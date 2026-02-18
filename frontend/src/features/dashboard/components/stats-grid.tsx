@@ -29,14 +29,16 @@ export function StatsGrid() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {statLabels.map(({ key, label }) => (
-        <Card key={key}>
-          <CardBody>
-            <p className="text-sm font-medium text-gray-500">{label}</p>
-            <p className="mt-1 text-3xl font-semibold text-gray-900">
-              {stats[key]}
-            </p>
-          </CardBody>
-        </Card>
+        <div id={`stat-${key}`} key={key}>
+          <Card>
+            <CardBody>
+              <p className="text-sm font-medium text-gray-500">{label}</p>
+              <p id={`stat-${key}-count`} className="mt-1 text-3xl font-semibold text-gray-900">
+                {stats[key]}
+              </p>
+            </CardBody>
+          </Card>
+        </div>
       ))}
     </div>
   );

@@ -10,7 +10,7 @@ export function RaceDetail({ race }: RaceDetailProps) {
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-lg font-semibold text-gray-900">{race.name}</h2>
+        <h2 id="race-detail-name" className="text-lg font-semibold text-gray-900">{race.name}</h2>
       </CardHeader>
       <CardBody>
         <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">

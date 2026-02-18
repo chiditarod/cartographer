@@ -4,11 +4,10 @@ import path from 'path';
 export default async function globalSetup() {
   const projectRoot = path.resolve(__dirname, '..');
 
-  console.log('E2E Global Setup: Preparing test database...');
-  execSync('RAILS_ENV=test bundle exec rails db:test:prepare', {
-    cwd: projectRoot,
-    stdio: 'pipe',
-  });
+  // Note: db:test:prepare is skipped here because the Playwright webServer
+  // (Rails) is already connected to the test DB before globalSetup runs.
+  // Run `bundle exec rspec` or `RAILS_ENV=test rails db:test:prepare`
+  // beforehand if the schema needs updating.
 
   console.log('E2E Global Setup: Cleaning data...');
   try {

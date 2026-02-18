@@ -11,7 +11,7 @@ export function LocationDetail({ location }: LocationDetailProps) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">{location.name}</h2>
+          <h2 id="location-name" className="text-lg font-semibold text-gray-900">{location.name}</h2>
           <Badge variant={location.geocoded ? 'success' : 'warning'}>
             {location.geocoded ? 'Geocoded' : 'Not Geocoded'}
           </Badge>

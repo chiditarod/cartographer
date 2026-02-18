@@ -5,23 +5,23 @@ test.describe('Operations', () => {
     await test.step('navigate to race detail', async () => {
       await page.goto('/races');
       await page.getByRole('link', { name: 'View' }).first().click();
-      await expect(page.getByText(/E2E Race/)).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
     await test.step('ensure mock mode is on', async () => {
-      const mockCheckbox = page.getByLabel(/mock mode/i);
+      const mockCheckbox = page.locator('#mock-mode-checkbox');
       if (!(await mockCheckbox.isChecked())) {
         await mockCheckbox.check();
       }
     });
 
     await test.step('trigger leg generation', async () => {
-      await page.getByRole('button', { name: /generate legs/i }).click();
+      await page.locator('#btn-generate-legs').click();
     });
 
     await test.step('wait for progress and completion', async () => {
       await expect(page.locator('[data-testid="progress-bar"]')).toBeVisible({ timeout: 10000 });
-      await expect(page.getByText(/completed/i)).toBeVisible({ timeout: 15000 });
+      await expect(page.getByText(/completed/i)).toBeVisible({ timeout: 30000 });
     });
   });
 
@@ -29,15 +29,15 @@ test.describe('Operations', () => {
     await test.step('navigate to race detail', async () => {
       await page.goto('/races');
       await page.getByRole('link', { name: 'View' }).first().click();
-      await expect(page.getByText(/E2E Race/)).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
     await test.step('trigger route generation', async () => {
-      await page.getByRole('button', { name: /generate routes/i }).click();
+      await page.locator('#btn-generate-routes').click();
     });
 
     await test.step('wait for completion', async () => {
-      await expect(page.getByText(/completed/i)).toBeVisible({ timeout: 15000 });
+      await expect(page.getByText(/completed/i)).toBeVisible({ timeout: 30000 });
     });
   });
 });

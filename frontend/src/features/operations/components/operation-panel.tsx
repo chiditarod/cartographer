@@ -83,8 +83,9 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900">Operations</h3>
-          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+          <label htmlFor="mock-mode-checkbox" className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
             <input
+              id="mock-mode-checkbox"
               type="checkbox"
               checked={mockMode}
               onChange={(e) => setMockMode(e.target.checked)}
@@ -98,6 +99,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
         <div className="space-y-4">
           <div className="flex flex-wrap gap-3">
             <Button
+              id="btn-generate-legs"
               onClick={handleGenerateLegs}
               loading={generateLegs.isPending}
               disabled={isAnyRunning}
@@ -105,6 +107,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
               Generate Legs
             </Button>
             <Button
+              id="btn-generate-routes"
               onClick={handleGenerateRoutes}
               loading={generateRoutes.isPending}
               disabled={isAnyRunning}
@@ -112,6 +115,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
               Generate Routes
             </Button>
             <Button
+              id="btn-geocode"
               onClick={handleGeocodeLocations}
               loading={geocodeLocations.isPending}
               disabled={isAnyRunning || !race}

@@ -1,9 +1,9 @@
 import { NavLink } from 'react-router-dom';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: '◐' },
-  { to: '/locations', label: 'Locations', icon: '◎' },
-  { to: '/races', label: 'Races', icon: '⇢' },
+  { to: '/', label: 'Dashboard', icon: '◐', id: 'nav-dashboard' },
+  { to: '/locations', label: 'Locations', icon: '◎', id: 'nav-locations' },
+  { to: '/races', label: 'Races', icon: '⇢', id: 'nav-races' },
 ];
 
 export function Sidebar() {
@@ -17,6 +17,7 @@ export function Sidebar() {
         {navItems.map((item) => (
           <NavLink
             key={item.to}
+            id={item.id}
             to={item.to}
             end={item.to === '/'}
             className={({ isActive }) =>
