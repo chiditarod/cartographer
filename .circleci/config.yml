@@ -67,5 +67,5 @@ workflows:
       - test:
           matrix:
             parameters:
-              ruby_version: ["3.3.10"]
+              ruby_version: ["3.4.8"]
               gemfile: ["Gemfile"]

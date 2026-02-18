@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '3.3.10'
+ruby '3.4.8'
 
 gem 'rails', '~> 8.0.0'
 gem 'pg'
@@ -27,7 +27,7 @@ gem 'bootsnap', '>= 1.12.0', require: false
 gem 'google_maps_service'
 
 group :development, :test do
-  gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
+  gem 'byebug', platforms: [:mri]
   gem 'factory_bot_rails'
   gem 'faker'
   gem 'awesome_print'
@@ -48,4 +48,4 @@ group :test do
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
+gem 'tzinfo-data', platforms: [:windows, :jruby]

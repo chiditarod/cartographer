@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RoutesController < ApplicationController
   def index
     @race = Race.find(params[:race_id])

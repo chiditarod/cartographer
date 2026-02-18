@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class BulkLegCreator < ApplicationJob
 
   # including test_mode hash will prevent calls to google api

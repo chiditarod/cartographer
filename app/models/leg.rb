@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Leg < ApplicationRecord
   validates :distance, numericality: true  # in meters
   belongs_to :start, class_name: "Location"

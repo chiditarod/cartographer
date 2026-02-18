@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class LegsRoute < ApplicationRecord
   belongs_to :leg
   belongs_to :route

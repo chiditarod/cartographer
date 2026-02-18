@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Race < ApplicationRecord
   validates :num_stops, :max_teams, :people_per_team,
     numericality: { only_integer: true }
