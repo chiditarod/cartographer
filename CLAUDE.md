@@ -43,10 +43,11 @@
 - DB reset/seed during E2E uses fast API endpoints (`POST /api/v1/e2e/reset` and `/e2e/seed`) instead of slow rake tasks — only available in test env
 - When checking for "completed" text in E2E operations tests, scope to `[data-testid="progress-bar"]` to avoid ambiguity with notification text
 - Race creation in E2E must check location pool checkboxes — form validates `location_ids.length > 0`
+- `POST /api/v1/races/:id/duplicate` duplicates a race with locations (not routes), prepends "Copy of " to name — uses `ActiveRecord#dup`
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (155 tests, all passing, ~81% coverage)
+- `bundle exec rspec` — Run all RSpec tests (156 tests, all passing, ~81% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
 - `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (17 tests: 16 seeded + 1 fresh)
