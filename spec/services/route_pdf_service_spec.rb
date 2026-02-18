@@ -5,9 +5,12 @@ require 'rails_helper'
 RSpec.describe RoutePdfService do
   let(:route) { FactoryBot.create(:sequential_route) }
 
-  it 'generates a valid PDF' do
+  it 'generates a valid single-page PDF' do
     pdf_data = RoutePdfService.call(route)
     expect(pdf_data).to start_with('%PDF')
+    # Prawn PDFs contain /Type /Page entries — one per page (excluding /Type /Pages)
+    page_count = pdf_data.scan(%r{/Type\s*/Page[^s]}).size
+    expect(page_count).to eq(1)
   end
 
   it 'works without a logo' do
