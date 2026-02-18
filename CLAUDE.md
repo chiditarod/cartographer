@@ -56,12 +56,14 @@
 - `RankRoutesJob` computes rarity scores for complete routes — uses `update_column(:rarity_score, ...)` to bypass Route validations/callbacks
 - Rarity algorithm: for each intermediate CP position, score = 1 - (freq/N); normalize sum across positions to 0-100 scale
 - Job pattern: wrap `Race.find` inside `begin...rescue` so `job_status.fail!` is called even if the race isn't found
+- Operation button order: Geocode Locations → Generate Legs → Generate Routes → Rank Routes (matches logical workflow)
+- Rarity score is a one-time snapshot — re-run Rank Routes job to refresh after route deletion
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (167 tests, all passing, ~82% coverage)
+- `bundle exec rspec` — Run all RSpec tests (168 tests, all passing, ~82% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
-- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (19 tests: 18 seeded + 1 fresh)
+- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (20 tests: 19 seeded + 1 fresh)
 - `cd e2e && npx playwright test --project=seeded` — Run only seeded E2E tests
 - `cd e2e && npx playwright test --project=fresh` — Run only fresh E2E tests
