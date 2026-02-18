@@ -69,6 +69,7 @@ module Api
           distance_unit: r.race.distance_unit,
           leg_count: r.legs.size,
           target_leg_count: r.target_leg_count,
+          rarity_score: r.rarity_score,
           created_at: r.created_at,
           location_sequence: if r.legs.any?
             r.legs.map { |l| { id: l.start.id, name: l.start.name } } +
