@@ -52,6 +52,7 @@
 - Race creation in E2E must check location pool checkboxes — form validates `location_ids.length > 0`
 - `POST /api/v1/races/:id/duplicate` duplicates a race with locations (not routes), prepends "Copy of " to name — uses `ActiveRecord#dup`
 - Sidebar has two sections: main nav (Dashboard, Locations, Races) at top and Help pinned at bottom — add new primary nav to `navItems` array, secondary nav to the bottom `div`
+- Race detail card "Checkpoint Position Usage" heat-map table uses `RouteSummary.location_sequence` — index 0 is start, last index is finish, intermediate indices are checkpoint positions (CP 1..N where N = `num_stops`)
 
 ## Commands
 
