@@ -1,7 +1,6 @@
 import type { Race, RouteSummary } from '@/types/api';
 import { Card, CardHeader, CardBody } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { abbreviateLocation } from '@/utils/location';
 
 interface RaceDetailProps {
   race: Race;
@@ -9,14 +8,52 @@ interface RaceDetailProps {
   routes?: RouteSummary[];
 }
 
+function heatColor(value: number, min: number, max: number): string {
+  if (min === max) return 'hsl(0, 0%, 92%)';
+  const t = (value - min) / (max - min);
+  // green (120) at low → yellow (45) at mid → red (0) at high
+  const hue = t <= 0.5
+    ? 120 - (120 - 45) * (t / 0.5)
+    : 45 - 45 * ((t - 0.5) / 0.5);
+  const saturation = 40 + 10 * t; // 40% → 50%
+  const lightness = 90 - 2 * t;   // 90% → 88%
+  return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%)`;
+}
+
 export function RaceDetail({ race, locationColorMap, routes }: RaceDetailProps) {
-  const locationUsage = new Map<number, number>();
+  // Build positionUsage: Map<locationId, Map<cpNumber, count>>
+  const positionUsage = new Map<number, Map<number, number>>();
   if (routes) {
     for (const route of routes) {
-      for (const loc of route.location_sequence) {
-        locationUsage.set(loc.id, (locationUsage.get(loc.id) || 0) + 1);
+      const seq = route.location_sequence;
+      // Skip index 0 (start) and last index (finish), only count intermediate checkpoints
+      for (let i = 1; i < seq.length - 1; i++) {
+        const loc = seq[i];
+        const cpNumber = i; // checkpoint position (1-based)
+        if (!positionUsage.has(loc.id)) {
+          positionUsage.set(loc.id, new Map());
+        }
+        const locMap = positionUsage.get(loc.id)!;
+        locMap.set(cpNumber, (locMap.get(cpNumber) || 0) + 1);
       }
     }
+  }
+
+  // Precompute per-column min/max bounds
+  const numCPs = race.num_stops;
+  const colBounds = new Map<number, { min: number; max: number }>();
+  for (let cp = 1; cp <= numCPs; cp++) {
+    let min = Infinity;
+    let max = -Infinity;
+    for (const [, locMap] of positionUsage) {
+      const count = locMap.get(cp) || 0;
+      if (count < min) min = count;
+      if (count > max) max = count;
+    }
+    // If no data, set both to 0
+    if (min === Infinity) min = 0;
+    if (max === -Infinity) max = 0;
+    colBounds.set(cp, { min, max });
   }
 
   return (
@@ -102,15 +139,52 @@ export function RaceDetail({ race, locationColorMap, routes }: RaceDetailProps) 
           </div>
         )}
 
-        {race.locations && race.locations.length > 0 && locationUsage.size > 0 && (
+        {race.locations && race.locations.length > 0 && positionUsage.size > 0 && (
           <div className="mt-4">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Location Usage in Routes</h3>
-            <div className="flex flex-wrap gap-2">
-              {race.locations.map((loc) => (
-                <Badge key={loc.id} colorClasses={locationColorMap.get(loc.id)}>
-                  {abbreviateLocation(loc.name)}: {locationUsage.get(loc.id) || 0}
-                </Badge>
-              ))}
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Checkpoint Position Usage</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-gray-500 font-medium text-left pr-4 py-1">Location</th>
+                    {Array.from({ length: numCPs }, (_, i) => (
+                      <th key={i + 1} className="text-gray-500 font-medium px-3 py-1 text-center">
+                        CP {i + 1}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {race.locations
+                    .filter((loc) => positionUsage.has(loc.id))
+                    .map((loc) => {
+                      const locMap = positionUsage.get(loc.id)!;
+                      return (
+                        <tr key={loc.id}>
+                          <td className="pr-4 py-1">
+                            <Badge colorClasses={locationColorMap.get(loc.id)}>
+                              {loc.name}
+                            </Badge>
+                          </td>
+                          {Array.from({ length: numCPs }, (_, i) => {
+                            const cp = i + 1;
+                            const count = locMap.get(cp) || 0;
+                            const bounds = colBounds.get(cp)!;
+                            return (
+                              <td
+                                key={cp}
+                                className="px-3 py-1 text-center font-mono rounded"
+                                style={{ backgroundColor: heatColor(count, bounds.min, bounds.max) }}
+                              >
+                                {count}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
