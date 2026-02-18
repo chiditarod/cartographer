@@ -10,9 +10,11 @@ import { abbreviateLocation } from '@/utils/location';
 interface RoutesListProps {
   raceId: number;
   locationColorMap?: Map<number, string>;
+  selectedIds?: Set<number>;
+  onSelectionChange?: (ids: Set<number>) => void;
 }
 
-export function RoutesList({ raceId, locationColorMap }: RoutesListProps) {
+export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionChange }: RoutesListProps) {
   const { data: routes, isLoading, isError } = useRoutes(raceId);
 
   if (isLoading) {
@@ -36,11 +38,46 @@ export function RoutesList({ raceId, locationColorMap }: RoutesListProps) {
     );
   }
 
+  const selectable = selectedIds !== undefined && onSelectionChange !== undefined;
+  const allSelected = selectable && routes.length > 0 && routes.every((r) => selectedIds.has(r.id));
+  const colSpan = selectable ? 5 : 4;
+
+  const toggleRoute = (id: number) => {
+    if (!onSelectionChange || !selectedIds) return;
+    const next = new Set(selectedIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    onSelectionChange(next);
+  };
+
+  const toggleAll = () => {
+    if (!onSelectionChange || !routes) return;
+    if (allSelected) {
+      onSelectionChange(new Set());
+    } else {
+      onSelectionChange(new Set(routes.map((r) => r.id)));
+    }
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
+            {selectable && (
+              <th className="w-10 px-3 py-3">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  data-testid="select-all-routes"
+                />
+              </th>
+            )}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Name
             </th>
@@ -59,6 +96,17 @@ export function RoutesList({ raceId, locationColorMap }: RoutesListProps) {
           {routes.map((route) => (
             <React.Fragment key={route.id}>
               <tr>
+                {selectable && (
+                  <td className="w-10 px-3 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(route.id)}
+                      onChange={() => toggleRoute(route.id)}
+                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      data-testid={`select-route-${route.id}`}
+                    />
+                  </td>
+                )}
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {route.name || `Route #${route.id}`}
                 </td>
@@ -79,7 +127,7 @@ export function RoutesList({ raceId, locationColorMap }: RoutesListProps) {
               </tr>
               {route.location_sequence.length > 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 pb-4 pt-0">
+                  <td colSpan={colSpan} className="px-6 pb-4 pt-0">
                     <div className="flex flex-wrap items-center gap-1">
                       {route.location_sequence.map((loc, i) => (
                         <React.Fragment key={`${route.id}-loc-${i}`}>

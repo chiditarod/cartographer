@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useRace } from '@/features/races/api/get-race';
 import { useDeleteRace } from '@/features/races/api/delete-race';
 import { useDuplicateRace } from '@/features/races/api/duplicate-race';
+import { useDeleteSelectedRoutes } from '@/features/routes/api/delete-selected-routes';
 import { RaceDetail } from '@/features/races/components/race-detail';
 import { OperationPanel } from '@/features/operations/components/operation-panel';
 import { RoutesList } from '@/features/routes/components/routes-list';
@@ -23,13 +24,33 @@ export function RaceRoute() {
   const { data: routes } = useRoutes(raceId);
   const deleteMutation = useDeleteRace();
   const duplicateMutation = useDuplicateRace();
+  const deleteSelectedMutation = useDeleteSelectedRoutes(raceId);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteSelectedModal, setShowDeleteSelectedModal] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
+  const [selectedRouteIds, setSelectedRouteIds] = useState<Set<number>>(new Set());
 
   if (isLoading) return <Spinner />;
   if (!race) return <p>Race not found</p>;
 
   const locationColorMap = race.locations ? buildLocationColorMap(race.locations) : new Map();
+  const selectionCount = selectedRouteIds.size;
+
+  const handleExportCsv = () => {
+    const url = selectionCount > 0
+      ? `/api/v1/races/${raceId}/routes/export_csv?ids=${[...selectedRouteIds].join(',')}`
+      : `/api/v1/races/${raceId}/routes/export_csv`;
+    fetch(url)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `race-${raceId}-routes.csv`;
+        link.click();
+        URL.revokeObjectURL(blobUrl);
+      });
+  };
 
   return (
     <div>
@@ -59,6 +80,40 @@ export function RaceRoute() {
               deleteMutation.mutate(raceId, {
                 onSuccess: () => navigate('/races'),
               });
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={showDeleteSelectedModal}
+        onClose={() => setShowDeleteSelectedModal(false)}
+        title="Delete Selected Routes"
+      >
+        <p className="text-sm text-gray-600 mb-4">
+          Are you sure you want to delete {selectionCount} selected route{selectionCount !== 1 ? 's' : ''}? This cannot be undone.
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setShowDeleteSelectedModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            loading={deleteSelectedMutation.isPending}
+            id="confirm-delete-selected-routes-btn"
+            onClick={() => {
+              deleteSelectedMutation.mutate(
+                { raceId, ids: [...selectedRouteIds] },
+                {
+                  onSuccess: () => {
+                    setShowDeleteSelectedModal(false);
+                    setSelectedRouteIds(new Set());
+                    setNotification(`Deleted ${selectionCount} route${selectionCount !== 1 ? 's' : ''}.`);
+                  },
+                },
+              );
             }}
           >
             Delete
@@ -112,27 +167,31 @@ export function RaceRoute() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => {
-                  fetch(`/api/v1/races/${raceId}/routes/export_csv`)
-                    .then((res) => res.blob())
-                    .then((blob) => {
-                      const url = URL.createObjectURL(blob);
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.download = `race-${raceId}-routes.csv`;
-                      link.click();
-                      URL.revokeObjectURL(url);
-                    });
-                }}
+                onClick={handleExportCsv}
+                id="export-csv-btn"
               >
-                Export CSV
+                {selectionCount > 0 ? `Export CSV (${selectionCount})` : 'Export CSV'}
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                disabled={selectionCount === 0}
+                onClick={() => setShowDeleteSelectedModal(true)}
+                id="delete-selected-routes-btn"
+              >
+                {selectionCount > 0 ? `Delete (${selectionCount})` : 'Delete'}
               </Button>
               <Link to={`/races/${id}/routes`} id="view-all-routes-link">
                 <Button variant="secondary" size="sm">View All Routes</Button>
               </Link>
             </div>
           </div>
-          <RoutesList raceId={raceId} locationColorMap={locationColorMap} />
+          <RoutesList
+            raceId={raceId}
+            locationColorMap={locationColorMap}
+            selectedIds={selectedRouteIds}
+            onSelectionChange={setSelectedRouteIds}
+          />
         </div>
       </div>
     </div>
