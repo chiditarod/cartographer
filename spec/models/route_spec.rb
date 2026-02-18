@@ -37,7 +37,9 @@ RSpec.describe Route, type: :model do
       let(:route) { FactoryBot.create :sequential_route }
       it 'becomes invalid' do
         expect(route).to be_valid
-        route.legs.destroy(route.legs.last)
+        last_join = route.legs_routes.last
+        LegsRoute.where(leg_id: last_join.leg_id, route_id: last_join.route_id, order: last_join.order).delete_all
+        route.reload
         expect(route).to be_invalid
       end
     end
