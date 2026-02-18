@@ -52,11 +52,10 @@ test.describe('Routes', () => {
   });
 
   test('deletes all routes', async ({ page }) => {
-    await test.step('navigate to routes list', async () => {
+    await test.step('navigate to race detail', async () => {
       await page.goto('/races');
       await page.getByRole('link', { name: 'View' }).first().click();
-      await page.locator('#view-all-routes-link').click();
-      await expect(page.locator('#routes-page-title')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
     await test.step('click delete all and confirm', async () => {

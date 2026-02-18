@@ -2,10 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardBody } from '@/components/ui/card';
+import { Modal } from '@/components/ui/modal';
 import { JobProgress } from '@/features/operations/components/job-progress';
 import { useGenerateLegs } from '@/features/operations/api/generate-legs';
 import { useGenerateRoutes } from '@/features/operations/api/generate-routes';
 import { useGeocodeLocations } from '@/features/operations/api/geocode-locations';
+import { useDeleteAllRoutes } from '@/features/routes/api/delete-all-routes';
+import { useRoutes } from '@/features/routes/api/get-routes';
 import { useJobPoller } from '@/hooks/use-job-poller';
 import { useRace } from '@/features/races/api/get-race';
 
@@ -16,7 +19,10 @@ interface OperationPanelProps {
 
 export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
   const [mockMode, setMockMode] = useState(false);
+  const [showDeleteAllRoutes, setShowDeleteAllRoutes] = useState(false);
   const { data: race } = useRace(raceId);
+  const { data: routes } = useRoutes(raceId);
+  const deleteAllRoutes = useDeleteAllRoutes(raceId);
 
   const generateLegs = useGenerateLegs();
   const generateRoutes = useGenerateRoutes();
@@ -124,6 +130,16 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
             >
               Geocode Locations
             </Button>
+            {routes && routes.length > 0 && (
+              <Button
+                id="delete-all-routes-btn"
+                variant="danger"
+                onClick={() => setShowDeleteAllRoutes(true)}
+                disabled={isAnyRunning}
+              >
+                Delete All Routes
+              </Button>
+            )}
           </div>
 
           {(legsPoller.jobStatus || legsPoller.isPolling) && (
@@ -157,6 +173,34 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
           )}
         </div>
       </CardBody>
+
+      <Modal
+        open={showDeleteAllRoutes}
+        onClose={() => setShowDeleteAllRoutes(false)}
+        title="Delete All Routes"
+      >
+        <p className="text-sm text-gray-500 mb-6">
+          Are you sure you want to delete all {routes?.length ?? 0} routes? This cannot be undone.
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setShowDeleteAllRoutes(false)}>
+            Cancel
+          </Button>
+          <Button
+            id="confirm-delete-all-routes-btn"
+            variant="danger"
+            loading={deleteAllRoutes.isPending}
+            onClick={() => {
+              deleteAllRoutes.mutate(
+                { raceId },
+                { onSuccess: () => setShowDeleteAllRoutes(false) },
+              );
+            }}
+          >
+            Delete All
+          </Button>
+        </div>
+      </Modal>
     </Card>
   );
 }
