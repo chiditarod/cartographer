@@ -25,6 +25,7 @@ gem 'jbuilder', '~> 2.7'
 gem 'bootsnap', '>= 1.12.0', require: false
 
 gem 'google_maps_service'
+gem 'rack-cors'
 
 group :development, :test do
   gem 'byebug', platforms: [:mri]
