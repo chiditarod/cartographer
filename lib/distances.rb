@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Distances
 
   def self.m_to_s(m, unit=nil)

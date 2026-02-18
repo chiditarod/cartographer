@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'boot'
 
 require 'rails/all'
@@ -9,17 +11,13 @@ Bundler.require(*Rails.groups)
 module Rodrouter
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 5.2
-
-    # TODO: figure out why this is even necessary
-    # https://github.com/rails/rails/issues/14382
-    #config.autoload_paths = %W(#{config.root}/app/validators)
+    config.load_defaults 8.0
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
 
-    config.autoload_paths += %W(#{config.root}/lib)
+    config.autoload_lib(ignore: %w[assets tasks])
   end
 end

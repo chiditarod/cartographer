@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Route < ApplicationRecord
   belongs_to :race
   validates :race, presence: true

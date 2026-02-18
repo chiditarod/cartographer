@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Add geocode data to a location
 class GeocodeLocationJob < ApplicationJob
   queue_as :default

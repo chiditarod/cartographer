@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RouteGenerator
 
   def self.call(race, route=nil)
