@@ -49,3 +49,11 @@ node_modules/
 
 .DS_Store
 *.swp
+
+# Frontend build output
+/public/spa/
+
+# E2E test artifacts
+/e2e/test-results/
+/e2e/playwright-report/
+.playwright-mcp

@@ -43,6 +43,9 @@ Rails.application.configure do
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 
+  # Use async adapter so E2E tests can exercise background jobs
+  config.active_job.queue_adapter = :async
+
   # Raises error for missing translations
   # config.action_view.raise_on_missing_translations = true
 end

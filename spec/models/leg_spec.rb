@@ -57,6 +57,12 @@ RSpec.describe Leg, type: :model do
     end
   end
 
+  describe '.csv_header' do
+    it 'returns column headers' do
+      expect(Leg.csv_header).to eq("Start,Distance,Finish")
+    end
+  end
+
   describe '.save' do
     let(:start) { FactoryBot.create :location }
     let(:finish) { FactoryBot.create :location }

@@ -14,6 +14,9 @@ class Race < ApplicationRecord
   belongs_to :finish, class_name: "Location"
   has_and_belongs_to_many :locations
   has_many :routes
+  has_one_attached :logo
+
+  validate :acceptable_logo, if: -> { logo.attached? }
 
   enum :distance_unit, { mi: 0, km: 1 }
 
@@ -37,5 +40,16 @@ class Race < ApplicationRecord
 
   def max_leg_distance_m
     mi? ? Distances.mi_to_m(max_leg_distance) : max_leg_distance * 1000
+  end
+
+  private
+
+  def acceptable_logo
+    unless logo.content_type.in?(%w[image/png image/jpeg])
+      errors.add(:logo, "must be a PNG or JPEG")
+    end
+    if logo.byte_size > 5.megabytes
+      errors.add(:logo, "must be less than 5 MB")
+    end
   end
 end

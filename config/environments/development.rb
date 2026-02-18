@@ -61,6 +61,9 @@ Rails.application.configure do
   # routes, locales, etc. This feature depends on the listen gem.
   config.file_watcher = ActiveSupport::EventedFileUpdateChecker
 
+  # Use async adapter so jobs run in background threads
+  config.active_job.queue_adapter = :async
+
   config.after_initialize do
     ActiveRecord::Base.logger = Rails.logger.clone
     ActiveRecord::Base.logger.level = Logger::INFO

@@ -11,8 +11,7 @@ RSpec.describe GoogleApiClient do
       end
 
       it 'raises an error due to missing API key' do
-        # Source has typo "StandardEror" which triggers NameError at runtime
-        expect { GoogleApiClient.new }.to raise_error(NameError)
+        expect { GoogleApiClient.new }.to raise_error(StandardError, "GOOGLE_API_KEY env var is required to use Google API")
       end
     end
 

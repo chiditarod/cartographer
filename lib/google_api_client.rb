@@ -6,7 +6,7 @@ class GoogleApiClient
 
   def initialize
     unless ENV['GOOGLE_API_KEY']
-      raise StandardEror.new("GOOGLE_API_KEY env var is required to use Google API")
+      raise StandardError.new("GOOGLE_API_KEY env var is required to use Google API")
     end
 
     @client ||= GoogleMapsService::Client.new(

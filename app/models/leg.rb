@@ -18,6 +18,10 @@ class Leg < ApplicationRecord
     "#{start || '?' } --(#{Distances.m_to_s(distance, unit)})--> #{finish || '?'}"
   end
 
+  def self.csv_header
+    "Start,Distance,Finish"
+  end
+
   def to_csv(unit=nil)
     "#{start || '?' },#{Distances.m_to_s(distance, unit)},#{finish || '?'}"
   end
