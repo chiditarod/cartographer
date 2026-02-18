@@ -16,6 +16,19 @@ RSpec.describe 'Api::V1::Routes', type: :request do
         expect(r['complete']).to be true
       end
     end
+
+    it 'includes location_sequence in each route' do
+      get "/api/v1/races/#{race.id}/routes"
+      json = JSON.parse(response.body)
+      json.each do |r|
+        expect(r).to have_key('location_sequence')
+        expect(r['location_sequence']).to be_an(Array)
+        r['location_sequence'].each do |loc|
+          expect(loc).to have_key('id')
+          expect(loc).to have_key('name')
+        end
+      end
+    end
   end
 
   describe 'GET /api/v1/races/:race_id/routes/:id' do
@@ -45,6 +58,21 @@ RSpec.describe 'Api::V1::Routes', type: :request do
         delete "/api/v1/races/#{race.id}/routes/#{route.id}"
       }.to change(Route, :count).by(-1)
       expect(response).to have_http_status(:ok)
+    end
+  end
+
+  describe 'GET /api/v1/races/:race_id/routes/export_csv' do
+    it 'returns CSV of all complete routes' do
+      get "/api/v1/races/#{race.id}/routes/export_csv"
+      expect(response).to have_http_status(:ok)
+      expect(response.content_type).to include('text/csv')
+      expect(response.body).to include('Route ID')
+    end
+
+    it 'does not include incomplete routes' do
+      incomplete = FactoryBot.create(:route, race: race, complete: false)
+      get "/api/v1/races/#{race.id}/routes/export_csv"
+      expect(response.body).not_to include(incomplete.id.to_s)
     end
   end
 

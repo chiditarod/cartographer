@@ -22,6 +22,16 @@ module Api
         render json: serialize_route(route)
       end
 
+      def export_csv
+        race = Race.find(params[:race_id])
+        routes = race.routes.complete.includes(legs: [:start, :finish])
+
+        csv_parts = routes.map(&:to_csv)
+        csv_content = csv_parts.join("\n")
+
+        send_data csv_content, filename: "race-#{race.id}-routes.csv", type: 'text/csv'
+      end
+
       def destroy
         race = Race.find(params[:race_id])
         if params[:id] == 'all'
@@ -51,7 +61,13 @@ module Api
           distance_unit: r.race.distance_unit,
           leg_count: r.legs.size,
           target_leg_count: r.target_leg_count,
-          created_at: r.created_at
+          created_at: r.created_at,
+          location_sequence: if r.legs.any?
+            r.legs.map { |l| { id: l.start.id, name: l.start.name } } +
+              [{ id: r.legs.last.finish.id, name: r.legs.last.finish.name }]
+          else
+            []
+          end
         }
         if include_details
           data[:legs] = r.legs.map { |l|

@@ -56,6 +56,7 @@ export interface RouteSummary {
   distance_unit: 'mi' | 'km';
   leg_count: number;
   target_leg_count: number;
+  location_sequence: { id: number; name: string }[];
   created_at: string;
 }
 
