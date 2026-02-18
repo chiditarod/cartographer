@@ -37,6 +37,12 @@
 - Compute `Number(id)` from `useParams` once at top of component, not inline
 - Route `complete` boolean is set via `before_save` callback — after adding legs via association, must call `route.save!` to trigger it
 - "Delete all" pattern: `params[:id] == 'all'` in destroy action (used by legs and routes controllers)
+- "Bulk delete" pattern: `params[:id] == 'bulk'` with `params[:ids]` array in request body (routes controller)
+- Filtered CSV export: `GET /api/v1/races/:id/routes/export_csv?ids=1,2,3` filters by route IDs
+- E2E seed creates 2 complete routes (forward and reverse leg order) for route selection tests
+- Route summary API includes `location_sequence` array of `{id, name}` for path visualization
+- `buildLocationColorMap()` in `frontend/src/utils/location.ts` assigns unique colors to locations
+- Badge component accepts optional `colorClasses` prop that overrides `variant` styling
 - E2E seed must create complete routes (with legs) for route-related E2E tests to work
 - E2E tests use per-test fixtures: `seededTest` (reset + seed) and `freshTest` (reset only) from `e2e/fixtures.ts`
 - E2E tests are organized into `tests/seeded/` (need seed data) and `tests/fresh/` (create own data)
@@ -48,9 +54,9 @@
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (157 tests, all passing, ~81% coverage)
+- `bundle exec rspec` — Run all RSpec tests (163 tests, all passing, ~82% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
-- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (17 tests: 16 seeded + 1 fresh)
+- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (19 tests: 18 seeded + 1 fresh)
 - `cd e2e && npx playwright test --project=seeded` — Run only seeded E2E tests
 - `cd e2e && npx playwright test --project=fresh` — Run only fresh E2E tests
