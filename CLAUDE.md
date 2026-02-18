@@ -27,10 +27,15 @@
 - Keep `root 'home#index'` for existing specs; SPA catch-all only handles unmatched paths
 - `RouteGenerator` is recursive and can be long-running
 - `MOCK_MAP=true` env var enables mock mode for development without Google API key
+- `GET /api/v1/geocode_search?query=...` endpoint for address search (supports MOCK_MAP)
+- Never call side effects directly in React render body — always use useEffect
+- Forms should accept `error` prop and display API errors; use `formatMutationError()` from utils
+- Use `Modal` component instead of `window.confirm()` for destructive actions
+- Compute `Number(id)` from `useParams` once at top of component, not inline
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (151 tests, all passing, ~92% coverage)
+- `bundle exec rspec` — Run all RSpec tests (154 tests, all passing, ~90% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
 - `cd e2e && npx playwright test --reporter=list` — Run Playwright E2E tests
