@@ -1,12 +1,15 @@
 import type { Race } from '@/types/api';
 import { Card, CardHeader, CardBody } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { buildLocationColorMap } from '@/utils/location';
 
 interface RaceDetailProps {
   race: Race;
 }
 
 export function RaceDetail({ race }: RaceDetailProps) {
+  const locationColorMap = race.locations ? buildLocationColorMap(race.locations) : new Map();
+
   return (
     <Card>
       <CardHeader>
@@ -82,7 +85,7 @@ export function RaceDetail({ race }: RaceDetailProps) {
             <h3 className="text-sm font-medium text-gray-500 mb-2">Location Pool</h3>
             <div className="flex flex-wrap gap-2">
               {race.locations.map((loc) => (
-                <Badge key={loc.id} variant="info">
+                <Badge key={loc.id} colorClasses={locationColorMap.get(loc.id)}>
                   {loc.name}
                 </Badge>
               ))}
