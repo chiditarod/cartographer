@@ -122,6 +122,24 @@ RSpec.describe 'Api::V1::Routes', type: :request do
     end
   end
 
+  describe 'GET /api/v1/races/:race_id/routes/export_pdf (collection)' do
+    it 'returns a batch PDF' do
+      get "/api/v1/races/#{race.id}/routes/export_pdf"
+      expect(response).to have_http_status(:ok)
+      expect(response.content_type).to include('application/pdf')
+      expect(response.body).to start_with('%PDF')
+    end
+
+    it 'filters by ids param' do
+      route2 = FactoryBot.create(:sequential_route, race: race)
+      get "/api/v1/races/#{race.id}/routes/export_pdf?ids=#{route.id}"
+      expect(response).to have_http_status(:ok)
+      expect(response.content_type).to include('application/pdf')
+      page_count = response.body.scan(%r{/Type\s*/Page[^s]}).size
+      expect(page_count).to eq(1)
+    end
+  end
+
   describe 'DELETE /api/v1/races/:race_id/routes/all' do
     it 'deletes all routes for the race' do
       FactoryBot.create(:sequential_route, race: race)

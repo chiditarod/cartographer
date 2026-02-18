@@ -24,12 +24,22 @@ module Api
 
       def export_pdf
         race = Race.find(params[:race_id])
-        route = race.routes.find(params[:id])
-        pdf_data = RoutePdfService.call(route)
-        send_data pdf_data,
-                  filename: "route-#{route.id}.pdf",
-                  type: "application/pdf",
-                  disposition: "attachment"
+        if params[:id].present?
+          route = race.routes.find(params[:id])
+          pdf_data = RoutePdfService.call(route)
+          send_data pdf_data,
+                    filename: "route-#{route.id}.pdf",
+                    type: "application/pdf",
+                    disposition: "attachment"
+        else
+          routes = race.routes.complete.includes(legs: [:start, :finish])
+          routes = routes.where(id: params[:ids].split(',')) if params[:ids].present?
+          pdf_data = RoutePdfService.call_batch(routes.to_a)
+          send_data pdf_data,
+                    filename: "race-#{race.id}-routes.pdf",
+                    type: "application/pdf",
+                    disposition: "attachment"
+        end
       end
 
       def export_csv

@@ -36,6 +36,22 @@ export function RaceRoute() {
   const locationColorMap = race.locations ? buildLocationColorMap(race.locations) : new Map();
   const selectionCount = selectedRouteIds.size;
 
+  const handleExportPdf = () => {
+    const url = selectionCount > 0
+      ? `/api/v1/races/${raceId}/routes/export_pdf?ids=${[...selectedRouteIds].join(',')}`
+      : `/api/v1/races/${raceId}/routes/export_pdf`;
+    fetch(url)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `race-${raceId}-routes.pdf`;
+        link.click();
+        URL.revokeObjectURL(blobUrl);
+      });
+  };
+
   const handleExportCsv = () => {
     const url = selectionCount > 0
       ? `/api/v1/races/${raceId}/routes/export_csv?ids=${[...selectedRouteIds].join(',')}`
@@ -164,6 +180,15 @@ export function RaceRoute() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Complete Routes</h2>
             <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={selectionCount === 0}
+                onClick={handleExportPdf}
+                id="download-pdf-btn"
+              >
+                {selectionCount > 0 ? `Download PDF (${selectionCount})` : 'Download PDF'}
+              </Button>
               <Button
                 variant="secondary"
                 size="sm"

@@ -16,6 +16,17 @@ class RoutePdfService
     new(route).generate
   end
 
+  def self.call_batch(routes)
+    return call(routes.first) if routes.size == 1
+
+    pdf = Prawn::Document.new(page_size: "LETTER", margin: MARGIN)
+    routes.each_with_index do |route, index|
+      pdf.start_new_page if index > 0
+      new(route).render_page(pdf)
+    end
+    pdf.render
+  end
+
   def initialize(route)
     @route = route
     @race  = route.race
@@ -27,14 +38,18 @@ class RoutePdfService
       margin: MARGIN
     )
 
+    render_page(pdf)
+
+    pdf.render
+  end
+
+  def render_page(pdf)
     draw_header(pdf)
     remaining = pdf.cursor - MARGIN  # space left for map + table
     table_height = estimate_table_height
     max_map_height = remaining - table_height - MAP_GAP
     draw_map(pdf, max_map_height)
     draw_location_table(pdf)
-
-    pdf.render
   end
 
   private

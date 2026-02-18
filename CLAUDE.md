@@ -63,15 +63,16 @@
 - `buildRaceBody()` in `frontend/src/features/races/utils/build-race-form-data.ts` returns FormData when logo/deleteLogo present, JSON string otherwise
 - Race controller handles `delete_logo` param in update to purge logo, and copies logo blob in duplicate
 - `RoutePdfService` generates 8.5x11 PDF with Prawn: header (logo + names), map image, location table, footer (distance + rarity)
-- PDF export endpoint: `GET /api/v1/races/:race_id/routes/:id/export_pdf` — returns `application/pdf`
+- PDF export endpoint: `GET /api/v1/races/:race_id/routes/:id/export_pdf` — returns single-route PDF
+- Batch PDF export: `GET /api/v1/races/:race_id/routes/export_pdf?ids=1,2,3` — returns multi-page PDF (one page per route); `RoutePdfService.call_batch(routes)` handles batch rendering
 - PDF map image: fetches from Google Static Maps URL or local file for MOCK_MAP mode; wraps in rescue for resilience
 - `rails_blob_path(r.logo, only_path: true)` returns Active Storage blob URL for serialization
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (179 tests, all passing, ~83% coverage)
+- `bundle exec rspec` — Run all RSpec tests (183 tests, all passing, ~83% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
-- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (22 tests: 20 seeded + 2 fresh)
+- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (23 tests: 21 seeded + 2 fresh)
 - `cd e2e && npx playwright test --project=seeded` — Run only seeded E2E tests
 - `cd e2e && npx playwright test --project=fresh` — Run only fresh E2E tests
