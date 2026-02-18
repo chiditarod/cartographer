@@ -2,16 +2,18 @@
 version: 2.1
 orbs:
   ruby: circleci/ruby@2.0.0
+  node: circleci/node@6.3.0
+
 references:
   restore: &restore
     restore_cache:
       keys:
-        - v1_bundler_deps-
+        - v2_bundler_deps-{{ .Environment.CIRCLE_JOB }}-{{ checksum "Gemfile.lock" }}
   save: &save
     save_cache:
       paths:
         - ./vendor/bundle
-      key: v1_bundler_deps- # CIRCLE_JOB e.g. "ruby-2.5"
+      key: v2_bundler_deps-{{ .Environment.CIRCLE_JOB }}-{{ checksum "Gemfile.lock" }}
   wait_for_db: &wait_for_db
     run:
       name: Wait for Database
@@ -61,7 +63,75 @@ jobs:
       - ruby/rspec-test
       - <<: *save
 
+  integration:
+    parameters:
+      ruby_version:
+        type: string
+        default: "3.4.8"
+    docker:
+      # Primary image with Ruby, Node, and browsers
+      - image: "cimg/ruby:<< parameters.ruby_version >>-browsers"
+      # PostgreSQL service
+      - image: cimg/postgres:14.6
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: cartographer_test
+          POSTGRES_PASSWORD: ""
+    environment:
+      RAILS_ENV: test
+      BUNDLE_JOBS: "4"
+      BUNDLE_RETRY: "3"
+      PGHOST: 127.0.0.1
+      PGUSER: postgres
+      PGPASSWORD: ""
+      # Playwright config
+      CI: "true"
+      MOCK_MAP: "true"
+    steps:
+      - checkout
+
+      # Ruby dependencies
+      - <<: *restore
+      - <<: *bundle
+      - <<: *save
+
+      # Frontend dependencies
+      - node/install-packages:
+          pkg-manager: npm
+          app-dir: frontend
+
+      # E2E dependencies
+      - node/install-packages:
+          pkg-manager: npm
+          app-dir: e2e
+
+      # Install Playwright browsers
+      - run:
+          name: Install Playwright browsers
+          command: cd e2e && npx playwright install --with-deps chromium
+
+      # Wait for services
+      - <<: *wait_for_db
+
+      # Setup database
+      - <<: *migrate
+
+      # Run Playwright tests
+      - run:
+          name: Run Playwright integration tests
+          command: cd e2e && npx playwright test --reporter=list
+          no_output_timeout: 10m
+
+      # Store test artifacts
+      - store_artifacts:
+          path: e2e/playwright-report
+          destination: playwright-report
+      - store_artifacts:
+          path: e2e/test-results
+          destination: test-results
+
 workflows:
+  # Main workflow for all pushes and PRs
   all:
     jobs:
       - test:
@@ -69,3 +139,27 @@ workflows:
             parameters:
               ruby_version: ["3.4.8"]
               gemfile: ["Gemfile"]
+
+      # Integration tests run after unit tests pass
+      - integration:
+          requires:
+            - test
+
+  # Nightly integration tests on main (for catching regressions)
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 6 * * *" # 6 AM UTC daily
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - test:
+          matrix:
+            parameters:
+              ruby_version: ["3.4.8"]
+              gemfile: ["Gemfile"]
+      - integration:
+          requires:
+            - test
