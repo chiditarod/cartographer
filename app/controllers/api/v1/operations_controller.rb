@@ -38,6 +38,20 @@ module Api
         render json: { job_status_id: job_status.id }, status: :accepted
       end
 
+      def rank_routes
+        race = Race.find(params[:race_id])
+
+        job_status = JobStatus.create!(
+          job_type: 'rank_routes',
+          status: 'running',
+          metadata: { race_id: race.id }
+        )
+
+        RankRoutesJob.perform_later(job_status.id, race.id)
+
+        render json: { job_status_id: job_status.id }, status: :accepted
+      end
+
       def geocode
         location_ids = params[:location_ids]
 

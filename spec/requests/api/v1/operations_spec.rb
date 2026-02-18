@@ -45,6 +45,20 @@ RSpec.describe 'Api::V1::Operations', type: :request do
     end
   end
 
+  describe 'POST /api/v1/races/:race_id/rank_routes' do
+    it 'creates a job status and returns its id' do
+      race = FactoryBot.create(:race, :with_locations)
+
+      post "/api/v1/races/#{race.id}/rank_routes"
+      expect(response).to have_http_status(:accepted)
+      json = JSON.parse(response.body)
+      expect(json).to have_key('job_status_id')
+
+      job_status = JobStatus.find(json['job_status_id'])
+      expect(job_status.job_type).to eq('rank_routes')
+    end
+  end
+
   describe 'GET /api/v1/job_statuses/:id' do
     it 'returns job status' do
       js = JobStatus.create!(job_type: 'test', status: 'running', progress: 5, total: 10)
