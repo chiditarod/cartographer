@@ -1,5 +1,6 @@
 ## Project Conventions
 
+- Always use sub-agents when exploring a project's context or structure.
 - Always use sub-agents and parallelism whenever it is safe to do so to increase throughput and reduce token use.
 - Always use Context7 MCP when you need library/API documentation, code generation, setup or configuration steps without user explicitly asking.
 - Always use Playwrite MCP when you need to verify UI changes without user explicitly asking.
