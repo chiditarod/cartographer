@@ -81,7 +81,9 @@
 - `RouteBalancer.call(race, count)` — synchronous greedy service, returns array of route IDs
 - `POST /api/v1/races/:id/auto_select` with `{ count: N }` — synchronous, returns `{ route_ids: [...] }`
 - Auto-Select button in OperationPanel uses `onAutoSelect` callback (not job polling) to update `selectedRouteIds`
-- `LegDistanceStrip` component in route detail shows colored location badges connected by proportionally-sized arrows (linear scale); uses `buildLocationColorMap()` and `abbreviateLocation()` from `utils/location.ts`
+- `LegDistanceStrip` component shows colored location badges connected by proportionally-sized arrows (linear scale); accepts `RouteSummary`, optional `locationColorMap`, and `showHeader` props — used in both route detail page and routes list table
+- Route summary API includes `leg_distances` array of `{distance, distance_display}` for proportional path rendering without fetching full route detail
+- Race page "Complete Routes" header has a "Distance view" toggle (`proportionalPaths` state) that switches routes list between simple badge→arrow and proportional distance strip
 
 ## Commands
 
