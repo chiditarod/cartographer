@@ -5,6 +5,7 @@ import { Card, CardHeader, CardBody } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RouteMap } from '@/features/routes/components/route-map';
+import { LegDistanceStrip } from '@/features/routes/components/leg-distance-strip';
 import { useUpdateRoute } from '@/features/routes/api/update-route';
 
 interface RouteDetailProps {
@@ -98,6 +99,8 @@ export function RouteDetail({ route, raceId }: RouteDetailProps) {
               </dd>
             </div>
           </dl>
+
+          {route.legs.length > 0 && <LegDistanceStrip route={route} />}
 
           {route.legs.length > 0 && (
             <div>
