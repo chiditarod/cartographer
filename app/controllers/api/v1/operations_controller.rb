@@ -52,6 +52,19 @@ module Api
         render json: { job_status_id: job_status.id }, status: :accepted
       end
 
+      def auto_select
+        race = Race.find(params[:race_id])
+        count = params[:count].to_i
+        complete_count = race.routes.complete.count
+
+        if count <= 0 || count > complete_count
+          return render json: { error: "Count must be between 1 and #{complete_count}" }, status: :unprocessable_entity
+        end
+
+        route_ids = RouteBalancer.call(race, count)
+        render json: { route_ids: route_ids }
+      end
+
       def geocode
         location_ids = params[:location_ids]
 

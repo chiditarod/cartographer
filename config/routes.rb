@@ -14,6 +14,7 @@ Rails.application.routes.draw do
         post 'generate_legs', to: 'operations#generate_legs'
         post 'generate_routes', to: 'operations#generate_routes'
         post 'rank_routes', to: 'operations#rank_routes'
+        post 'auto_select', to: 'operations#auto_select'
         post 'duplicate', on: :member
       end
       resources :legs, only: [:index, :destroy]
