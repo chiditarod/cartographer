@@ -35,26 +35,43 @@ class RouteBalancer
     # Greedy selection
     selected_ids = []
     selected_indices = Set.new
-    freq = Array.new(num_stops) { Hash.new(0) }
+    # Pre-seed frequency matrix with zeros for all known locations at each
+    # position so the scoring function accounts for locations not yet selected.
+    freq = Array.new(num_stops) do |pos|
+      h = Hash.new(0)
+      all_locations_at[pos].each { |lid| h[lid] = 0 }
+      h
+    end
 
     count.times do
       best_index = nil
       best_score = Float::INFINITY
+      best_zeros_filled = -1
+      best_unique = -1
 
       route_data.each_with_index do |rd, idx|
         next if selected_indices.include?(idx)
 
         # Simulate adding this route
         score = 0
+        zeros_filled = 0
         rd[:sequence].each_with_index do |loc_id, pos|
+          zeros_filled += 1 if freq[pos][loc_id] == 0
           simulated = freq[pos].dup
           simulated[loc_id] += 1
           values = simulated.values
           score += values.max - values.min
         end
+        unique_locs = rd[:sequence].uniq.size
 
-        if score < best_score
+        # Primary: minimize imbalance. Tie-break 1: maximize zeros filled.
+        # Tie-break 2: prefer routes with more unique locations (broader coverage).
+        if score < best_score ||
+           (score == best_score && zeros_filled > best_zeros_filled) ||
+           (score == best_score && zeros_filled == best_zeros_filled && unique_locs > best_unique)
           best_score = score
+          best_zeros_filled = zeros_filled
+          best_unique = unique_locs
           best_index = idx
         end
       end
