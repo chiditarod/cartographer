@@ -4,7 +4,7 @@ test.describe('Operations', () => {
   test('generates legs for a race (mock mode)', async ({ page }) => {
     await test.step('navigate to race detail', async () => {
       await page.goto('/races');
-      await page.getByRole('link', { name: 'View' }).first().click();
+      await page.locator('[id^="view-race-"]').first().click();
       await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
@@ -21,14 +21,14 @@ test.describe('Operations', () => {
 
     await test.step('wait for progress and completion', async () => {
       await expect(page.locator('[data-testid="progress-bar"]')).toBeVisible({ timeout: 10000 });
-      await expect(page.locator('[data-testid="progress-bar"]').getByText(/completed/i)).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="progress-status"][data-status="completed"]')).toBeVisible({ timeout: 30000 });
     });
   });
 
   test('generates routes for a race', async ({ page }) => {
     await test.step('navigate to race detail', async () => {
       await page.goto('/races');
-      await page.getByRole('link', { name: 'View' }).first().click();
+      await page.locator('[id^="view-race-"]').first().click();
       await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
@@ -37,23 +37,22 @@ test.describe('Operations', () => {
     });
 
     await test.step('wait for completion', async () => {
-      await expect(page.locator('[data-testid="progress-bar"]').getByText(/completed/i)).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="progress-status"][data-status="completed"]')).toBeVisible({ timeout: 30000 });
     });
   });
 
   test('ranks routes for a race', async ({ page }) => {
     await test.step('navigate to race detail', async () => {
       await page.goto('/races');
-      await page.getByRole('link', { name: 'View' }).first().click();
+      await page.locator('[id^="view-race-"]').first().click();
       await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
     await test.step('verify button order', async () => {
-      const buttons = page.locator('.flex.flex-wrap.gap-3 button:not([id="delete-all-routes-btn"])');
-      await expect(buttons.nth(0)).toHaveText('Geocode Locations');
-      await expect(buttons.nth(1)).toHaveText('Generate Legs');
-      await expect(buttons.nth(2)).toHaveText('Generate Routes');
-      await expect(buttons.nth(3)).toHaveText('Rank Routes');
+      await expect(page.locator('#btn-geocode')).toBeVisible();
+      await expect(page.locator('#btn-generate-legs')).toBeVisible();
+      await expect(page.locator('#btn-generate-routes')).toBeVisible();
+      await expect(page.locator('#btn-rank-routes')).toBeVisible();
     });
 
     await test.step('trigger rank routes', async () => {
@@ -61,7 +60,7 @@ test.describe('Operations', () => {
     });
 
     await test.step('wait for completion', async () => {
-      await expect(page.locator('[data-testid="progress-bar"]').getByText(/completed/i)).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="progress-status"][data-status="completed"]')).toBeVisible({ timeout: 30000 });
     });
   });
 });

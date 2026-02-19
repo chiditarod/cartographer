@@ -18,6 +18,10 @@ export default defineConfig({
         target: `http://localhost:${apiPort}`,
         changeOrigin: true,
       },
+      '/rails/active_storage': {
+        target: `http://localhost:${apiPort}`,
+        changeOrigin: true,
+      },
     },
   },
   build: {

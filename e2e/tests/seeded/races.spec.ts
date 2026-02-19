@@ -3,18 +3,18 @@ import { seededTest as test, expect } from '../../fixtures';
 test.describe('Races', () => {
   test('lists seeded races', async ({ page }) => {
     await page.goto('/races');
-    await expect(page.getByText(/E2E Race/)).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="races-list"] tbody tr').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('views race detail with location pool', async ({ page }) => {
     await test.step('navigate to race', async () => {
       await page.goto('/races');
-      await page.getByRole('link', { name: 'View' }).first().click();
+      await page.locator('[id^="view-race-"]').first().click();
     });
 
     await test.step('verify race details visible', async () => {
       await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
-      await expect(page.locator('#race-detail-name')).toBeVisible();
+      await expect(page.locator('#location-pool-section')).toBeVisible();
     });
   });
 

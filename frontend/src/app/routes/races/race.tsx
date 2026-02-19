@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useRace } from '@/features/races/api/get-race';
 import { useDeleteRace } from '@/features/races/api/delete-race';
 import { useDuplicateRace } from '@/features/races/api/duplicate-race';
 import { useDeleteSelectedRoutes } from '@/features/routes/api/delete-selected-routes';
+import { useBulkSelectRoutes } from '@/features/routes/api/bulk-select-routes';
 import { RaceDetail } from '@/features/races/components/race-detail';
+import { SelectionFrequencyMatrix } from '@/features/races/components/selection-frequency-matrix';
 import { OperationPanel } from '@/features/operations/components/operation-panel';
 import { RoutesList } from '@/features/routes/components/routes-list';
 import { useRoutes } from '@/features/routes/api/get-routes';
@@ -25,10 +27,32 @@ export function RaceRoute() {
   const deleteMutation = useDeleteRace();
   const duplicateMutation = useDuplicateRace();
   const deleteSelectedMutation = useDeleteSelectedRoutes(raceId);
+  const bulkSelectMutation = useBulkSelectRoutes(raceId);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteSelectedModal, setShowDeleteSelectedModal] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
   const [selectedRouteIds, setSelectedRouteIds] = useState<Set<number>>(new Set());
+  const [proportionalPaths, setProportionalPaths] = useState(false);
+  const initializedFromApi = useRef(false);
+
+  // Reset initialization flag when navigating to a different race
+  useEffect(() => {
+    initializedFromApi.current = false;
+  }, [raceId]);
+
+  // Initialize selectedRouteIds from API data on first load
+  useEffect(() => {
+    if (routes && !initializedFromApi.current) {
+      const persisted = new Set(routes.filter((r) => r.selected).map((r) => r.id));
+      setSelectedRouteIds(persisted);
+      initializedFromApi.current = true;
+    }
+  }, [routes]);
+
+  const persistSelection = (ids: Set<number>) => {
+    setSelectedRouteIds(ids);
+    bulkSelectMutation.mutate({ raceId, ids: [...ids] });
+  };
 
   if (isLoading) return <Spinner />;
   if (!race) return <p>Race not found</p>;
@@ -108,7 +132,7 @@ export function RaceRoute() {
         onClose={() => setShowDeleteSelectedModal(false)}
         title="Delete Selected Routes"
       >
-        <p className="text-sm text-gray-600 mb-4">
+        <p id="delete-selected-modal-body" className="text-sm text-gray-600 mb-4">
           Are you sure you want to delete {selectionCount} selected route{selectionCount !== 1 ? 's' : ''}? This cannot be undone.
         </p>
         <div className="flex justify-end gap-3">
@@ -126,6 +150,7 @@ export function RaceRoute() {
                   onSuccess: () => {
                     setShowDeleteSelectedModal(false);
                     setSelectedRouteIds(new Set());
+                    // No need to persist — the routes themselves are deleted
                     setNotification(`Deleted ${selectionCount} route${selectionCount !== 1 ? 's' : ''}.`);
                   },
                 },
@@ -138,7 +163,16 @@ export function RaceRoute() {
       </Modal>
 
       <div className="flex items-center justify-between mb-6">
-        <h1 id="race-page-title" className="text-2xl font-bold text-gray-900">{race.name}</h1>
+        <div className="flex items-center gap-3">
+          {race.logo_url && (
+            <img
+              src={race.logo_url}
+              alt=""
+              className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
+            />
+          )}
+          <h1 id="race-page-title" className="text-2xl font-bold text-gray-900">{race.name}</h1>
+        </div>
         <div className="flex gap-2">
           <Link to={`/races/${id}/edit`} id="edit-race-link">
             <Button variant="secondary">Edit</Button>
@@ -174,11 +208,42 @@ export function RaceRoute() {
             queryClient.invalidateQueries({ queryKey: ['stats'] });
             setNotification('Operation completed successfully.');
           }}
+          onAutoSelect={(routeIds) => {
+            setSelectedRouteIds(new Set(routeIds));
+            // auto_select endpoint already persists selection to DB
+          }}
         />
 
         <div>
+          {selectedRouteIds.size > 0 && routes && (
+            <div className="sticky top-0 z-20 bg-gray-50 pb-4 -mx-8 px-8 pt-2 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.06)]">
+              <SelectionFrequencyMatrix
+                race={race}
+                routes={routes}
+                selectedRouteIds={selectedRouteIds}
+                locationColorMap={locationColorMap}
+              />
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Complete Routes</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold text-gray-900">Complete Routes</h2>
+              <button
+                id="toggle-proportional-paths"
+                type="button"
+                onClick={() => setProportionalPaths((v) => !v)}
+                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${proportionalPaths ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                role="switch"
+                aria-checked={proportionalPaths}
+                aria-label="Show proportional distances"
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${proportionalPaths ? 'translate-x-4' : 'translate-x-0'}`}
+                />
+              </button>
+              <span className="text-xs text-gray-500">Distance view</span>
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="secondary"
@@ -206,16 +271,14 @@ export function RaceRoute() {
               >
                 {selectionCount > 0 ? `Delete (${selectionCount})` : 'Delete'}
               </Button>
-              <Link to={`/races/${id}/routes`} id="view-all-routes-link">
-                <Button variant="secondary" size="sm">View All Routes</Button>
-              </Link>
             </div>
           </div>
           <RoutesList
             raceId={raceId}
             locationColorMap={locationColorMap}
             selectedIds={selectedRouteIds}
-            onSelectionChange={setSelectedRouteIds}
+            onSelectionChange={persistSelection}
+            proportionalPaths={proportionalPaths}
           />
         </div>
       </div>

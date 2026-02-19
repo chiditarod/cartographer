@@ -57,3 +57,9 @@ node_modules/
 /e2e/test-results/
 /e2e/playwright-report/
 .playwright-mcp
+
+/storage/
+!/storage/.keep
+
+# playwright screenshots
+/*.png

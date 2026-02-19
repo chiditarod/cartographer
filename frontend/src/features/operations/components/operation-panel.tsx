@@ -8,6 +8,8 @@ import { useGenerateLegs } from '@/features/operations/api/generate-legs';
 import { useGenerateRoutes } from '@/features/operations/api/generate-routes';
 import { useGeocodeLocations } from '@/features/operations/api/geocode-locations';
 import { useRankRoutes } from '@/features/operations/api/rank-routes';
+import { useAutoSelectRoutes } from '@/features/operations/api/auto-select';
+import { AutoSelectModal } from '@/features/operations/components/auto-select-modal';
 import { useDeleteAllRoutes } from '@/features/routes/api/delete-all-routes';
 import { useRoutes } from '@/features/routes/api/get-routes';
 import { useJobPoller } from '@/hooks/use-job-poller';
@@ -16,9 +18,10 @@ import { useRace } from '@/features/races/api/get-race';
 interface OperationPanelProps {
   raceId: number;
   onJobComplete?: () => void;
+  onAutoSelect?: (routeIds: number[]) => void;
 }
 
-export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
+export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: OperationPanelProps) {
   const [mockMode, setMockMode] = useState(false);
   const [showDeleteAllRoutes, setShowDeleteAllRoutes] = useState(false);
   const { data: race } = useRace(raceId);
@@ -29,6 +32,8 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
   const generateRoutes = useGenerateRoutes();
   const geocodeLocations = useGeocodeLocations();
   const rankRoutes = useRankRoutes();
+  const autoSelect = useAutoSelectRoutes();
+  const [showAutoSelect, setShowAutoSelect] = useState(false);
 
   const legsPoller = useJobPoller();
   const routesPoller = useJobPoller();
@@ -80,6 +85,20 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
       },
     });
   };
+
+  const handleAutoSelect = (count: number) => {
+    autoSelect.mutate(
+      { raceId, count },
+      {
+        onSuccess: (data) => {
+          onAutoSelect?.(data.route_ids);
+          setShowAutoSelect(false);
+        },
+      },
+    );
+  };
+
+  const completeRouteCount = routes?.filter((r) => r.complete).length ?? 0;
 
   // Fire onJobComplete when any poller finishes - properly in useEffect, not render body
   useEffect(() => {
@@ -150,6 +169,13 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
             >
               Rank Routes
             </Button>
+            <Button
+              id="btn-auto-select"
+              onClick={() => setShowAutoSelect(true)}
+              disabled={isAnyRunning || completeRouteCount === 0}
+            >
+              Auto-Select
+            </Button>
             {routes && routes.length > 0 && (
               <Button
                 id="delete-all-routes-btn"
@@ -163,7 +189,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
           </div>
 
           {(legsPoller.jobStatus || legsPoller.isPolling) && (
-            <div>
+            <div data-testid="op-generate-legs-progress">
               <p className="text-xs font-medium text-gray-500 mb-1">Generate Legs</p>
               <JobProgress
                 jobStatus={legsPoller.jobStatus}
@@ -173,7 +199,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
           )}
 
           {(routesPoller.jobStatus || routesPoller.isPolling) && (
-            <div>
+            <div data-testid="op-generate-routes-progress">
               <p className="text-xs font-medium text-gray-500 mb-1">Generate Routes</p>
               <JobProgress
                 jobStatus={routesPoller.jobStatus}
@@ -183,7 +209,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
           )}
 
           {(geocodePoller.jobStatus || geocodePoller.isPolling) && (
-            <div>
+            <div data-testid="op-geocode-progress">
               <p className="text-xs font-medium text-gray-500 mb-1">Geocode Locations</p>
               <JobProgress
                 jobStatus={geocodePoller.jobStatus}
@@ -193,7 +219,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
           )}
 
           {(rankPoller.jobStatus || rankPoller.isPolling) && (
-            <div>
+            <div data-testid="op-rank-routes-progress">
               <p className="text-xs font-medium text-gray-500 mb-1">Rank Routes</p>
               <JobProgress
                 jobStatus={rankPoller.jobStatus}
@@ -209,7 +235,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
         onClose={() => setShowDeleteAllRoutes(false)}
         title="Delete All Routes"
       >
-        <p className="text-sm text-gray-500 mb-6">
+        <p id="delete-all-modal-body" className="text-sm text-gray-500 mb-6">
           Are you sure you want to delete all {routes?.length ?? 0} routes? This cannot be undone.
         </p>
         <div className="flex justify-end gap-3">
@@ -231,6 +257,17 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
           </Button>
         </div>
       </Modal>
+      <AutoSelectModal
+        open={showAutoSelect}
+        onClose={() => {
+          setShowAutoSelect(false);
+          autoSelect.reset();
+        }}
+        onSubmit={handleAutoSelect}
+        isLoading={autoSelect.isPending}
+        maxCount={completeRouteCount}
+        error={autoSelect.error?.message}
+      />
     </Card>
   );
 }

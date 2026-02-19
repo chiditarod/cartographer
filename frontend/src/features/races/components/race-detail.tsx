@@ -1,6 +1,6 @@
 import type { Race, RouteSummary } from '@/types/api';
-import { Card, CardHeader, CardBody } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { heatColor, buildPositionUsage, buildColBounds } from '../utils/checkpoint-frequency';
 
 interface RaceDetailProps {
   race: Race;
@@ -8,128 +8,45 @@ interface RaceDetailProps {
   routes?: RouteSummary[];
 }
 
-function heatColor(value: number, min: number, max: number): string {
-  if (min === max) return 'hsl(0, 0%, 92%)';
-  const t = (value - min) / (max - min);
-  // green (120) at low → yellow (45) at mid → red (0) at high
-  const hue = t <= 0.5
-    ? 120 - (120 - 45) * (t / 0.5)
-    : 45 - 45 * ((t - 0.5) / 0.5);
-  const saturation = 40 + 10 * t; // 40% → 50%
-  const lightness = 90 - 2 * t;   // 90% → 88%
-  return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%)`;
-}
-
 export function RaceDetail({ race, locationColorMap, routes }: RaceDetailProps) {
-  // Build positionUsage: Map<locationId, Map<cpNumber, count>>
-  const positionUsage = new Map<number, Map<number, number>>();
-  if (routes) {
-    for (const route of routes) {
-      const seq = route.location_sequence;
-      // Skip index 0 (start) and last index (finish), only count intermediate checkpoints
-      for (let i = 1; i < seq.length - 1; i++) {
-        const loc = seq[i];
-        const cpNumber = i; // checkpoint position (1-based)
-        if (!positionUsage.has(loc.id)) {
-          positionUsage.set(loc.id, new Map());
-        }
-        const locMap = positionUsage.get(loc.id)!;
-        locMap.set(cpNumber, (locMap.get(cpNumber) || 0) + 1);
-      }
-    }
-  }
-
-  // Precompute per-column min/max bounds
+  const positionUsage = routes ? buildPositionUsage(routes) : new Map<number, Map<number, number>>();
   const numCPs = race.num_stops;
-  const colBounds = new Map<number, { min: number; max: number }>();
-  for (let cp = 1; cp <= numCPs; cp++) {
-    let min = Infinity;
-    let max = -Infinity;
-    for (const [, locMap] of positionUsage) {
-      const count = locMap.get(cp) || 0;
-      if (count < min) min = count;
-      if (count > max) max = count;
-    }
-    // If no data, set both to 0
-    if (min === Infinity) min = 0;
-    if (max === -Infinity) max = 0;
-    colBounds.set(cp, { min, max });
-  }
+  const colBounds = buildColBounds(positionUsage, numCPs);
+
+  const stats: { label: string; value: string | number }[] = [
+    { label: 'Stops', value: race.num_stops },
+    { label: 'Max Teams', value: race.max_teams },
+    { label: 'Per Team', value: race.people_per_team },
+    { label: 'Total Dist', value: `${race.min_total_distance}–${race.max_total_distance} ${race.distance_unit}` },
+    { label: 'Leg Dist', value: `${race.min_leg_distance}–${race.max_leg_distance} ${race.distance_unit}` },
+  ];
+
+  if (race.start) stats.push({ label: 'Start', value: race.start.name });
+  if (race.finish) stats.push({ label: 'Finish', value: race.finish.name });
+  if (race.leg_count != null) stats.push({ label: 'Legs', value: race.leg_count });
+  stats.push({ label: 'Routes', value: race.route_count });
 
   return (
-    <Card>
-      <CardHeader>
-        <h2 id="race-detail-name" className="text-lg font-semibold text-gray-900">{race.name}</h2>
-      </CardHeader>
-      <CardBody>
-        <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Stops</dt>
-            <dd className="mt-1 text-sm text-gray-900">{race.num_stops}</dd>
-          </div>
+    <div className="rounded-lg border border-gray-200 bg-white">
+      <div className="border-l-4 border-indigo-400 px-5 py-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          {stats.map((stat, i) => (
+            <span key={stat.label} className="flex items-center gap-x-4">
+              {i > 0 && (
+                <span className="text-gray-300" aria-hidden="true">|</span>
+              )}
+              <span className="text-xs text-gray-500">{stat.label}</span>
+              <span className="text-sm font-semibold text-gray-900">{stat.value}</span>
+            </span>
+          ))}
+        </div>
+      </div>
 
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Max Teams</dt>
-            <dd className="mt-1 text-sm text-gray-900">{race.max_teams}</dd>
-          </div>
-
-          <div>
-            <dt className="text-sm font-medium text-gray-500">People per Team</dt>
-            <dd className="mt-1 text-sm text-gray-900">{race.people_per_team}</dd>
-          </div>
-
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Total Distance Range</dt>
-            <dd className="mt-1 text-sm text-gray-900">
-              {race.min_total_distance}&ndash;{race.max_total_distance} {race.distance_unit}
-            </dd>
-          </div>
-
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Leg Distance Range</dt>
-            <dd className="mt-1 text-sm text-gray-900">
-              {race.min_leg_distance}&ndash;{race.max_leg_distance} {race.distance_unit}
-            </dd>
-          </div>
-
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Distance Unit</dt>
-            <dd className="mt-1 text-sm text-gray-900">
-              {race.distance_unit === 'mi' ? 'Miles' : 'Kilometers'}
-            </dd>
-          </div>
-
-          {race.start && (
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Start</dt>
-              <dd className="mt-1 text-sm text-gray-900">{race.start.name}</dd>
-            </div>
-          )}
-
-          {race.finish && (
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Finish</dt>
-              <dd className="mt-1 text-sm text-gray-900">{race.finish.name}</dd>
-            </div>
-          )}
-
-          {race.leg_count != null && (
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Legs</dt>
-              <dd className="mt-1 text-sm text-gray-900">{race.leg_count}</dd>
-            </div>
-          )}
-
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Routes</dt>
-            <dd className="mt-1 text-sm text-gray-900">{race.route_count}</dd>
-          </div>
-        </dl>
-
+      <div className="px-5 py-4 space-y-4">
         {race.locations && race.locations.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Location Pool</h3>
-            <div className="flex flex-wrap gap-2">
+          <div id="location-pool-section">
+            <h3 className="text-xs font-medium text-gray-500 mb-1.5">Location Pool</h3>
+            <div className="flex flex-wrap gap-1.5">
               {race.locations.map((loc) => (
                 <Badge key={loc.id} colorClasses={locationColorMap.get(loc.id)}>
                   {loc.name}
@@ -140,8 +57,8 @@ export function RaceDetail({ race, locationColorMap, routes }: RaceDetailProps) 
         )}
 
         {race.locations && race.locations.length > 0 && positionUsage.size > 0 && (
-          <div className="mt-4">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Checkpoint Position Usage</h3>
+          <div>
+            <h3 className="text-xs font-medium text-gray-500 mb-1.5">Checkpoint Position Usage</h3>
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
@@ -188,7 +105,7 @@ export function RaceDetail({ race, locationColorMap, routes }: RaceDetailProps) 
             </div>
           </div>
         )}
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   );
 }

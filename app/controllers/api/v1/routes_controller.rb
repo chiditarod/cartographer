@@ -55,6 +55,14 @@ module Api
         send_data csv_content, filename: "race-#{race.id}-routes.csv", type: 'text/csv'
       end
 
+      def bulk_select
+        race = Race.find(params[:race_id])
+        ids = params[:ids] || []
+        race.routes.where(selected: true).where.not(id: ids).update_all(selected: false)
+        race.routes.where(id: ids).update_all(selected: true) if ids.any?
+        render json: { selected_ids: ids.map(&:to_i) }
+      end
+
       def destroy
         race = Race.find(params[:race_id])
         if params[:id] == 'all'
@@ -76,7 +84,7 @@ module Api
       private
 
       def route_params
-        params.require(:route).permit(:name)
+        params.require(:route).permit(:name, :selected)
       end
 
       def serialize_route(r, include_details: false)
@@ -90,13 +98,17 @@ module Api
           leg_count: r.legs.size,
           target_leg_count: r.target_leg_count,
           rarity_score: r.rarity_score,
+          selected: r.selected,
           created_at: r.created_at,
           location_sequence: if r.legs.any?
             r.legs.map { |l| { id: l.start.id, name: l.start.name } } +
               [{ id: r.legs.last.finish.id, name: r.legs.last.finish.name }]
           else
             []
-          end
+          end,
+          leg_distances: r.legs.map { |l|
+            { distance: l.distance, distance_display: Distances.m_to_s(l.distance, r.race.distance_unit) }
+          }
         }
         if include_details
           data[:legs] = r.legs.map { |l|

@@ -9,7 +9,6 @@ import { RacesRoute } from '@/app/routes/races/races';
 import { NewRaceRoute } from '@/app/routes/races/new-race';
 import { RaceRoute } from '@/app/routes/races/race';
 import { EditRaceRoute } from '@/app/routes/races/edit-race';
-import { RaceRoutesRoute } from '@/app/routes/routes/race-routes';
 import { RouteDetailRoute } from '@/app/routes/routes/route-detail';
 import { HelpRoute } from '@/app/routes/help';
 
@@ -26,7 +25,6 @@ export const router = createBrowserRouter([
       { path: '/races/new', element: <NewRaceRoute /> },
       { path: '/races/:id', element: <RaceRoute /> },
       { path: '/races/:id/edit', element: <EditRaceRoute /> },
-      { path: '/races/:raceId/routes', element: <RaceRoutesRoute /> },
       { path: '/races/:raceId/routes/:id', element: <RouteDetailRoute /> },
       { path: '/help', element: <HelpRoute /> },
     ],

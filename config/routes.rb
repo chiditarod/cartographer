@@ -10,10 +10,12 @@ Rails.application.routes.draw do
           get 'export_csv', on: :collection
           get 'export_pdf', on: :collection
           get 'export_pdf', on: :member
+          post 'bulk_select', on: :collection
         end
         post 'generate_legs', to: 'operations#generate_legs'
         post 'generate_routes', to: 'operations#generate_routes'
         post 'rank_routes', to: 'operations#rank_routes'
+        post 'auto_select', to: 'operations#auto_select'
         post 'duplicate', on: :member
       end
       resources :legs, only: [:index, :destroy]

@@ -5,10 +5,11 @@ import { useRoutes } from '@/features/routes/api/get-routes';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Spinner } from '@/components/ui/spinner';
 import { Badge } from '@/components/ui/badge';
+import { LegDistanceStrip } from '@/features/routes/components/leg-distance-strip';
 import { abbreviateLocation } from '@/utils/location';
 import type { RouteSummary } from '@/types/api';
 
-type SortKey = 'name' | 'distance' | 'leg_count' | 'rarity_score';
+type SortKey = 'selected' | 'name' | 'distance' | 'leg_count' | 'rarity_score';
 type SortDir = 'asc' | 'desc';
 
 interface RoutesListProps {
@@ -16,6 +17,7 @@ interface RoutesListProps {
   locationColorMap?: Map<number, string>;
   selectedIds?: Set<number>;
   onSelectionChange?: (ids: Set<number>) => void;
+  proportionalPaths?: boolean;
 }
 
 function SortIndicator({ sortKey, current, direction }: { sortKey: SortKey; current: SortKey | null; direction: SortDir }) {
@@ -25,11 +27,17 @@ function SortIndicator({ sortKey, current, direction }: { sortKey: SortKey; curr
   return <span className="ml-1">{direction === 'asc' ? '\u2191' : '\u2193'}</span>;
 }
 
-function sortRoutes(routes: RouteSummary[], key: SortKey | null, dir: SortDir): RouteSummary[] {
+function sortRoutes(routes: RouteSummary[], key: SortKey | null, dir: SortDir, selectedIds?: Set<number>): RouteSummary[] {
   if (!key) return routes;
   return [...routes].sort((a, b) => {
     let cmp = 0;
     switch (key) {
+      case 'selected': {
+        const aSelected = selectedIds?.has(a.id) ? 1 : 0;
+        const bSelected = selectedIds?.has(b.id) ? 1 : 0;
+        cmp = aSelected - bSelected;
+        break;
+      }
       case 'name': {
         const aName = (a.name || `Route #${a.id}`).toLowerCase();
         const bName = (b.name || `Route #${b.id}`).toLowerCase();
@@ -53,14 +61,14 @@ function sortRoutes(routes: RouteSummary[], key: SortKey | null, dir: SortDir): 
   });
 }
 
-export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionChange }: RoutesListProps) {
+export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionChange, proportionalPaths = false }: RoutesListProps) {
   const { data: routes, isLoading, isError } = useRoutes(raceId);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   const sortedRoutes = useMemo(
-    () => sortRoutes(routes ?? [], sortKey, sortDir),
-    [routes, sortKey, sortDir],
+    () => sortRoutes(routes ?? [], sortKey, sortDir, selectedIds),
+    [routes, sortKey, sortDir, selectedIds],
   );
 
   if (isLoading) {
@@ -126,13 +134,24 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
           <tr>
             {selectable && (
               <th className="w-10 px-3 py-3">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={toggleAll}
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                  data-testid="select-all-routes"
-                />
+                <div className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    data-testid="select-all-routes"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSort('selected')}
+                    className="text-gray-400 hover:text-gray-700"
+                    data-testid="sort-by-selected"
+                    title="Sort by selected"
+                  >
+                    <SortIndicator sortKey="selected" current={sortKey} direction={sortDir} />
+                  </button>
+                </div>
               </th>
             )}
             <th className={thClass} onClick={() => handleSort('name')}>
@@ -181,6 +200,7 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <Link
+                    id={`view-route-${route.id}`}
                     to={`/races/${raceId}/routes/${route.id}`}
                     className="text-indigo-600 hover:text-indigo-900"
                   >
@@ -191,20 +211,28 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
               {route.location_sequence.length > 0 && (
                 <tr>
                   <td colSpan={colSpan} className="px-6 pb-4 pt-0">
-                    <div className="flex flex-wrap items-center gap-1">
-                      {route.location_sequence.map((loc, i) => (
-                        <React.Fragment key={`${route.id}-loc-${i}`}>
-                          {i > 0 && (
-                            <span className="text-gray-400 text-xs mx-0.5">&rarr;</span>
-                          )}
-                          <Badge
-                            colorClasses={locationColorMap?.get(loc.id)}
-                          >
-                            {abbreviateLocation(loc.name)}
-                          </Badge>
-                        </React.Fragment>
-                      ))}
-                    </div>
+                    {proportionalPaths ? (
+                      <LegDistanceStrip
+                        route={route}
+                        locationColorMap={locationColorMap}
+                        showHeader={false}
+                      />
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-1">
+                        {route.location_sequence.map((loc, i) => (
+                          <React.Fragment key={`${route.id}-loc-${i}`}>
+                            {i > 0 && (
+                              <span className="text-gray-400 text-xs mx-0.5">&rarr;</span>
+                            )}
+                            <Badge
+                              colorClasses={locationColorMap?.get(loc.id)}
+                            >
+                              {abbreviateLocation(loc.name)}
+                            </Badge>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    )}
                   </td>
                 </tr>
               )}

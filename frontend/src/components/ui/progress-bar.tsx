@@ -18,7 +18,7 @@ export function ProgressBar({ progress, total, status, message }: ProgressBarPro
   return (
     <div data-testid="progress-bar">
       <div className="flex justify-between text-sm text-gray-600 mb-1">
-        <span className="capitalize">{status}</span>
+        <span data-testid="progress-status" data-status={status} className="capitalize">{status}</span>
         <span>{percent}%</span>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2.5">

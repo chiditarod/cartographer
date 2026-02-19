@@ -1,3 +1,5 @@
+> **First thing every session**: Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full codebase map (models, API endpoints, services, frontend structure, data flow).
+
 ## Project Conventions
 
 - Always use sub-agents when exploring a project's context or structure.
@@ -48,7 +50,10 @@
 - E2E tests use per-test fixtures: `seededTest` (reset + seed) and `freshTest` (reset only) from `e2e/fixtures.ts`
 - E2E tests are organized into `tests/seeded/` (need seed data) and `tests/fresh/` (create own data)
 - DB reset/seed during E2E uses fast API endpoints (`POST /api/v1/e2e/reset` and `/e2e/seed`) instead of slow rake tasks — only available in test env
-- When checking for "completed" text in E2E operations tests, scope to `[data-testid="progress-bar"]` to avoid ambiguity with notification text
+- **E2E locator best practice**: NEVER use `getByText()` or `getByRole({ name: '...' })` in E2E tests — always use `page.locator('#id')`, `page.locator('[data-testid="..."]')`, or `page.locator('[id^="prefix-"]')` for robustness against text changes. When adding new interactive elements, always include an `id` or `data-testid` attribute. Use `id` for unique elements (buttons, links, sections) and `data-testid` for repeated/structural elements (list tables, empty states, progress indicators).
+- For operation progress checks use `[data-testid="progress-status"][data-status="completed"]` instead of text matching
+- Operation progress sections have data-testids: `op-geocode-progress`, `op-generate-legs-progress`, `op-generate-routes-progress`, `op-rank-routes-progress`
+- View links in lists use id pattern `view-{entity}-{id}` (e.g. `view-race-123`, `view-location-45`, `view-route-789`)
 - Race creation in E2E must check location pool checkboxes — form validates `location_ids.length > 0`
 - `POST /api/v1/races/:id/duplicate` duplicates a race with locations (not routes), prepends "Copy of " to name — uses `ActiveRecord#dup`
 - Sidebar has two sections: main nav (Dashboard, Locations, Races) at top and Help pinned at bottom — add new primary nav to `navItems` array, secondary nav to the bottom `div`
@@ -67,10 +72,30 @@
 - Batch PDF export: `GET /api/v1/races/:race_id/routes/export_pdf?ids=1,2,3` — returns multi-page PDF (one page per route); `RoutePdfService.call_batch(routes)` handles batch rendering
 - PDF map image: fetches from Google Static Maps URL or local file for MOCK_MAP mode; wraps in rescue for resilience
 - `rails_blob_path(r.logo, only_path: true)` returns Active Storage blob URL for serialization
+- Shared checkpoint frequency utils in `frontend/src/features/races/utils/checkpoint-frequency.ts` — `heatColor()`, `buildPositionUsage()`, `buildColBounds()` used by both `RaceDetail` and `SelectionFrequencyMatrix`
+- Heat-map palettes are configurable via `HeatPalette` interface and `PALETTES` object — default is `ocean`; `verdant` (red→yellow→green) also available; pass palette as 4th arg to `heatColor()`
+- `heatColor()` returns grey for zero values and a `uniform` color when all non-zero values in a column are identical
+- `SelectionFrequencyMatrix` component filters routes by `selectedRouteIds` and renders a live heat-map — placed between OperationPanel and routes section in race page
+- Race detail card uses compact horizontal stat strip (no CardHeader, no Distance Unit field) — stat values separated by pipe dividers with indigo left border accent
+- No standalone `/races/:id/routes` page — routes list is only shown within the race detail page; route detail "Back to Race" links to `/races/:raceId`
+- `RouteBalancer.call(race, count)` — synchronous greedy service, returns array of route IDs; freq matrix must be pre-seeded with zeros for all known locations at each position, otherwise scoring is blind to uncovered cells; tie-breaking prefers routes that fill more zero cells and have more unique locations
+- `POST /api/v1/races/:id/auto_select` with `{ count: N }` — synchronous, returns `{ route_ids: [...] }`
+- Auto-Select button in OperationPanel uses `onAutoSelect` callback (not job polling) to update `selectedRouteIds`
+- `LegDistanceStrip` component shows colored location badges connected by proportionally-sized arrows (linear scale); accepts `RouteSummary`, optional `locationColorMap`, and `showHeader` props — used in both route detail page and routes list table
+- Route summary API includes `leg_distances` array of `{distance, distance_display}` for proportional path rendering without fetching full route detail
+- Race page "Complete Routes" header has a "Distance view" toggle (`proportionalPaths` state) that switches routes list between simple badge→arrow and proportional distance strip
+- Route `selected` boolean is persisted to DB — `POST /api/v1/races/:race_id/routes/bulk_select` with `{ ids: [...] }` sets selected=true for given IDs and false for all others in that race
+- `auto_select` endpoint also persists selection to DB (deselects previous, selects new)
+- Race page initializes `selectedRouteIds` from API on first load via `useEffect` + `useRef` guard; user checkbox changes call `persistSelection()` which updates state optimistically and fires `bulk_select` mutation
+- Routes list table supports sort-by-selected via a sort button next to the select-all checkbox (`data-testid="sort-by-selected"`)
+- App layout uses `h-screen` (not `min-h-screen`) so `<main>` with `overflow-auto` is the actual scroll container — required for `position: sticky` to work inside page content
+- `SelectionFrequencyMatrix` is wrapped in a `sticky top-0 z-20` container with opaque `bg-gray-50` background so it stays visible while scrolling routes
+- Matrix table has `max-h-[40vh] overflow-y-auto` to prevent dominating viewport with many locations
+- For sticky positioning: ancestor elements with `overflow: auto/hidden/scroll` create containing blocks — the sticky element sticks relative to the nearest scrolling ancestor, not the viewport
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (183 tests, all passing, ~83% coverage)
+- `bundle exec rspec` — Run all RSpec tests (193 tests, all passing, ~84% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
 - `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (23 tests: 21 seeded + 2 fresh)
