@@ -84,6 +84,10 @@
 - `LegDistanceStrip` component shows colored location badges connected by proportionally-sized arrows (linear scale); accepts `RouteSummary`, optional `locationColorMap`, and `showHeader` props — used in both route detail page and routes list table
 - Route summary API includes `leg_distances` array of `{distance, distance_display}` for proportional path rendering without fetching full route detail
 - Race page "Complete Routes" header has a "Distance view" toggle (`proportionalPaths` state) that switches routes list between simple badge→arrow and proportional distance strip
+- Route `selected` boolean is persisted to DB — `POST /api/v1/races/:race_id/routes/bulk_select` with `{ ids: [...] }` sets selected=true for given IDs and false for all others in that race
+- `auto_select` endpoint also persists selection to DB (deselects previous, selects new)
+- Race page initializes `selectedRouteIds` from API on first load via `useEffect` + `useRef` guard; user checkbox changes call `persistSelection()` which updates state optimistically and fires `bulk_select` mutation
+- Routes list table supports sort-by-selected via a sort button next to the select-all checkbox (`data-testid="sort-by-selected"`)
 
 ## Commands
 
