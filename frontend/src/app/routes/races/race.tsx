@@ -214,16 +214,18 @@ export function RaceRoute() {
           }}
         />
 
-        {selectedRouteIds.size > 0 && routes && (
-          <SelectionFrequencyMatrix
-            race={race}
-            routes={routes}
-            selectedRouteIds={selectedRouteIds}
-            locationColorMap={locationColorMap}
-          />
-        )}
-
         <div>
+          {selectedRouteIds.size > 0 && routes && (
+            <div className="sticky top-0 z-20 bg-gray-50 pb-4 -mx-8 px-8 pt-2 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.06)]">
+              <SelectionFrequencyMatrix
+                race={race}
+                routes={routes}
+                selectedRouteIds={selectedRouteIds}
+                locationColorMap={locationColorMap}
+              />
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold text-gray-900">Complete Routes</h2>
