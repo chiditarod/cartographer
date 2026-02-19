@@ -140,7 +140,16 @@ export function RaceRoute() {
       </Modal>
 
       <div className="flex items-center justify-between mb-6">
-        <h1 id="race-page-title" className="text-2xl font-bold text-gray-900">{race.name}</h1>
+        <div className="flex items-center gap-3">
+          {race.logo_url && (
+            <img
+              src={race.logo_url}
+              alt=""
+              className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
+            />
+          )}
+          <h1 id="race-page-title" className="text-2xl font-bold text-gray-900">{race.name}</h1>
+        </div>
         <div className="flex gap-2">
           <Link to={`/races/${id}/edit`} id="edit-race-link">
             <Button variant="secondary">Edit</Button>
