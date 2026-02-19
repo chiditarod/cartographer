@@ -60,6 +60,7 @@ export interface RouteSummary {
   location_sequence: { id: number; name: string }[];
   leg_distances: { distance: number; distance_display: string }[];
   rarity_score: number | null;
+  selected: boolean;
   created_at: string;
 }
 

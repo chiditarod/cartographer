@@ -62,6 +62,8 @@ module Api
         end
 
         route_ids = RouteBalancer.call(race, count)
+        race.routes.where(selected: true).where.not(id: route_ids).update_all(selected: false)
+        race.routes.where(id: route_ids).update_all(selected: true)
         render json: { route_ids: route_ids }
       end
 

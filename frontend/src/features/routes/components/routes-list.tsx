@@ -9,7 +9,7 @@ import { LegDistanceStrip } from '@/features/routes/components/leg-distance-stri
 import { abbreviateLocation } from '@/utils/location';
 import type { RouteSummary } from '@/types/api';
 
-type SortKey = 'name' | 'distance' | 'leg_count' | 'rarity_score';
+type SortKey = 'selected' | 'name' | 'distance' | 'leg_count' | 'rarity_score';
 type SortDir = 'asc' | 'desc';
 
 interface RoutesListProps {
@@ -27,11 +27,17 @@ function SortIndicator({ sortKey, current, direction }: { sortKey: SortKey; curr
   return <span className="ml-1">{direction === 'asc' ? '\u2191' : '\u2193'}</span>;
 }
 
-function sortRoutes(routes: RouteSummary[], key: SortKey | null, dir: SortDir): RouteSummary[] {
+function sortRoutes(routes: RouteSummary[], key: SortKey | null, dir: SortDir, selectedIds?: Set<number>): RouteSummary[] {
   if (!key) return routes;
   return [...routes].sort((a, b) => {
     let cmp = 0;
     switch (key) {
+      case 'selected': {
+        const aSelected = selectedIds?.has(a.id) ? 1 : 0;
+        const bSelected = selectedIds?.has(b.id) ? 1 : 0;
+        cmp = aSelected - bSelected;
+        break;
+      }
       case 'name': {
         const aName = (a.name || `Route #${a.id}`).toLowerCase();
         const bName = (b.name || `Route #${b.id}`).toLowerCase();
@@ -61,8 +67,8 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   const sortedRoutes = useMemo(
-    () => sortRoutes(routes ?? [], sortKey, sortDir),
-    [routes, sortKey, sortDir],
+    () => sortRoutes(routes ?? [], sortKey, sortDir, selectedIds),
+    [routes, sortKey, sortDir, selectedIds],
   );
 
   if (isLoading) {
@@ -128,13 +134,24 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
           <tr>
             {selectable && (
               <th className="w-10 px-3 py-3">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={toggleAll}
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                  data-testid="select-all-routes"
-                />
+                <div className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    data-testid="select-all-routes"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSort('selected')}
+                    className="text-gray-400 hover:text-gray-700"
+                    data-testid="sort-by-selected"
+                    title="Sort by selected"
+                  >
+                    <SortIndicator sortKey="selected" current={sortKey} direction={sortDir} />
+                  </button>
+                </div>
               </th>
             )}
             <th className={thClass} onClick={() => handleSort('name')}>

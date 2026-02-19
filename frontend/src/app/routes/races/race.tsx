@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useRace } from '@/features/races/api/get-race';
 import { useDeleteRace } from '@/features/races/api/delete-race';
 import { useDuplicateRace } from '@/features/races/api/duplicate-race';
 import { useDeleteSelectedRoutes } from '@/features/routes/api/delete-selected-routes';
+import { useBulkSelectRoutes } from '@/features/routes/api/bulk-select-routes';
 import { RaceDetail } from '@/features/races/components/race-detail';
 import { SelectionFrequencyMatrix } from '@/features/races/components/selection-frequency-matrix';
 import { OperationPanel } from '@/features/operations/components/operation-panel';
@@ -26,11 +27,32 @@ export function RaceRoute() {
   const deleteMutation = useDeleteRace();
   const duplicateMutation = useDuplicateRace();
   const deleteSelectedMutation = useDeleteSelectedRoutes(raceId);
+  const bulkSelectMutation = useBulkSelectRoutes(raceId);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteSelectedModal, setShowDeleteSelectedModal] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
   const [selectedRouteIds, setSelectedRouteIds] = useState<Set<number>>(new Set());
   const [proportionalPaths, setProportionalPaths] = useState(false);
+  const initializedFromApi = useRef(false);
+
+  // Reset initialization flag when navigating to a different race
+  useEffect(() => {
+    initializedFromApi.current = false;
+  }, [raceId]);
+
+  // Initialize selectedRouteIds from API data on first load
+  useEffect(() => {
+    if (routes && !initializedFromApi.current) {
+      const persisted = new Set(routes.filter((r) => r.selected).map((r) => r.id));
+      setSelectedRouteIds(persisted);
+      initializedFromApi.current = true;
+    }
+  }, [routes]);
+
+  const persistSelection = (ids: Set<number>) => {
+    setSelectedRouteIds(ids);
+    bulkSelectMutation.mutate({ raceId, ids: [...ids] });
+  };
 
   if (isLoading) return <Spinner />;
   if (!race) return <p>Race not found</p>;
@@ -128,6 +150,7 @@ export function RaceRoute() {
                   onSuccess: () => {
                     setShowDeleteSelectedModal(false);
                     setSelectedRouteIds(new Set());
+                    // No need to persist — the routes themselves are deleted
                     setNotification(`Deleted ${selectionCount} route${selectionCount !== 1 ? 's' : ''}.`);
                   },
                 },
@@ -187,6 +210,7 @@ export function RaceRoute() {
           }}
           onAutoSelect={(routeIds) => {
             setSelectedRouteIds(new Set(routeIds));
+            // auto_select endpoint already persists selection to DB
           }}
         />
 
@@ -251,7 +275,7 @@ export function RaceRoute() {
             raceId={raceId}
             locationColorMap={locationColorMap}
             selectedIds={selectedRouteIds}
-            onSelectionChange={setSelectedRouteIds}
+            onSelectionChange={persistSelection}
             proportionalPaths={proportionalPaths}
           />
         </div>

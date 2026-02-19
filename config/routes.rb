@@ -10,6 +10,7 @@ Rails.application.routes.draw do
           get 'export_csv', on: :collection
           get 'export_pdf', on: :collection
           get 'export_pdf', on: :member
+          post 'bulk_select', on: :collection
         end
         post 'generate_legs', to: 'operations#generate_legs'
         post 'generate_routes', to: 'operations#generate_routes'
