@@ -53,7 +53,7 @@ export function RouteDetail({ route, raceId }: RouteDetailProps) {
               {route.name || `Route #${route.id}`}
             </h2>
             <div className="flex gap-2">
-              <Button variant="secondary" size="sm" onClick={handleExportPdf}>
+              <Button id="route-download-pdf-btn" variant="secondary" size="sm" onClick={handleExportPdf}>
                 Download PDF
               </Button>
               <Button variant="secondary" size="sm" onClick={handleExportCsv}>

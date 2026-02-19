@@ -181,6 +181,7 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <Link
+                    id={`view-route-${route.id}`}
                     to={`/races/${raceId}/routes/${route.id}`}
                     className="text-indigo-600 hover:text-indigo-900"
                   >

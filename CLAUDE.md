@@ -48,7 +48,10 @@
 - E2E tests use per-test fixtures: `seededTest` (reset + seed) and `freshTest` (reset only) from `e2e/fixtures.ts`
 - E2E tests are organized into `tests/seeded/` (need seed data) and `tests/fresh/` (create own data)
 - DB reset/seed during E2E uses fast API endpoints (`POST /api/v1/e2e/reset` and `/e2e/seed`) instead of slow rake tasks — only available in test env
-- When checking for "completed" text in E2E operations tests, scope to `[data-testid="progress-bar"]` to avoid ambiguity with notification text
+- **E2E locator best practice**: NEVER use `getByText()` or `getByRole({ name: '...' })` in E2E tests — always use `page.locator('#id')`, `page.locator('[data-testid="..."]')`, or `page.locator('[id^="prefix-"]')` for robustness against text changes. When adding new interactive elements, always include an `id` or `data-testid` attribute. Use `id` for unique elements (buttons, links, sections) and `data-testid` for repeated/structural elements (list tables, empty states, progress indicators).
+- For operation progress checks use `[data-testid="progress-status"][data-status="completed"]` instead of text matching
+- Operation progress sections have data-testids: `op-geocode-progress`, `op-generate-legs-progress`, `op-generate-routes-progress`, `op-rank-routes-progress`
+- View links in lists use id pattern `view-{entity}-{id}` (e.g. `view-race-123`, `view-location-45`, `view-route-789`)
 - Race creation in E2E must check location pool checkboxes — form validates `location_ids.length > 0`
 - `POST /api/v1/races/:id/duplicate` duplicates a race with locations (not routes), prepends "Copy of " to name — uses `ActiveRecord#dup`
 - Sidebar has two sections: main nav (Dashboard, Locations, Races) at top and Help pinned at bottom — add new primary nav to `navItems` array, secondary nav to the bottom `div`
@@ -67,6 +70,9 @@
 - Batch PDF export: `GET /api/v1/races/:race_id/routes/export_pdf?ids=1,2,3` — returns multi-page PDF (one page per route); `RoutePdfService.call_batch(routes)` handles batch rendering
 - PDF map image: fetches from Google Static Maps URL or local file for MOCK_MAP mode; wraps in rescue for resilience
 - `rails_blob_path(r.logo, only_path: true)` returns Active Storage blob URL for serialization
+- Shared checkpoint frequency utils in `frontend/src/features/races/utils/checkpoint-frequency.ts` — `heatColor()`, `buildPositionUsage()`, `buildColBounds()` used by both `RaceDetail` and `SelectionFrequencyMatrix`
+- `SelectionFrequencyMatrix` component filters routes by `selectedRouteIds` and renders a live heat-map — placed between OperationPanel and routes section in race page
+- Race detail card uses compact horizontal stat strip (no CardHeader, no Distance Unit field) — stat values separated by pipe dividers with indigo left border accent
 
 ## Commands
 

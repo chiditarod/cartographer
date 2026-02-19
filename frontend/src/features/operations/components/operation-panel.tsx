@@ -163,7 +163,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
           </div>
 
           {(legsPoller.jobStatus || legsPoller.isPolling) && (
-            <div>
+            <div data-testid="op-generate-legs-progress">
               <p className="text-xs font-medium text-gray-500 mb-1">Generate Legs</p>
               <JobProgress
                 jobStatus={legsPoller.jobStatus}
@@ -173,7 +173,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
           )}
 
           {(routesPoller.jobStatus || routesPoller.isPolling) && (
-            <div>
+            <div data-testid="op-generate-routes-progress">
               <p className="text-xs font-medium text-gray-500 mb-1">Generate Routes</p>
               <JobProgress
                 jobStatus={routesPoller.jobStatus}
@@ -183,7 +183,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
           )}
 
           {(geocodePoller.jobStatus || geocodePoller.isPolling) && (
-            <div>
+            <div data-testid="op-geocode-progress">
               <p className="text-xs font-medium text-gray-500 mb-1">Geocode Locations</p>
               <JobProgress
                 jobStatus={geocodePoller.jobStatus}
@@ -193,7 +193,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
           )}
 
           {(rankPoller.jobStatus || rankPoller.isPolling) && (
-            <div>
+            <div data-testid="op-rank-routes-progress">
               <p className="text-xs font-medium text-gray-500 mb-1">Rank Routes</p>
               <JobProgress
                 jobStatus={rankPoller.jobStatus}
@@ -209,7 +209,7 @@ export function OperationPanel({ raceId, onJobComplete }: OperationPanelProps) {
         onClose={() => setShowDeleteAllRoutes(false)}
         title="Delete All Routes"
       >
-        <p className="text-sm text-gray-500 mb-6">
+        <p id="delete-all-modal-body" className="text-sm text-gray-500 mb-6">
           Are you sure you want to delete all {routes?.length ?? 0} routes? This cannot be undone.
         </p>
         <div className="flex justify-end gap-3">

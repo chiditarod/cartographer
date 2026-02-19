@@ -29,7 +29,7 @@ test.describe('Race Logo Upload', () => {
       await expect(page.getByAltText('Logo preview')).toBeVisible();
 
       // Verify Remove button appears
-      await expect(page.getByText('Remove')).toBeVisible();
+      await expect(page.locator('#remove-logo-btn')).toBeVisible();
 
       await page.locator('#race-num-stops').fill('1');
       await page.locator('#race-max-teams').fill('5');
@@ -53,7 +53,7 @@ test.describe('Race Logo Upload', () => {
     });
 
     await test.step('remove logo via edit form', async () => {
-      await page.getByRole('link', { name: 'Edit' }).click();
+      await page.locator('#edit-race-link').click();
       await expect(page.locator('#race-name')).toBeVisible({ timeout: 10000 });
 
       // Upload a new logo to test remove flow
@@ -61,7 +61,7 @@ test.describe('Race Logo Upload', () => {
       await expect(page.getByAltText('Logo preview')).toBeVisible();
 
       // Click Remove and verify preview disappears
-      await page.getByText('Remove').click();
+      await page.locator('#remove-logo-btn').click();
       await expect(page.getByAltText('Logo preview')).not.toBeVisible();
     });
   });

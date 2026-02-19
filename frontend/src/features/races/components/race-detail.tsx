@@ -44,7 +44,7 @@ export function RaceDetail({ race, locationColorMap, routes }: RaceDetailProps) 
 
       <div className="px-5 py-4 space-y-4">
         {race.locations && race.locations.length > 0 && (
-          <div>
+          <div id="location-pool-section">
             <h3 className="text-xs font-medium text-gray-500 mb-1.5">Location Pool</h3>
             <div className="flex flex-wrap gap-1.5">
               {race.locations.map((loc) => (

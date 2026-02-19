@@ -181,6 +181,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
               className="h-12 w-auto rounded border border-gray-200"
             />
             <button
+              id="remove-logo-btn"
               type="button"
               onClick={handleRemoveLogo}
               className="text-sm text-red-600 hover:text-red-800"

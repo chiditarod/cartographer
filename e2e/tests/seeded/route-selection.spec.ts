@@ -4,7 +4,7 @@ test.describe('Route Selection', () => {
   test('selects routes with checkboxes and updates button labels', async ({ page }) => {
     await test.step('navigate to race detail', async () => {
       await page.goto('/races');
-      await page.getByRole('link', { name: 'View' }).first().click();
+      await page.locator('[id^="view-race-"]').first().click();
       await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
@@ -45,7 +45,7 @@ test.describe('Route Selection', () => {
   test('downloads batch PDF for selected routes', async ({ page }) => {
     await test.step('navigate to race detail', async () => {
       await page.goto('/races');
-      await page.getByRole('link', { name: 'View' }).first().click();
+      await page.locator('[id^="view-race-"]').first().click();
       await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
@@ -73,7 +73,7 @@ test.describe('Route Selection', () => {
   test('deletes selected routes', async ({ page }) => {
     await test.step('navigate to race detail', async () => {
       await page.goto('/races');
-      await page.getByRole('link', { name: 'View' }).first().click();
+      await page.locator('[id^="view-race-"]').first().click();
       await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
@@ -85,12 +85,12 @@ test.describe('Route Selection', () => {
     });
 
     await test.step('confirm deletion in modal', async () => {
-      await expect(page.getByText('This cannot be undone')).toBeVisible();
+      await expect(page.locator('#delete-selected-modal-body')).toBeVisible();
       await page.locator('#confirm-delete-selected-routes-btn').click();
     });
 
     await test.step('verify one route remains', async () => {
-      await expect(page.getByText(/Deleted 1 route\b/)).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('[data-testid="notification"]')).toBeVisible({ timeout: 10000 });
       // After deleting 1 of 2 routes, there should be 1 route row remaining
       const routeCheckboxes = page.locator('input[type="checkbox"][data-testid^="select-route-"]');
       await expect(routeCheckboxes).toHaveCount(1, { timeout: 10000 });

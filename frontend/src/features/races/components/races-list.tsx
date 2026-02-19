@@ -30,7 +30,7 @@ export function RacesList() {
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
+      <table data-testid="races-list" className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -67,6 +67,7 @@ export function RacesList() {
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm">
                 <Link
+                  id={`view-race-${race.id}`}
                   to={`/races/${race.id}`}
                   className="text-indigo-600 hover:text-indigo-900"
                 >

@@ -23,7 +23,7 @@ export function Notification({
     : 'bg-red-50 border-red-200 text-red-800';
 
   return (
-    <div className={`fixed top-4 right-4 z-50 rounded-md border px-4 py-3 shadow-lg ${bgClass}`}>
+    <div data-testid="notification" className={`fixed top-4 right-4 z-50 rounded-md border px-4 py-3 shadow-lg ${bgClass}`}>
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium">{message}</span>
         <button

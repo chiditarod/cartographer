@@ -109,7 +109,7 @@ export function RaceRoute() {
         onClose={() => setShowDeleteSelectedModal(false)}
         title="Delete Selected Routes"
       >
-        <p className="text-sm text-gray-600 mb-4">
+        <p id="delete-selected-modal-body" className="text-sm text-gray-600 mb-4">
           Are you sure you want to delete {selectionCount} selected route{selectionCount !== 1 ? 's' : ''}? This cannot be undone.
         </p>
         <div className="flex justify-end gap-3">
