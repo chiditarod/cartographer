@@ -1,3 +1,5 @@
+> **First thing every session**: Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full codebase map (models, API endpoints, services, frontend structure, data flow).
+
 ## Project Conventions
 
 - Always use sub-agents when exploring a project's context or structure.
