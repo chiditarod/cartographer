@@ -78,10 +78,14 @@
 - `SelectionFrequencyMatrix` component filters routes by `selectedRouteIds` and renders a live heat-map — placed between OperationPanel and routes section in race page
 - Race detail card uses compact horizontal stat strip (no CardHeader, no Distance Unit field) — stat values separated by pipe dividers with indigo left border accent
 - No standalone `/races/:id/routes` page — routes list is only shown within the race detail page; route detail "Back to Race" links to `/races/:raceId`
+- `RouteBalancer.call(race, count)` — synchronous greedy service, returns array of route IDs
+- `POST /api/v1/races/:id/auto_select` with `{ count: N }` — synchronous, returns `{ route_ids: [...] }`
+- Auto-Select button in OperationPanel uses `onAutoSelect` callback (not job polling) to update `selectedRouteIds`
+- `LegDistanceStrip` component in route detail shows colored location badges connected by proportionally-sized arrows (linear scale); uses `buildLocationColorMap()` and `abbreviateLocation()` from `utils/location.ts`
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (183 tests, all passing, ~83% coverage)
+- `bundle exec rspec` — Run all RSpec tests (191 tests, all passing, ~84% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
 - `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (23 tests: 21 seeded + 2 fresh)
