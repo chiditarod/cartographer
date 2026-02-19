@@ -96,7 +96,10 @@ module Api
               [{ id: r.legs.last.finish.id, name: r.legs.last.finish.name }]
           else
             []
-          end
+          end,
+          leg_distances: r.legs.map { |l|
+            { distance: l.distance, distance_display: Distances.m_to_s(l.distance, r.race.distance_unit) }
+          }
         }
         if include_details
           data[:legs] = r.legs.map { |l|

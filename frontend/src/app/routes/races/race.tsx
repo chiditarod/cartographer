@@ -30,6 +30,7 @@ export function RaceRoute() {
   const [showDeleteSelectedModal, setShowDeleteSelectedModal] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
   const [selectedRouteIds, setSelectedRouteIds] = useState<Set<number>>(new Set());
+  const [proportionalPaths, setProportionalPaths] = useState(false);
 
   if (isLoading) return <Spinner />;
   if (!race) return <p>Race not found</p>;
@@ -191,7 +192,23 @@ export function RaceRoute() {
 
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Complete Routes</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold text-gray-900">Complete Routes</h2>
+              <button
+                id="toggle-proportional-paths"
+                type="button"
+                onClick={() => setProportionalPaths((v) => !v)}
+                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${proportionalPaths ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                role="switch"
+                aria-checked={proportionalPaths}
+                aria-label="Show proportional distances"
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${proportionalPaths ? 'translate-x-4' : 'translate-x-0'}`}
+                />
+              </button>
+              <span className="text-xs text-gray-500">Distance view</span>
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="secondary"
@@ -226,6 +243,7 @@ export function RaceRoute() {
             locationColorMap={locationColorMap}
             selectedIds={selectedRouteIds}
             onSelectionChange={setSelectedRouteIds}
+            proportionalPaths={proportionalPaths}
           />
         </div>
       </div>

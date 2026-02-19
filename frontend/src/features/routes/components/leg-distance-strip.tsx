@@ -1,28 +1,37 @@
 import { Badge } from '@/components/ui/badge';
 import { abbreviateLocation, buildLocationColorMap } from '@/utils/location';
-import type { RouteDetail } from '@/types/api';
+import type { RouteSummary } from '@/types/api';
 
 interface LegDistanceStripProps {
-  route: RouteDetail;
+  route: RouteSummary;
+  locationColorMap?: Map<number, string>;
+  showHeader?: boolean;
 }
 
 const MIN_FLEX = 1;
 const FLEX_SCALE = 10;
 
-export function LegDistanceStrip({ route }: LegDistanceStripProps) {
-  const { location_sequence, legs } = route;
+export function LegDistanceStrip({
+  route,
+  locationColorMap,
+  showHeader = true,
+}: LegDistanceStripProps) {
+  const { location_sequence, leg_distances } = route;
 
-  if (legs.length === 0 || location_sequence.length < 2) return null;
+  if (leg_distances.length === 0 || location_sequence.length < 2) return null;
 
-  const colorMap = buildLocationColorMap(location_sequence);
-  const maxDistance = Math.max(...legs.map((l) => l.distance));
+  const colorMap =
+    locationColorMap ?? buildLocationColorMap(location_sequence);
+  const maxDistance = Math.max(...leg_distances.map((l) => l.distance));
 
   return (
-    <div className="mb-4">
-      <h3 className="text-sm font-medium text-gray-700 mb-3">Route Path</h3>
+    <div className={showHeader ? 'mb-4' : undefined}>
+      {showHeader && (
+        <h3 className="text-sm font-medium text-gray-700 mb-3">Route Path</h3>
+      )}
       <div className="flex items-center w-full py-2">
         {location_sequence.map((loc, i) => {
-          const leg = i < legs.length ? legs[i] : null;
+          const leg = i < leg_distances.length ? leg_distances[i] : null;
           const flexValue = leg
             ? Math.max(MIN_FLEX, (leg.distance / maxDistance) * FLEX_SCALE)
             : 0;

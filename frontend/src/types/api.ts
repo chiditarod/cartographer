@@ -58,6 +58,7 @@ export interface RouteSummary {
   leg_count: number;
   target_leg_count: number;
   location_sequence: { id: number; name: string }[];
+  leg_distances: { distance: number; distance_display: string }[];
   rarity_score: number | null;
   created_at: string;
 }

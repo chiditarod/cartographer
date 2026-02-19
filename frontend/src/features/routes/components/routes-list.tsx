@@ -5,6 +5,7 @@ import { useRoutes } from '@/features/routes/api/get-routes';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Spinner } from '@/components/ui/spinner';
 import { Badge } from '@/components/ui/badge';
+import { LegDistanceStrip } from '@/features/routes/components/leg-distance-strip';
 import { abbreviateLocation } from '@/utils/location';
 import type { RouteSummary } from '@/types/api';
 
@@ -16,6 +17,7 @@ interface RoutesListProps {
   locationColorMap?: Map<number, string>;
   selectedIds?: Set<number>;
   onSelectionChange?: (ids: Set<number>) => void;
+  proportionalPaths?: boolean;
 }
 
 function SortIndicator({ sortKey, current, direction }: { sortKey: SortKey; current: SortKey | null; direction: SortDir }) {
@@ -53,7 +55,7 @@ function sortRoutes(routes: RouteSummary[], key: SortKey | null, dir: SortDir): 
   });
 }
 
-export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionChange }: RoutesListProps) {
+export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionChange, proportionalPaths = false }: RoutesListProps) {
   const { data: routes, isLoading, isError } = useRoutes(raceId);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -192,20 +194,28 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
               {route.location_sequence.length > 0 && (
                 <tr>
                   <td colSpan={colSpan} className="px-6 pb-4 pt-0">
-                    <div className="flex flex-wrap items-center gap-1">
-                      {route.location_sequence.map((loc, i) => (
-                        <React.Fragment key={`${route.id}-loc-${i}`}>
-                          {i > 0 && (
-                            <span className="text-gray-400 text-xs mx-0.5">&rarr;</span>
-                          )}
-                          <Badge
-                            colorClasses={locationColorMap?.get(loc.id)}
-                          >
-                            {abbreviateLocation(loc.name)}
-                          </Badge>
-                        </React.Fragment>
-                      ))}
-                    </div>
+                    {proportionalPaths ? (
+                      <LegDistanceStrip
+                        route={route}
+                        locationColorMap={locationColorMap}
+                        showHeader={false}
+                      />
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-1">
+                        {route.location_sequence.map((loc, i) => (
+                          <React.Fragment key={`${route.id}-loc-${i}`}>
+                            {i > 0 && (
+                              <span className="text-gray-400 text-xs mx-0.5">&rarr;</span>
+                            )}
+                            <Badge
+                              colorClasses={locationColorMap?.get(loc.id)}
+                            >
+                              {abbreviateLocation(loc.name)}
+                            </Badge>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    )}
                   </td>
                 </tr>
               )}
