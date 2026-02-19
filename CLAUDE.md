@@ -88,6 +88,10 @@
 - `auto_select` endpoint also persists selection to DB (deselects previous, selects new)
 - Race page initializes `selectedRouteIds` from API on first load via `useEffect` + `useRef` guard; user checkbox changes call `persistSelection()` which updates state optimistically and fires `bulk_select` mutation
 - Routes list table supports sort-by-selected via a sort button next to the select-all checkbox (`data-testid="sort-by-selected"`)
+- App layout uses `h-screen` (not `min-h-screen`) so `<main>` with `overflow-auto` is the actual scroll container — required for `position: sticky` to work inside page content
+- `SelectionFrequencyMatrix` is wrapped in a `sticky top-0 z-20` container with opaque `bg-gray-50` background so it stays visible while scrolling routes
+- Matrix table has `max-h-[40vh] overflow-y-auto` to prevent dominating viewport with many locations
+- For sticky positioning: ancestor elements with `overflow: auto/hidden/scroll` create containing blocks — the sticky element sticks relative to the nearest scrolling ancestor, not the viewport
 
 ## Commands
 
