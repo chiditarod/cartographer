@@ -5,6 +5,7 @@ import { useDeleteRace } from '@/features/races/api/delete-race';
 import { useDuplicateRace } from '@/features/races/api/duplicate-race';
 import { useDeleteSelectedRoutes } from '@/features/routes/api/delete-selected-routes';
 import { RaceDetail } from '@/features/races/components/race-detail';
+import { SelectionFrequencyMatrix } from '@/features/races/components/selection-frequency-matrix';
 import { OperationPanel } from '@/features/operations/components/operation-panel';
 import { RoutesList } from '@/features/routes/components/routes-list';
 import { useRoutes } from '@/features/routes/api/get-routes';
@@ -175,6 +176,15 @@ export function RaceRoute() {
             setNotification('Operation completed successfully.');
           }}
         />
+
+        {selectedRouteIds.size > 0 && routes && (
+          <SelectionFrequencyMatrix
+            race={race}
+            routes={routes}
+            selectedRouteIds={selectedRouteIds}
+            locationColorMap={locationColorMap}
+          />
+        )}
 
         <div>
           <div className="flex items-center justify-between mb-4">

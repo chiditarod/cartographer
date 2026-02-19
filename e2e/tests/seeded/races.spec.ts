@@ -14,7 +14,7 @@ test.describe('Races', () => {
 
     await test.step('verify race details visible', async () => {
       await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
-      await expect(page.locator('#race-detail-name')).toBeVisible();
+      await expect(page.getByText('Location Pool')).toBeVisible();
     });
   });
 
