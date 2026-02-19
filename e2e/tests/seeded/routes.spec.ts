@@ -1,24 +1,23 @@
 import { seededTest as test, expect } from '../../fixtures';
 
 test.describe('Routes', () => {
-  test('views routes list for a race', async ({ page }) => {
+  test('views routes list on race detail', async ({ page }) => {
     await test.step('navigate to race', async () => {
       await page.goto('/races');
       await page.locator('[id^="view-race-"]').first().click();
       await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
-    await test.step('navigate to routes list', async () => {
-      await page.locator('#view-all-routes-link').click();
-      await expect(page.locator('#routes-page-title')).toBeVisible({ timeout: 10000 });
+    await test.step('verify routes are visible', async () => {
+      await expect(page.locator('[id^="view-route-"]').first()).toBeVisible({ timeout: 10000 });
     });
   });
 
   test('views route detail', async ({ page }) => {
-    await test.step('navigate to routes', async () => {
+    await test.step('navigate to race', async () => {
       await page.goto('/races');
       await page.locator('[id^="view-race-"]').first().click();
-      await page.locator('#view-all-routes-link').click();
+      await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
     await test.step('click first route', async () => {
@@ -34,7 +33,7 @@ test.describe('Routes', () => {
     await test.step('navigate to a route', async () => {
       await page.goto('/races');
       await page.locator('[id^="view-race-"]').first().click();
-      await page.locator('#view-all-routes-link').click();
+      await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
     await test.step('rename the route', async () => {
@@ -55,7 +54,7 @@ test.describe('Routes', () => {
     await test.step('navigate to route detail', async () => {
       await page.goto('/races');
       await page.locator('[id^="view-race-"]').first().click();
-      await page.locator('#view-all-routes-link').click();
+      await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
       const viewLinks = page.locator('[id^="view-route-"]');
       await viewLinks.first().click();
       await expect(page.locator('#route-name')).toBeVisible({ timeout: 10000 });
@@ -66,6 +65,21 @@ test.describe('Routes', () => {
       await page.locator('#route-download-pdf-btn').click();
       const download = await downloadPromise;
       expect(download.suggestedFilename()).toMatch(/\.pdf$/);
+    });
+  });
+
+  test('navigates back to race from route detail', async ({ page }) => {
+    await test.step('navigate to route detail', async () => {
+      await page.goto('/races');
+      await page.locator('[id^="view-race-"]').first().click();
+      await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
+      await page.locator('[id^="view-route-"]').first().click();
+      await expect(page.locator('#route-name')).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step('click Back to Race', async () => {
+      await page.locator('#back-to-race-link').click();
+      await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
   });
 

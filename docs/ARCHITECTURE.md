@@ -181,7 +181,6 @@ frontend/src/
 | `/races/new` | RaceForm (create) | races |
 | `/races/:id` | RaceDetail + OperationPanel + RoutesList | races, operations, routes |
 | `/races/:id/edit` | RaceForm (edit) | races |
-| `/races/:raceId/routes` | RoutesList | routes |
 | `/races/:raceId/routes/:id` | RouteDetail + RouteMap | routes |
 | `/help` | GettingStarted | help |
 

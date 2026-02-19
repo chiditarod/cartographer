@@ -19,8 +19,8 @@ export function RouteDetailRoute() {
         <h1 className="text-2xl font-bold text-gray-900">
           {route.name || `Route #${route.id}`}
         </h1>
-        <Link to={`/races/${raceIdParam}/routes`}>
-          <Button variant="secondary">Back to Routes</Button>
+        <Link to={`/races/${raceIdParam}`} id="back-to-race-link">
+          <Button variant="secondary">Back to Race</Button>
         </Link>
       </div>
       <RouteDetailComponent route={route} raceId={raceId} />

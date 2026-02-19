@@ -216,9 +216,6 @@ export function RaceRoute() {
               >
                 {selectionCount > 0 ? `Delete (${selectionCount})` : 'Delete'}
               </Button>
-              <Link to={`/races/${id}/routes`} id="view-all-routes-link">
-                <Button variant="secondary" size="sm">View All Routes</Button>
-              </Link>
             </div>
           </div>
           <RoutesList
