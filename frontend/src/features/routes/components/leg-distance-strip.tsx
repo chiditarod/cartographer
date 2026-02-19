@@ -30,17 +30,15 @@ export function LegDistanceStrip({ route }: LegDistanceStripProps) {
           return (
             <div
               key={`strip-${loc.id}-${i}`}
-              className="flex items-center shrink-0"
+              className="flex items-center min-w-0"
+              style={leg ? { flex: `${flexValue} 1 0%` } : undefined}
             >
               <Badge colorClasses={colorMap.get(loc.id)}>
                 {abbreviateLocation(loc.name)}
               </Badge>
 
               {leg && (
-                <div
-                  className="flex flex-col items-center mx-1 min-w-0"
-                  style={{ flex: `${flexValue} 1 0%` }}
-                >
+                <div className="flex flex-col items-center mx-1 min-w-0 flex-1">
                   <div className="w-full flex items-center">
                     <div className="flex-1 border-t-2 border-gray-300" />
                     <svg
