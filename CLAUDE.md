@@ -73,6 +73,8 @@
 - PDF map image: fetches from Google Static Maps URL or local file for MOCK_MAP mode; wraps in rescue for resilience
 - `rails_blob_path(r.logo, only_path: true)` returns Active Storage blob URL for serialization
 - Shared checkpoint frequency utils in `frontend/src/features/races/utils/checkpoint-frequency.ts` — `heatColor()`, `buildPositionUsage()`, `buildColBounds()` used by both `RaceDetail` and `SelectionFrequencyMatrix`
+- Heat-map palettes are configurable via `HeatPalette` interface and `PALETTES` object — default is `ocean`; `verdant` (red→yellow→green) also available; pass palette as 4th arg to `heatColor()`
+- `heatColor()` returns grey for zero values and a `uniform` color when all non-zero values in a column are identical
 - `SelectionFrequencyMatrix` component filters routes by `selectedRouteIds` and renders a live heat-map — placed between OperationPanel and routes section in race page
 - Race detail card uses compact horizontal stat strip (no CardHeader, no Distance Unit field) — stat values separated by pipe dividers with indigo left border accent
 - No standalone `/races/:id/routes` page — routes list is only shown within the race detail page; route detail "Back to Race" links to `/races/:raceId`
