@@ -175,6 +175,9 @@ export function RaceRoute() {
             queryClient.invalidateQueries({ queryKey: ['stats'] });
             setNotification('Operation completed successfully.');
           }}
+          onAutoSelect={(routeIds) => {
+            setSelectedRouteIds(new Set(routeIds));
+          }}
         />
 
         {selectedRouteIds.size > 0 && routes && (
