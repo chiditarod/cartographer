@@ -1,15 +1,62 @@
 import type { RouteSummary } from '@/types/api';
 
-export function heatColor(value: number, min: number, max: number): string {
-  if (min === max) return 'hsl(0, 0%, 92%)';
+/* ── Configurable heat-map color palettes ─────────────────────────── */
+
+export interface HeatPalette {
+  /** Display name */
+  name: string;
+  /** Background for cells with a count of exactly 0 */
+  zero: string;
+  /** Background when every non-zero value in the column is identical */
+  uniform: string;
+  /** Maps a normalised value t ∈ [0, 1] to a CSS colour string */
+  color: (t: number) => string;
+}
+
+export const PALETTES = {
+  /** Red → Yellow → Green  (high frequency = green) */
+  verdant: {
+    name: 'Verdant',
+    zero: 'hsl(0, 0%, 88%)',
+    uniform: 'hsl(120, 35%, 88%)',
+    color: (t: number) => {
+      const hue = t <= 0.5
+        ? 0 + 45 * (t / 0.5)                       // 0 → 45
+        : 45 + (120 - 45) * ((t - 0.5) / 0.5);     // 45 → 120
+      const saturation = 38 + 20 * t;                // 38 % → 58 %
+      const lightness  = 92 - 12 * t;                // 92 % → 80 %
+      return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%)`;
+    },
+  },
+
+  /** Pale blue → Indigo → Deep navy  (high frequency = deep blue) */
+  ocean: {
+    name: 'Ocean',
+    zero: 'hsl(0, 0%, 88%)',
+    uniform: 'hsl(220, 40%, 86%)',
+    color: (t: number) => {
+      const hue = 210 - 10 * t;                     // 210 → 200
+      const saturation = 30 + 45 * t;                // 30 % → 75 %
+      const lightness  = 93 - 22 * t;                // 93 % → 71 %
+      return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%)`;
+    },
+  },
+} satisfies Record<string, HeatPalette>;
+
+export type PaletteName = keyof typeof PALETTES;
+
+/* ── Heat-color function ──────────────────────────────────────────── */
+
+export function heatColor(
+  value: number,
+  min: number,
+  max: number,
+  palette: HeatPalette = PALETTES.ocean,
+): string {
+  if (value === 0) return palette.zero;
+  if (min === max) return palette.uniform;
   const t = (value - min) / (max - min);
-  // green (120) at low → yellow (45) at mid → red (0) at high
-  const hue = t <= 0.5
-    ? 120 - (120 - 45) * (t / 0.5)
-    : 45 - 45 * ((t - 0.5) / 0.5);
-  const saturation = 40 + 10 * t; // 40% → 50%
-  const lightness = 90 - 2 * t;   // 90% → 88%
-  return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%)`;
+  return palette.color(t);
 }
 
 export function buildPositionUsage(
