@@ -92,12 +92,30 @@
 - `SelectionFrequencyMatrix` is wrapped in a `sticky top-0 z-20` container with opaque `bg-gray-50` background so it stays visible while scrolling routes
 - Matrix table has `max-h-[40vh] overflow-y-auto` to prevent dominating viewport with many locations
 - For sticky positioning: ancestor elements with `overflow: auto/hidden/scroll` create containing blocks — the sticky element sticks relative to the nearest scrolling ancestor, not the viewport
+- `Team` model: `belongs_to :race`, `belongs_to :route, optional: true` — unique bib_number scoped to race, custom validation that route belongs to same race
+- `Route` model has `has_many :teams, dependent: :nullify` — deleting a route unassigns its teams rather than destroying them
+- `TeamCsvImporter.call(race, csv_text)` — auto-detects `number` and `name` columns (case-insensitive), upserts by bib_number, returns `{ imported:, skipped:, total: }`
+- CSV import uses `find_or_initialize_by(bib_number:)` for upsert — re-importing updates names for existing bibs
+- `TeamsController` follows same patterns as RoutesController: `params[:id] == 'all'` for delete-all, nested under races
+- `POST /api/v1/races/:race_id/teams/bulk_assign` with `{ assignments: [{ team_id:, route_id: }] }` — clears all assignments first, then applies new ones in a transaction
+- `TimecardPdfService.call(race, team_route_pairs, blank_count_per_route: 0)` — generates 2-up LETTER landscape PDF; cards sorted by route name then bib number; spare blanks appended per route
+- `GET /api/v1/races/:race_id/timecards/export_pdf` — returns 422 if no teams assigned to routes
+- Race serialization includes `team_count` and `blank_timecards_per_route` fields
+- Race form includes "Spare Timecards Per Route" field (4-column grid row with num_stops, max_teams, people_per_team)
+- Timecards page at `/races/:id/timecards` — CSV upload, drag-and-drop team assignment board, bulk assign dropdown, PDF generation
+- Timecards page uses native HTML5 DnD API (no extra dependencies) — `draggable`, `onDragStart/Over/Drop`
+- Race page header has "Timecards" button (id=`timecards-link`) with team count badge
+- E2E reset endpoint clears `Team.delete_all` before other destroys
+- E2E test CSV fixture at `e2e/test-data/teams.csv` for team import tests
+- When adding new API routes, E2E server must be restarted (kill ports 3099/5199) for new routes to be recognized
+- `csv` gem must be explicitly included in Gemfile (not a default gem in Ruby 3.4+)
+- `bulk_assign` controller uses `.select { |a| a.respond_to?(:permit) }` to handle empty arrays from Rails params
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (193 tests, all passing, ~84% coverage)
+- `bundle exec rspec` — Run all RSpec tests (224 tests, all passing, ~87% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
-- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (23 tests: 21 seeded + 2 fresh)
+- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (28 tests: 26 seeded + 2 fresh)
 - `cd e2e && npx playwright test --project=seeded` — Run only seeded E2E tests
 - `cd e2e && npx playwright test --project=fresh` — Run only fresh E2E tests
