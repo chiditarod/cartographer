@@ -6,6 +6,7 @@ module Api
       before_action :ensure_test_environment!
 
       def reset
+        Team.delete_all
         Route.destroy_all
         Leg.delete_all
         Race.destroy_all

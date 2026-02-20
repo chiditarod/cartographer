@@ -199,7 +199,7 @@ export function TimecardsRoute() {
           >
             &larr; Back to Race
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 id="timecards-page-title" className="text-2xl font-bold text-gray-900">
             {race.name} &mdash; Timecards
           </h1>
         </div>
