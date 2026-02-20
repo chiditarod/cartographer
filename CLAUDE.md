@@ -42,7 +42,7 @@
 - "Delete all" pattern: `params[:id] == 'all'` in destroy action (used by legs and routes controllers)
 - "Bulk delete" pattern: `params[:id] == 'bulk'` with `params[:ids]` array in request body (routes controller)
 - Filtered CSV export: `GET /api/v1/races/:id/routes/export_csv?ids=1,2,3` filters by route IDs
-- E2E seed creates 2 complete routes (forward and reverse leg order) for route selection tests
+- E2E seed creates 2 complete routes (forward and reverse leg order) for route selection tests — both are marked `selected: true` so timecards E2E tests work
 - Route summary API includes `location_sequence` array of `{id, name}` for path visualization
 - `buildLocationColorMap()` in `frontend/src/utils/location.ts` assigns unique colors to locations
 - Badge component accepts optional `colorClasses` prop that overrides `variant` styling
@@ -102,7 +102,7 @@
 - `GET /api/v1/races/:race_id/timecards/export_pdf` — returns 422 if no teams assigned to routes
 - Race serialization includes `team_count` and `blank_timecards_per_route` fields
 - Race form includes "Spare Timecards Per Route" field (4-column grid row with num_stops, max_teams, people_per_team)
-- Timecards page at `/races/:id/timecards` — CSV upload, drag-and-drop team assignment board, bulk assign dropdown, PDF generation
+- Timecards page at `/races/:id/timecards` — CSV upload, drag-and-drop team assignment board, bulk assign dropdown, PDF generation; only shows routes that are `selected` on the race page (not all complete routes)
 - Timecards page uses native HTML5 DnD API (no extra dependencies) — `draggable`, `onDragStart/Over/Drop`
 - Race page header has "Timecards" button (id=`timecards-link`) with team count badge
 - E2E reset endpoint clears `Team.delete_all` before other destroys
