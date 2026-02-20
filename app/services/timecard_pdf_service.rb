@@ -88,7 +88,7 @@ class TimecardPdfService
     row_height = box_height + 18  # box + spacing
 
     # Calculate available space for checkpoints (leave room for footer)
-    footer_height = 60
+    footer_height = 130
     available = pdf.cursor - MARGIN - footer_height
     max_rows = (available / row_height).floor
     rows_to_render = [location_sequence.size, max_rows].min
@@ -131,14 +131,14 @@ class TimecardPdfService
 
     # Footer — race name and logo
     pdf.move_cursor_to MARGIN + footer_height
-    pdf.text @race.name, size: 16, style: :bold, align: :center
+    pdf.text @race.name, size: 26, style: :bold, align: :center
 
     if @race.logo.attached?
       begin
         logo_data = @race.logo.download
         logo_io = StringIO.new(logo_data)
-        pdf.move_down 4
-        pdf.image logo_io, height: 30, position: :center
+        pdf.move_down 6
+        pdf.image logo_io, height: 80, position: :center
       rescue StandardError
         # skip logo if it can't be loaded
       end
