@@ -5,8 +5,9 @@ class TimecardPdfService
   PAGE_WIDTH     = 792
   PAGE_HEIGHT    = 612
   MARGIN         = 36
-  GUTTER         = 18
-  CARD_WIDTH     = (PAGE_WIDTH - (MARGIN * 2) - GUTTER) / 2.0
+  GUTTER         = 36
+  CARD_INSET     = 12
+  CARD_WIDTH     = (PAGE_WIDTH - (MARGIN * 2) - GUTTER) / 2.0 - CARD_INSET
   CARD_HEIGHT    = PAGE_HEIGHT - (MARGIN * 2)
 
   def self.call(race, team_route_pairs, blank_count_per_route: 0)
@@ -31,7 +32,7 @@ class TimecardPdfService
       pdf.start_new_page if page_index > 0
 
       pair.each_with_index do |card, slot|
-        x_offset = slot == 0 ? 0 : CARD_WIDTH + GUTTER
+        x_offset = slot == 0 ? CARD_INSET : CARD_WIDTH + CARD_INSET + GUTTER
         pdf.bounding_box([x_offset, pdf.bounds.top], width: CARD_WIDTH, height: CARD_HEIGHT) do
           render_card(pdf, card)
         end
@@ -91,27 +92,24 @@ class TimecardPdfService
     footer_height = 130
     available = pdf.cursor - MARGIN - footer_height
     max_rows = (available / row_height).floor
-    rows_to_render = [location_sequence.size, max_rows].min
+    # Skip start location (index 0) — timecards begin at CP 1
+    display_sequence = location_sequence.drop(1)
+    rows_to_render = [display_sequence.size, max_rows].min
 
     rows_to_render.times do |i|
-      loc = location_sequence[i]
-      label = if i == 0
-                "START"
-              elsif i == location_sequence.size - 1
-                "FINISH"
-              else
-                "CP #{i}"
-              end
+      loc = display_sequence[i]
+      is_finish = i == display_sequence.size - 1
+      label = is_finish ? "FINISH" : "CP #{i + 1}"
 
       y_pos = pdf.cursor
 
       # Checkpoint number + name
-      pdf.text_box "#{label}", at: [0, y_pos], width: 50, size: 10, style: :bold
+      pdf.text_box label, at: [0, y_pos], width: 50, size: 10, style: :bold
       pdf.text_box loc[:name], at: [50, y_pos], width: CARD_WIDTH - 60, size: 9, color: "333333"
 
       pdf.move_down 12
 
-      # TIME IN / TIME OUT boxes
+      # TIME IN / TIME OUT boxes (finish only gets TIME IN)
       time_label_width = 55
       in_box_x = time_label_width
       out_label_x = in_box_x + box_width + 6
@@ -121,9 +119,11 @@ class TimecardPdfService
       pdf.text_box "TiME iN:", at: [0, y_box], width: time_label_width, size: 8, style: :bold
       pdf.stroke_rectangle [in_box_x, y_box], box_width - time_label_width - 4, box_height
 
-      if out_box_x + box_width - time_label_width - 4 <= CARD_WIDTH
-        pdf.text_box "TiME OUT:", at: [out_label_x, y_box], width: time_label_width, size: 8, style: :bold
-        pdf.stroke_rectangle [out_box_x, y_box], box_width - time_label_width - 4, box_height
+      unless is_finish
+        if out_box_x + box_width - time_label_width - 4 <= CARD_WIDTH
+          pdf.text_box "TiME OUT:", at: [out_label_x, y_box], width: time_label_width, size: 8, style: :bold
+          pdf.stroke_rectangle [out_box_x, y_box], box_width - time_label_width - 4, box_height
+        end
       end
 
       pdf.move_down box_height + 6
