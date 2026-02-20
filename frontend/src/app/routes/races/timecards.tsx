@@ -34,7 +34,7 @@ export function TimecardsRoute() {
   if (raceLoading) return <Spinner />;
   if (!race) return <p>Race not found</p>;
 
-  const completeRoutes = (routes ?? []).filter((r) => r.complete);
+  const completeRoutes = (routes ?? []).filter((r) => r.complete && r.selected);
   const teamList = teams ?? [];
   const unassignedTeams = teamList.filter((t) => !t.route_id);
   const assignedTeams = teamList.filter((t) => t.route_id);
@@ -324,7 +324,7 @@ export function TimecardsRoute() {
             ))}
             {completeRoutes.length === 0 && (
               <p className="text-sm text-gray-400 col-span-2 py-8 text-center">
-                No complete routes available. Generate routes first.
+                No selected routes. <Link to={`/races/${id}`} className="text-indigo-600 hover:text-indigo-800">Select routes on the race page</Link> first.
               </p>
             )}
           </div>

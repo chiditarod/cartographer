@@ -57,6 +57,7 @@ module Api
         route = Route.create!(race: race, name: "E2E Route #{short_id}")
         legs.each { |leg| route.legs << leg }
         route.save!
+        route.update_column(:selected, true)
 
         reverse_chain = [cobra] + created_locations.reverse
         reverse_legs = reverse_chain.each_cons(2).map do |start_loc, finish_loc|
@@ -68,6 +69,7 @@ module Api
         route2 = Route.create!(race: race, name: "E2E Route B #{short_id}")
         reverse_legs.each { |leg| route2.legs << leg }
         route2.save!
+        route2.update_column(:selected, true)
 
         render json: { status: 'ok', unique_id: unique_id, short_id: short_id }
       end
