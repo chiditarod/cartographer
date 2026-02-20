@@ -12,6 +12,13 @@ Rails.application.routes.draw do
           get 'export_pdf', on: :member
           post 'bulk_select', on: :collection
         end
+        resources :teams, only: [:index, :create, :update, :destroy] do
+          collection do
+            post 'import_csv'
+            post 'bulk_assign'
+          end
+        end
+        get 'timecards/export_pdf', to: 'timecards#export_pdf'
         post 'generate_legs', to: 'operations#generate_legs'
         post 'generate_routes', to: 'operations#generate_routes'
         post 'rank_routes', to: 'operations#rank_routes'

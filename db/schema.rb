@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_19_043416) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_20_135846) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -111,6 +111,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_19_043416) do
     t.integer "distance_unit", default: 0, null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
+    t.integer "blank_timecards_per_route", default: 0, null: false
     t.index ["name"], name: "index_races_on_name", unique: true
   end
 
@@ -125,6 +126,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_19_043416) do
     t.boolean "selected"
   end
 
+  create_table "teams", force: :cascade do |t|
+    t.bigint "race_id", null: false
+    t.bigint "route_id"
+    t.string "name", null: false
+    t.integer "bib_number", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["race_id", "bib_number"], name: "index_teams_on_race_id_and_bib_number", unique: true
+    t.index ["race_id"], name: "index_teams_on_race_id"
+    t.index ["route_id"], name: "index_teams_on_route_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "teams", "races"
+  add_foreign_key "teams", "routes"
 end

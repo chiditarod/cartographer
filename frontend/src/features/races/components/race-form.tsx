@@ -20,6 +20,7 @@ interface RaceFormData {
   start_id: string;
   finish_id: string;
   location_ids: number[];
+  blank_timecards_per_route: string;
 }
 
 interface RaceFormProps {
@@ -43,6 +44,7 @@ function toFormData(race?: Race): RaceFormData {
     start_id: race?.start_id != null ? String(race.start_id) : '',
     finish_id: race?.finish_id != null ? String(race.finish_id) : '',
     location_ids: race?.location_ids ?? [],
+    blank_timecards_per_route: race?.blank_timecards_per_route != null ? String(race.blank_timecards_per_route) : '0',
   };
 }
 
@@ -139,6 +141,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
       start_id: Number(form.start_id),
       finish_id: Number(form.finish_id),
       location_ids: form.location_ids,
+      blank_timecards_per_route: Number(form.blank_timecards_per_route),
     };
     onSubmit(data, logoFile, deleteLogo);
   };
@@ -192,7 +195,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <Input
           id="race-num-stops"
           label="Number of Stops"
@@ -216,6 +219,14 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
           value={form.people_per_team}
           onChange={handleChange('people_per_team')}
           required
+        />
+        <Input
+          id="race-blank-timecards"
+          label="Spare Timecards Per Route"
+          type="number"
+          min="0"
+          value={form.blank_timecards_per_route}
+          onChange={handleChange('blank_timecards_per_route')}
         />
       </div>
 

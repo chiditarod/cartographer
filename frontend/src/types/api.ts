@@ -31,6 +31,8 @@ export interface Race {
   distance_unit: 'mi' | 'km';
   location_ids: number[];
   route_count: number;
+  team_count: number;
+  blank_timecards_per_route: number;
   logo_url: string | null;
   start?: { id: number; name: string };
   finish?: { id: number; name: string };
@@ -95,6 +97,21 @@ export interface JobStatus {
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+}
+
+export interface Team {
+  id: number;
+  name: string;
+  bib_number: number;
+  race_id: number;
+  route_id: number | null;
+  route_name: string | null;
+}
+
+export interface CsvImportResult {
+  imported: number;
+  skipped: number;
+  total: number;
 }
 
 export interface Stats {

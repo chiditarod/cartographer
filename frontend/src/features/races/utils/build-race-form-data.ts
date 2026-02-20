@@ -31,6 +31,7 @@ export function buildRaceBody({
     'distance_unit',
     'start_id',
     'finish_id',
+    'blank_timecards_per_route',
   ] as const;
 
   for (const key of scalarFields) {

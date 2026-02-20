@@ -61,7 +61,8 @@ module Api
           :name, :num_stops, :max_teams, :people_per_team,
           :min_total_distance, :max_total_distance,
           :min_leg_distance, :max_leg_distance,
-          :start_id, :finish_id, :distance_unit, :logo
+          :start_id, :finish_id, :distance_unit, :logo,
+          :blank_timecards_per_route
         )
       end
 
@@ -81,6 +82,8 @@ module Api
           distance_unit: r.distance_unit,
           location_ids: r.location_ids,
           route_count: r.routes.where(complete: true).count,
+          team_count: r.teams.count,
+          blank_timecards_per_route: r.blank_timecards_per_route,
           logo_url: r.logo.attached? ? rails_blob_path(r.logo, only_path: true) : nil,
           created_at: r.created_at,
           updated_at: r.updated_at
