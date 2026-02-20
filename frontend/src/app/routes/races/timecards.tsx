@@ -293,43 +293,62 @@ export function TimecardsRoute() {
         </div>
       </div>
 
-      {/* Section 1: CSV Upload */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">Import Teams</h2>
-        <div className="flex items-center gap-3">
-          <input
-            ref={fileInputRef}
-            id="csv-file-input"
-            type="file"
-            accept=".csv"
-            className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-          />
-          <Button
-            id="upload-csv-btn"
-            variant="primary"
-            size="sm"
-            loading={importCsvMutation.isPending}
-            onClick={handleFileUpload}
-          >
-            Upload CSV
-          </Button>
-          {teamList.length > 0 && (
+      {/* Top row: Import Teams (left) + Generate Timecards (right) */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Import Teams</h2>
+          <div className="flex items-center gap-3">
+            <input
+              ref={fileInputRef}
+              id="csv-file-input"
+              type="file"
+              accept=".csv"
+              className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+            />
             <Button
-              id="delete-all-teams-btn"
-              variant="danger"
+              id="upload-csv-btn"
+              variant="primary"
               size="sm"
-              onClick={() => setShowDeleteModal(true)}
+              loading={importCsvMutation.isPending}
+              onClick={handleFileUpload}
             >
-              Delete All Teams ({teamList.length})
+              Upload CSV
             </Button>
-          )}
+            {teamList.length > 0 && (
+              <Button
+                id="delete-all-teams-btn"
+                variant="danger"
+                size="sm"
+                onClick={() => setShowDeleteModal(true)}
+              >
+                Delete All Teams ({teamList.length})
+              </Button>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            CSV must have &quot;number&quot; and &quot;name&quot; columns (Dogtag export format).
+          </p>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
-          CSV must have &quot;number&quot; and &quot;name&quot; columns (Dogtag export format).
-        </p>
+
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Generate Timecards</h2>
+          <p className="text-sm text-gray-600 mb-3">
+            {assignedCount} team{assignedCount !== 1 ? 's' : ''} assigned across{' '}
+            {routesWithTeams.length} route{routesWithTeams.length !== 1 ? 's' : ''}
+            {spareCount > 0 && ` + ${spareCount} spare card${spareCount !== 1 ? 's' : ''}`}
+          </p>
+          <Button
+            id="download-timecards-pdf-btn"
+            variant="primary"
+            disabled={assignedCount === 0}
+            onClick={handleDownloadPdf}
+          >
+            Download Timecards PDF
+          </Button>
+        </div>
       </div>
 
-      {/* Section 2: Assignment Board */}
+      {/* Assignment Board */}
       {teamList.length > 0 && (
         <div className="flex gap-4 mb-6">
           {/* Unassigned column */}
@@ -434,23 +453,6 @@ export function TimecardsRoute() {
         </div>
       )}
 
-      {/* Section 3: Generate Timecards */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">Generate Timecards</h2>
-        <p className="text-sm text-gray-600 mb-3">
-          {assignedCount} team{assignedCount !== 1 ? 's' : ''} assigned across{' '}
-          {routesWithTeams.length} route{routesWithTeams.length !== 1 ? 's' : ''}
-          {spareCount > 0 && ` + ${spareCount} spare card${spareCount !== 1 ? 's' : ''}`}
-        </p>
-        <Button
-          id="download-timecards-pdf-btn"
-          variant="primary"
-          disabled={assignedCount === 0}
-          onClick={handleDownloadPdf}
-        >
-          Download Timecards PDF
-        </Button>
-      </div>
     </div>
   );
 }
