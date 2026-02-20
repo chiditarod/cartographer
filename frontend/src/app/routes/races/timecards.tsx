@@ -29,6 +29,7 @@ export function TimecardsRoute() {
   const [notification, setNotification] = useState<string | null>(null);
   const [notificationVariant, setNotificationVariant] = useState<'success' | 'error'>('success');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAutoAssignModal, setShowAutoAssignModal] = useState(false);
   const [dragTeamId, setDragTeamId] = useState<number | null>(null);
   const [bulkAssignRouteId, setBulkAssignRouteId] = useState<string>('');
   const [selectedTeamIds, setSelectedTeamIds] = useState<Set<number>>(new Set());
@@ -148,6 +149,23 @@ export function TimecardsRoute() {
     bulkAssignMutation.mutate(assignments);
   };
 
+  const handleAutoAssign = () => {
+    if (completeRoutes.length === 0 || teamList.length === 0) return;
+    const sortedTeams = [...teamList].sort((a, b) => a.bib_number - b.bib_number);
+    const routeIds = completeRoutes.map((r) => r.id);
+    const assignments = sortedTeams.map((team, i) => ({
+      team_id: team.id,
+      route_id: routeIds[i % routeIds.length],
+    }));
+    bulkAssignMutation.mutate(assignments, {
+      onSuccess: () => {
+        setShowAutoAssignModal(false);
+        setSelectedTeamIds(new Set());
+        notify(`Balanced ${teamList.length} teams across ${routeIds.length} routes.`);
+      },
+    });
+  };
+
   const handleDownloadPdf = () => {
     fetch(`/api/v1/races/${raceId}/timecards/export_pdf`)
       .then((res) => {
@@ -197,6 +215,35 @@ export function TimecardsRoute() {
             onClick={handleDeleteAll}
           >
             Delete All
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={showAutoAssignModal}
+        onClose={() => setShowAutoAssignModal(false)}
+        title="Auto-Assign Teams"
+      >
+        <p className="text-sm text-gray-600 mb-4">
+          This will evenly distribute all {teamList.length} teams across{' '}
+          {completeRoutes.length} selected route{completeRoutes.length !== 1 ? 's' : ''} (
+          {Math.floor(teamList.length / (completeRoutes.length || 1))}
+          {teamList.length % (completeRoutes.length || 1) > 0
+            ? `–${Math.floor(teamList.length / (completeRoutes.length || 1)) + 1}`
+            : ''}{' '}
+          teams per route). Any existing assignments will be replaced.
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setShowAutoAssignModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            id="confirm-auto-assign"
+            variant="primary"
+            loading={bulkAssignMutation.isPending}
+            onClick={handleAutoAssign}
+          >
+            Auto-Assign
           </Button>
         </div>
       </Modal>
@@ -292,9 +339,21 @@ export function TimecardsRoute() {
             onDrop={() => handleDropOnUnassigned()}
           >
             <div className="bg-white rounded-lg border border-gray-200 p-4 h-full">
-              <h3 className="text-md font-semibold text-gray-900 mb-3">
-                Unassigned Teams ({unassignedTeams.length})
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-md font-semibold text-gray-900">
+                  Unassigned Teams ({unassignedTeams.length})
+                </h3>
+                {completeRoutes.length > 0 && (
+                  <Button
+                    id="auto-assign-btn"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowAutoAssignModal(true)}
+                  >
+                    Auto-Assign
+                  </Button>
+                )}
+              </div>
 
               {unassignedTeams.length > 0 && completeRoutes.length > 0 && (
                 <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-100">
