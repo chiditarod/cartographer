@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useRace } from '@/features/races/api/get-race';
 import { useRoutes } from '@/features/routes/api/get-routes';
@@ -7,10 +7,12 @@ import { useImportTeamsCsv } from '@/features/teams/api/import-teams-csv';
 import { useBulkAssignTeams } from '@/features/teams/api/bulk-assign-teams';
 import { useDeleteTeam } from '@/features/teams/api/delete-team';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
 import { Modal } from '@/components/ui/modal';
 import { Notification } from '@/components/ui/notification';
 import { formatMutationError } from '@/utils/format';
+import { abbreviateLocation, buildLocationColorMap } from '@/utils/location';
 import type { Team, RouteSummary } from '@/types/api';
 
 export function TimecardsRoute() {
@@ -30,6 +32,15 @@ export function TimecardsRoute() {
   const [dragTeamId, setDragTeamId] = useState<number | null>(null);
   const [bulkAssignRouteId, setBulkAssignRouteId] = useState<string>('');
   const [selectedTeamIds, setSelectedTeamIds] = useState<Set<number>>(new Set());
+  const [showDistance, setShowDistance] = useState(false);
+  const [showPath, setShowPath] = useState(false);
+
+  const locationColorMap = useMemo(() => {
+    const allRoutes = (routes ?? []).filter((r) => r.complete && r.selected);
+    const allLocs = allRoutes.flatMap((r) => r.location_sequence);
+    const unique = allLocs.filter((loc, i, arr) => arr.findIndex((l) => l.id === loc.id) === i);
+    return buildLocationColorMap(unique);
+  }, [routes]);
 
   if (raceLoading) return <Spinner />;
   if (!race) return <p>Race not found</p>;
@@ -203,6 +214,36 @@ export function TimecardsRoute() {
             {race.name} &mdash; Timecards
           </h1>
         </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <button
+              id="toggle-show-distance"
+              type="button"
+              onClick={() => setShowDistance((v) => !v)}
+              className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${showDistance ? 'bg-indigo-600' : 'bg-gray-200'}`}
+              role="switch"
+              aria-checked={showDistance}
+              aria-label="Show distance"
+            >
+              <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${showDistance ? 'translate-x-4' : 'translate-x-0'}`} />
+            </button>
+            <span className="text-xs text-gray-500">Distance</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              id="toggle-show-path"
+              type="button"
+              onClick={() => setShowPath((v) => !v)}
+              className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${showPath ? 'bg-indigo-600' : 'bg-gray-200'}`}
+              role="switch"
+              aria-checked={showPath}
+              aria-label="Show path"
+            >
+              <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${showPath ? 'translate-x-4' : 'translate-x-0'}`} />
+            </button>
+            <span className="text-xs text-gray-500">Path</span>
+          </div>
+        </div>
       </div>
 
       {/* Section 1: CSV Upload */}
@@ -316,6 +357,9 @@ export function TimecardsRoute() {
                 key={route.id}
                 route={route}
                 teams={teamsForRoute(route.id)}
+                showDistance={showDistance}
+                showPath={showPath}
+                locationColorMap={locationColorMap}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => handleDropOnRoute(route.id)}
                 onDragStart={handleDragStart}
@@ -355,6 +399,9 @@ export function TimecardsRoute() {
 interface RouteDropCardProps {
   route: RouteSummary;
   teams: Team[];
+  showDistance: boolean;
+  showPath: boolean;
+  locationColorMap: Map<number, string>;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: () => void;
   onDragStart: (teamId: number) => void;
@@ -364,11 +411,18 @@ interface RouteDropCardProps {
 function RouteDropCard({
   route,
   teams,
+  showDistance,
+  showPath,
+  locationColorMap,
   onDragOver,
   onDrop,
   onDragStart,
   onRemove,
 }: RouteDropCardProps) {
+  const distanceDisplay = route.distance != null
+    ? `${route.distance.toFixed(2)} ${route.distance_unit}`
+    : null;
+
   return (
     <div
       onDragOver={onDragOver}
@@ -381,7 +435,24 @@ function RouteDropCard({
         <span className="ml-2 text-xs font-normal text-gray-500">
           ({teams.length} team{teams.length !== 1 ? 's' : ''})
         </span>
+        {showDistance && distanceDisplay && (
+          <span className="ml-2 text-xs font-normal text-gray-500">
+            &middot; {distanceDisplay}
+          </span>
+        )}
       </h4>
+      {showPath && route.location_sequence.length > 0 && (
+        <div className="flex flex-wrap items-center gap-0.5 mb-2">
+          {route.location_sequence.map((loc, i) => (
+            <React.Fragment key={`${route.id}-loc-${i}`}>
+              {i > 0 && <span className="text-gray-400 text-[10px] mx-0.5">&rarr;</span>}
+              <Badge colorClasses={locationColorMap.get(loc.id)}>
+                {abbreviateLocation(loc.name)}
+              </Badge>
+            </React.Fragment>
+          ))}
+        </div>
+      )}
       <div className="space-y-1">
         {teams
           .sort((a, b) => a.bib_number - b.bib_number)
