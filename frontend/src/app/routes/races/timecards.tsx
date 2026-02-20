@@ -149,6 +149,15 @@ export function TimecardsRoute() {
     bulkAssignMutation.mutate(assignments);
   };
 
+  const handleUnassignAll = () => {
+    bulkAssignMutation.mutate([], {
+      onSuccess: () => {
+        setSelectedTeamIds(new Set());
+        notify('All teams unassigned.');
+      },
+    });
+  };
+
   const handleAutoAssign = () => {
     if (completeRoutes.length === 0 || teamList.length === 0) return;
     const sortedTeams = [...teamList].sort((a, b) => a.bib_number - b.bib_number);
@@ -293,18 +302,18 @@ export function TimecardsRoute() {
         </div>
       </div>
 
-      {/* Top row: Import Teams (left) + Generate Timecards (right) */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      {/* Top row: Import | Assign | Generate */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Import Teams</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Import</h2>
+          <input
+            ref={fileInputRef}
+            id="csv-file-input"
+            type="file"
+            accept=".csv"
+            className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mb-2"
+          />
           <div className="flex items-center gap-3">
-            <input
-              ref={fileInputRef}
-              id="csv-file-input"
-              type="file"
-              accept=".csv"
-              className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-            />
             <Button
               id="upload-csv-btn"
               variant="primary"
@@ -321,17 +330,48 @@ export function TimecardsRoute() {
                 size="sm"
                 onClick={() => setShowDeleteModal(true)}
               >
-                Delete All Teams ({teamList.length})
+                Delete All ({teamList.length})
               </Button>
             )}
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            CSV must have &quot;number&quot; and &quot;name&quot; columns (Dogtag export format).
+            CSV with &quot;number&quot; and &quot;name&quot; columns.
           </p>
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Generate Timecards</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Assign</h2>
+          <p className="text-sm text-gray-600 mb-3">
+            {assignedCount} of {teamList.length} team{teamList.length !== 1 ? 's' : ''} assigned
+            across {routesWithTeams.length} route{routesWithTeams.length !== 1 ? 's' : ''}
+          </p>
+          <div className="flex items-center gap-3">
+            {completeRoutes.length > 0 && teamList.length > 0 && (
+              <Button
+                id="auto-assign-btn"
+                variant="primary"
+                size="sm"
+                onClick={() => setShowAutoAssignModal(true)}
+              >
+                Auto-Assign
+              </Button>
+            )}
+            {assignedCount > 0 && (
+              <Button
+                id="unassign-all-btn"
+                variant="secondary"
+                size="sm"
+                loading={bulkAssignMutation.isPending}
+                onClick={handleUnassignAll}
+              >
+                Unassign All
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Generate</h2>
           <p className="text-sm text-gray-600 mb-3">
             {assignedCount} team{assignedCount !== 1 ? 's' : ''} assigned across{' '}
             {routesWithTeams.length} route{routesWithTeams.length !== 1 ? 's' : ''}
@@ -358,21 +398,9 @@ export function TimecardsRoute() {
             onDrop={() => handleDropOnUnassigned()}
           >
             <div className="bg-white rounded-lg border border-gray-200 p-4 h-full">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-md font-semibold text-gray-900">
-                  Unassigned Teams ({unassignedTeams.length})
-                </h3>
-                {completeRoutes.length > 0 && (
-                  <Button
-                    id="auto-assign-btn"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setShowAutoAssignModal(true)}
-                  >
-                    Auto-Assign
-                  </Button>
-                )}
-              </div>
+              <h3 className="text-md font-semibold text-gray-900 mb-3">
+                Unassigned Teams ({unassignedTeams.length})
+              </h3>
 
               {unassignedTeams.length > 0 && completeRoutes.length > 0 && (
                 <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-100">
