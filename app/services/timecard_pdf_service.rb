@@ -76,26 +76,26 @@ class TimecardPdfService
       begin
         logo_data = @race.logo.download
         logo_io = StringIO.new(logo_data)
-        pdf.image logo_io, height: 80, position: :center
-        pdf.move_down 6
+        pdf.image logo_io, height: 60, position: :center
+        pdf.move_down 4
       rescue StandardError
         # skip logo if it can't be loaded
       end
     end
 
-    pdf.text @race.name, size: 30, style: :bold, align: :center
-    pdf.move_down 8
+    pdf.text @race.name, size: 28, style: :bold, align: :center
+    pdf.move_down 4
 
     # Team info
     if team
-      pdf.text team.name, size: 20, style: :bold
-      pdf.text "Team ##{team.bib_number}", size: 16, style: :bold
+      pdf.text team.name, size: 18, style: :bold
+      pdf.text "Team ##{team.bib_number}", size: 14, style: :bold
     else
-      pdf.text "Team #", size: 16, style: :bold
+      pdf.text "Team #", size: 14, style: :bold
     end
     route_label = route.name || "Route ##{route.id}"
-    pdf.text route_label, size: 14, color: "666666"
-    pdf.move_down 8
+    pdf.text route_label, size: 12, color: "666666"
+    pdf.move_down 6
 
     # Checkpoint rows — dynamically sized to fill available space
     # Skip start location (index 0) — timecards begin at CP 1
@@ -106,10 +106,14 @@ class TimecardPdfService
     num_rows = display_sequence.size
     row_height = available / num_rows.to_f
 
-    # Scale box height proportionally, capped for readability
-    box_height = [[row_height * 0.40, 30].max, 40].min
-    label_col_width = 40
-    time_label_width = 70
+    # Layout: big number in left column spanning full row, name + boxes to the right
+    num_col = 48
+    right_x = num_col + 2
+    right_width = CARD_WIDTH - right_x
+    time_label_width = 65
+
+    # Scale box height to fill row (name ~18pt + gap + box + bottom padding = row_height)
+    box_height = [[row_height - 26, 24].max, 36].min
 
     num_rows.times do |i|
       loc = display_sequence[i]
@@ -118,25 +122,26 @@ class TimecardPdfService
 
       y_pos = pdf.cursor
 
-      # Checkpoint number (large) + location name
-      pdf.text_box label, at: [0, y_pos], width: label_col_width, size: 24, style: :bold
-      pdf.text_box loc[:name], at: [label_col_width, y_pos], width: CARD_WIDTH - label_col_width,
-                   size: 14, color: "333333"
+      # Big number in left column, vertically centered across the full row
+      pdf.text_box label, at: [0, y_pos], width: num_col, height: row_height,
+                   size: 24, style: :bold, valign: :center
 
-      pdf.move_down 16
+      # Location name — top of right column
+      pdf.text_box loc[:name], at: [right_x, y_pos - 2], width: right_width,
+                   size: 14, style: :bold, color: "333333"
 
-      # TIME IN / TIME OUT boxes (finish only gets TIME IN)
-      half_width = (CARD_WIDTH - 8) / 2.0
-      in_box_width = half_width - time_label_width
-      y_box = pdf.cursor
+      # TIME IN / TIME OUT boxes below location name
+      box_y = y_pos - 20
+      half = (right_width - 8) / 2.0
+      in_box_width = half - time_label_width
 
-      pdf.text_box "TiME iN:", at: [0, y_box], width: time_label_width, size: 12, style: :bold
-      pdf.stroke_rectangle [time_label_width, y_box], in_box_width, box_height
+      pdf.text_box "TiME iN:", at: [right_x, box_y], width: time_label_width, size: 11, style: :bold
+      pdf.stroke_rectangle [right_x + time_label_width, box_y], in_box_width, box_height
 
       unless is_finish
-        out_x = half_width + 8
-        pdf.text_box "TiME OUT:", at: [out_x, y_box], width: time_label_width, size: 12, style: :bold
-        pdf.stroke_rectangle [out_x + time_label_width, y_box], in_box_width, box_height
+        out_x = right_x + half + 8
+        pdf.text_box "TiME OUT:", at: [out_x, box_y], width: time_label_width, size: 11, style: :bold
+        pdf.stroke_rectangle [out_x + time_label_width, box_y], in_box_width, box_height
       end
 
       # Advance to next row boundary
