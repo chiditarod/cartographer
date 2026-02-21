@@ -115,55 +115,63 @@ class CheckinCardPdfService
       line = raw_line.chomp
 
       if line.strip.empty?
-        pdf.move_down 8
+        pdf.move_down 10
         next
       end
 
-      # ## Heading
+      # ## Heading → 18pt bold centered
       if line =~ /\A\s*##\s+(.+)/
         heading = Regexp.last_match(1)
-        pdf.text "<u><b>#{escape_html(heading)}</b></u>", size: 14, inline_format: true
-        pdf.move_down 4
+        pdf.text heading, size: 18, style: :bold, align: :center
+        pdf.move_down 6
         next
       end
 
-      # Convert markdown bold/italic to Prawn inline format
+      # Lines with ___ blanks → render as stacked panel
+      if line.include?("___")
+        bold = line.include?("**")
+        label = line.gsub(/\*\*/, "").gsub(/_{3,}/, "").strip
+        render_panel(pdf, label, bold: bold)
+        next
+      end
+
+      # Regular text
       rendered = escape_html(line)
       rendered = rendered.gsub(/\*\*(.+?)\*\*/, '<b>\1</b>')
       rendered = rendered.gsub(/\*(.+?)\*/, '<i>\1</i>')
-
-      # Handle lines with ___ blanks — draw text with inline underline segments
-      if rendered.include?("___")
-        render_line_with_blanks(pdf, rendered)
-      else
-        pdf.text rendered, size: 10, inline_format: true
-      end
+      pdf.text rendered, size: 12, inline_format: true
     end
   end
 
-  def render_line_with_blanks(pdf, line)
-    # Split on runs of 3+ underscores
-    parts = line.split(/(_{3,})/)
+  def render_panel(pdf, label, bold: false)
+    panel_h = 50
     y = pdf.cursor
-    x = 0
 
-    parts.each do |part|
-      if part =~ /\A_{3,}\z/
-        # Draw a horizontal line for the blank
-        line_width = [part.length * 5, 120].min
-        pdf.stroke do
-          pdf.line [x, y - 10], [x + line_width, y - 10]
-        end
-        x += line_width + 4
-      else
-        next if part.empty?
-        w = pdf.width_of(part, size: 10, inline_format: true)
-        pdf.draw_text part, at: [x, y - 10], size: 10, inline_format: true
-        x += w
-      end
-    end
+    # Filled rounded rectangle background
+    bg_color = bold ? "E0E0E0" : "F0F0F0"
+    pdf.fill_color bg_color
+    pdf.fill_rounded_rectangle [0, y], CARD_WIDTH, panel_h, 4
+    pdf.fill_color "000000"
 
-    pdf.move_down 16
+    # Thin border
+    pdf.line_width = 0.5
+    pdf.stroke_rounded_rectangle [0, y], CARD_WIDTH, panel_h, 4
+
+    # Label text inside panel
+    label_size = bold ? 16 : 14
+    label_style = bold ? :bold : :normal
+    pdf.text_box label, at: [10, y - 8], width: CARD_WIDTH - 20,
+                 size: label_size, style: label_style
+
+    # Right-aligned fill line
+    line_w = 150
+    line_x = CARD_WIDTH - line_w - 10
+    line_y = y - 38
+    pdf.line_width = bold ? 1.5 : 0.75
+    pdf.stroke { pdf.line [line_x, line_y], [CARD_WIDTH - 10, line_y] }
+
+    pdf.line_width = 1
+    pdf.move_cursor_to y - panel_h - 10
   end
 
   def escape_html(text)
