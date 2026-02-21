@@ -14,6 +14,7 @@ class Race < ApplicationRecord
   belongs_to :finish, class_name: "Location"
   has_and_belongs_to_many :locations
   has_many :routes
+  has_many :teams, dependent: :destroy
   has_one_attached :logo
 
   validate :acceptable_logo, if: -> { logo.attached? }

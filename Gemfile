@@ -28,6 +28,7 @@ gem 'google_maps_service_ruby'
 gem 'rack-cors'
 gem 'prawn', '~> 2.5'
 gem 'prawn-table', '~> 0.2'
+gem 'csv'
 
 group :development, :test do
   gem 'byebug', platforms: [:mri]

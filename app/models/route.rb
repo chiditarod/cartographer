@@ -6,6 +6,7 @@ class Route < ApplicationRecord
 
   has_many :legs_routes, -> { order('legs_routes.order') }, dependent: :delete_all
   has_many :legs, through: :legs_routes
+  has_many :teams, dependent: :nullify
 
   validate :validate_leg_distances,
            :validate_leg_locations_allowed_in_race,

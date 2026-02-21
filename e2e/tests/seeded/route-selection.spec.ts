@@ -8,8 +8,13 @@ test.describe('Route Selection', () => {
       await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
-    await test.step('verify checkboxes are visible and buttons start without counts', async () => {
+    await test.step('deselect all routes to start from clean state', async () => {
       await expect(page.locator('[data-testid="select-all-routes"]')).toBeVisible({ timeout: 10000 });
+      // Seeded routes start selected — deselect all first
+      const selectAll = page.locator('[data-testid="select-all-routes"]');
+      if (await selectAll.isChecked()) {
+        await selectAll.uncheck();
+      }
       await expect(page.locator('#export-csv-btn')).toHaveText('Export CSV');
       await expect(page.locator('#download-pdf-btn')).toBeDisabled();
       await expect(page.locator('#download-pdf-btn')).toHaveText('Download PDF');
@@ -49,8 +54,12 @@ test.describe('Route Selection', () => {
       await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
-    await test.step('verify Download PDF button disabled initially', async () => {
-      await expect(page.locator('#download-pdf-btn')).toBeVisible({ timeout: 10000 });
+    await test.step('deselect all routes to start from clean state', async () => {
+      await expect(page.locator('[data-testid="select-all-routes"]')).toBeVisible({ timeout: 10000 });
+      const selectAll = page.locator('[data-testid="select-all-routes"]');
+      if (await selectAll.isChecked()) {
+        await selectAll.uncheck();
+      }
       await expect(page.locator('#download-pdf-btn')).toBeDisabled();
       await expect(page.locator('#download-pdf-btn')).toHaveText('Download PDF');
     });
@@ -77,9 +86,14 @@ test.describe('Route Selection', () => {
       await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
     });
 
-    await test.step('select first route and delete it', async () => {
+    await test.step('deselect all then select only first route and delete it', async () => {
+      const selectAll = page.locator('[data-testid="select-all-routes"]');
+      await expect(selectAll).toBeVisible({ timeout: 10000 });
+      // Seeded routes start selected — deselect all first
+      if (await selectAll.isChecked()) {
+        await selectAll.uncheck();
+      }
       const firstCheckbox = page.locator('input[type="checkbox"][data-testid^="select-route-"]').first();
-      await expect(firstCheckbox).toBeVisible({ timeout: 10000 });
       await firstCheckbox.check();
       await page.locator('#delete-selected-routes-btn').click();
     });
