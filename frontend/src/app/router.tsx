@@ -10,7 +10,7 @@ import { NewRaceRoute } from '@/app/routes/races/new-race';
 import { RaceRoute } from '@/app/routes/races/race';
 import { EditRaceRoute } from '@/app/routes/races/edit-race';
 import { RouteDetailRoute } from '@/app/routes/routes/route-detail';
-import { TimecardsRoute } from '@/app/routes/races/timecards';
+import { TeamsRoute } from '@/app/routes/races/teams';
 import { HelpRoute } from '@/app/routes/help';
 
 export const router = createBrowserRouter([
@@ -26,7 +26,7 @@ export const router = createBrowserRouter([
       { path: '/races/new', element: <NewRaceRoute /> },
       { path: '/races/:id', element: <RaceRoute /> },
       { path: '/races/:id/edit', element: <EditRaceRoute /> },
-      { path: '/races/:id/timecards', element: <TimecardsRoute /> },
+      { path: '/races/:id/teams', element: <TeamsRoute /> },
       { path: '/races/:raceId/routes/:id', element: <RouteDetailRoute /> },
       { path: '/help', element: <HelpRoute /> },
     ],

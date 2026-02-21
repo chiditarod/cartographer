@@ -177,9 +177,9 @@ export function RaceRoute() {
           <Link to={`/races/${id}/edit`} id="edit-race-link">
             <Button variant="secondary">Edit</Button>
           </Link>
-          <Link to={`/races/${id}/timecards`} id="timecards-link">
+          <Link to={`/races/${id}/teams`} id="teams-link">
             <Button variant="secondary">
-              Timecards{race.team_count > 0 ? ` (${race.team_count})` : ''}
+              Teams{race.team_count > 0 ? ` (${race.team_count})` : ''}
             </Button>
           </Link>
           <Button

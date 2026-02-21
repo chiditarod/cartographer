@@ -5,9 +5,9 @@ async function navigateToTimecards(page: import('@playwright/test').Page) {
   await page.goto('/races');
   await page.locator('[id^="view-race-"]').first().click();
   await expect(page.locator('#race-page-title')).toContainText(/E2E Race/, { timeout: 10000 });
-  await page.locator('#timecards-link').click();
-  await page.waitForURL(/\/timecards$/, { timeout: 10000 });
-  await expect(page.locator('#timecards-page-title')).toContainText('Timecards', { timeout: 10000 });
+  await page.locator('#teams-link').click();
+  await page.waitForURL(/\/teams$/, { timeout: 10000 });
+  await expect(page.locator('#teams-page-title')).toContainText('Teams', { timeout: 10000 });
 }
 
 async function uploadCsv(page: import('@playwright/test').Page) {
@@ -17,7 +17,7 @@ async function uploadCsv(page: import('@playwright/test').Page) {
   await expect(page.locator('[data-testid="notification"]')).toContainText('Imported 4 teams', { timeout: 10000 });
 }
 
-test.describe('Timecards', () => {
+test.describe('Teams', () => {
   test('navigates to timecards page from race detail', async ({ page }) => {
     await test.step('navigate to race', async () => {
       await page.goto('/races');
@@ -26,9 +26,9 @@ test.describe('Timecards', () => {
     });
 
     await test.step('click timecards link', async () => {
-      await page.locator('#timecards-link').click();
-      await page.waitForURL(/\/timecards$/, { timeout: 10000 });
-      await expect(page.locator('#timecards-page-title')).toContainText('Timecards', { timeout: 10000 });
+      await page.locator('#teams-link').click();
+      await page.waitForURL(/\/teams$/, { timeout: 10000 });
+      await expect(page.locator('#teams-page-title')).toContainText('Teams', { timeout: 10000 });
     });
   });
 

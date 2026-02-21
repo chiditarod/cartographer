@@ -15,7 +15,7 @@ import { formatMutationError } from '@/utils/format';
 import { abbreviateLocation, buildLocationColorMap } from '@/utils/location';
 import type { Team, RouteSummary } from '@/types/api';
 
-export function TimecardsRoute() {
+export function TeamsRoute() {
   const { id } = useParams<{ id: string }>();
   const raceId = Number(id);
   const { data: race, isLoading: raceLoading } = useRace(raceId);
@@ -283,8 +283,8 @@ export function TimecardsRoute() {
           >
             &larr; Back to Race
           </Link>
-          <h1 id="timecards-page-title" className="text-2xl font-bold text-gray-900">
-            {race.name} &mdash; Timecards
+          <h1 id="teams-page-title" className="text-2xl font-bold text-gray-900">
+            {race.name} &mdash; Teams
           </h1>
         </div>
         <div className="flex items-center gap-4">
