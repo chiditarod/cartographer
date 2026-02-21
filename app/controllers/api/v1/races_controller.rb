@@ -63,7 +63,8 @@ module Api
           :min_leg_distance, :max_leg_distance,
           :start_id, :finish_id, :distance_unit, :logo,
           :blank_timecards_per_route,
-          :checkin_card_content
+          :checkin_card_content,
+          :blank_checkin_cards
         )
       end
 
@@ -86,6 +87,7 @@ module Api
           team_count: r.teams.count,
           blank_timecards_per_route: r.blank_timecards_per_route,
           checkin_card_content: r.checkin_card_content,
+          blank_checkin_cards: r.blank_checkin_cards,
           logo_url: r.logo.attached? ? rails_blob_path(r.logo, only_path: true) : nil,
           created_at: r.created_at,
           updated_at: r.updated_at

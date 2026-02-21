@@ -14,7 +14,7 @@ module Api
 
         pdf_data = CheckinCardPdfService.call(
           race, teams,
-          blank_count: race.blank_timecards_per_route
+          blank_count: race.blank_checkin_cards
         )
 
         send_data pdf_data,

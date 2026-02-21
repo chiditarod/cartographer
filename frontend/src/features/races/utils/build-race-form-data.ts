@@ -33,6 +33,7 @@ export function buildRaceBody({
     'finish_id',
     'blank_timecards_per_route',
     'checkin_card_content',
+    'blank_checkin_cards',
   ] as const;
 
   for (const key of scalarFields) {

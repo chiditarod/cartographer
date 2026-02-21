@@ -21,6 +21,7 @@ interface RaceFormData {
   finish_id: string;
   location_ids: number[];
   blank_timecards_per_route: string;
+  blank_checkin_cards: string;
   checkin_card_content: string;
 }
 
@@ -46,6 +47,7 @@ function toFormData(race?: Race): RaceFormData {
     finish_id: race?.finish_id != null ? String(race.finish_id) : '',
     location_ids: race?.location_ids ?? [],
     blank_timecards_per_route: race?.blank_timecards_per_route != null ? String(race.blank_timecards_per_route) : '0',
+    blank_checkin_cards: race?.blank_checkin_cards != null ? String(race.blank_checkin_cards) : '0',
     checkin_card_content: race?.checkin_card_content ?? '',
   };
 }
@@ -144,6 +146,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
       finish_id: Number(form.finish_id),
       location_ids: form.location_ids,
       blank_timecards_per_route: Number(form.blank_timecards_per_route),
+      blank_checkin_cards: Number(form.blank_checkin_cards),
       checkin_card_content: form.checkin_card_content,
     };
     onSubmit(data, logoFile, deleteLogo);
@@ -198,7 +201,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
         )}
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <Input
           id="race-num-stops"
           label="Number of Stops"
@@ -230,6 +233,14 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
           min="0"
           value={form.blank_timecards_per_route}
           onChange={handleChange('blank_timecards_per_route')}
+        />
+        <Input
+          id="race-blank-checkin-cards"
+          label="Spare Check-in Cards"
+          type="number"
+          min="0"
+          value={form.blank_checkin_cards}
+          onChange={handleChange('blank_checkin_cards')}
         />
       </div>
 

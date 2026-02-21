@@ -83,13 +83,7 @@ class CheckinCardPdfService
     pdf.move_down 12
 
     # Team info (top section)
-    if team
-      pdf.text "Team Name: #{team.name}", size: 12, style: :bold
-      pdf.text "Team ##{team.bib_number}", size: 12, style: :bold
-    else
-      pdf.text "Team Name: _______________", size: 12, style: :bold
-      pdf.text "Team #___", size: 12, style: :bold
-    end
+    render_team_info(pdf, team)
     pdf.move_down 8
 
     # Tilde divider
@@ -97,17 +91,36 @@ class CheckinCardPdfService
     pdf.move_down 8
 
     # Team info (tear-off section)
-    if team
-      pdf.text "Team Name: #{team.name}", size: 12, style: :bold
-      pdf.text "Team ##{team.bib_number}", size: 12, style: :bold
-    else
-      pdf.text "Team Name: _______________", size: 12, style: :bold
-      pdf.text "Team #___", size: 12, style: :bold
-    end
+    render_team_info(pdf, team)
     pdf.move_down 12
 
     # Markdown content
     render_markdown(pdf, @race.checkin_card_content || "")
+  end
+
+  def render_team_info(pdf, team)
+    if team
+      pdf.text "Team Name: #{team.name}", size: 12, style: :bold
+      pdf.text "Team ##{team.bib_number}", size: 12, style: :bold
+    else
+      # Longer fill lines for blank cards
+      y = pdf.cursor
+      label = "Team Name: "
+      label_w = pdf.width_of(label, size: 12, style: :bold)
+      pdf.draw_text label, at: [0, y - 12], size: 12, style: :bold
+      line_end = CARD_WIDTH - 10
+      pdf.line_width = 0.75
+      pdf.stroke { pdf.line [label_w, y - 14], [line_end, y - 14] }
+      pdf.move_down 18
+
+      y = pdf.cursor
+      label = "Team #"
+      label_w = pdf.width_of(label, size: 12, style: :bold)
+      pdf.draw_text label, at: [0, y - 12], size: 12, style: :bold
+      pdf.stroke { pdf.line [label_w, y - 14], [label_w + 80, y - 14] }
+      pdf.line_width = 1
+      pdf.move_down 16
+    end
   end
 
   def render_markdown(pdf, content)

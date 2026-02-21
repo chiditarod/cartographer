@@ -34,6 +34,7 @@ export interface Race {
   team_count: number;
   blank_timecards_per_route: number;
   checkin_card_content: string;
+  blank_checkin_cards: number;
   logo_url: string | null;
   start?: { id: number; name: string };
   finish?: { id: number; name: string };

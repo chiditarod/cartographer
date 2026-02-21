@@ -114,7 +114,8 @@
 - `CheckinCardPdfService.call(race, teams, blank_count: 0)` — generates 2-up landscape LETTER PDF with logo, race name, team info, tilde divider (tear-off), and configurable markdown content
 - `GET /api/v1/races/:race_id/checkin_cards/export_pdf` — returns check-in card PDF; 422 if no teams assigned to routes
 - Race model has `checkin_card_content` text column with default Food Drive markdown — editable in race form textarea
-- Check-in card markdown renderer supports `## Heading`, `**bold**`, `*italic*`, `___` blanks (drawn as horizontal lines), and empty lines
+- Check-in card markdown renderer: `## Heading` → 18pt bold centered, `___` lines → stacked gray panels with right-aligned fill lines, `**bold ___**` → darker panel with bold label
+- Race model has `blank_checkin_cards` integer column (default 0) — separate from `blank_timecards_per_route`; controls spare blank check-in cards appended to PDF
 - `bulk_assign` controller uses `.select { |a| a.respond_to?(:permit) }` to handle empty arrays from Rails params
 
 ## Commands
