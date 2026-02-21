@@ -91,6 +91,14 @@ class TimecardPdfService
       pdf.text team.name, size: 18, style: :bold
       pdf.text "Team ##{team.bib_number}", size: 14, style: :bold
     else
+      # Blank team name fill line
+      y = pdf.cursor
+      label = "Team Name: "
+      label_w = pdf.width_of(label, size: 18, style: :bold)
+      pdf.draw_text label, at: [0, y - 18], size: 18, style: :bold
+      pdf.line_width = 0.75
+      pdf.stroke { pdf.line [label_w, y - 20], [CARD_WIDTH - 10, y - 20] }
+      pdf.move_down 24
       pdf.text "Team #", size: 14, style: :bold
     end
     route_label = route.name || "Route ##{route.id}"
