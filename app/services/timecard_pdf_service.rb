@@ -135,12 +135,14 @@ class TimecardPdfService
       half = (right_width - 8) / 2.0
       in_box_width = half - time_label_width
 
-      pdf.text_box "TiME iN:", at: [right_x, box_y], width: time_label_width, size: 11, style: :bold
+      pdf.text_box "TiME iN:", at: [right_x, box_y], width: time_label_width, height: box_height,
+                   size: 11, style: :bold, valign: :center
       pdf.stroke_rectangle [right_x + time_label_width, box_y], in_box_width, box_height
 
       unless is_finish
         out_x = right_x + half + 8
-        pdf.text_box "TiME OUT:", at: [out_x, box_y], width: time_label_width, size: 11, style: :bold
+        pdf.text_box "TiME OUT:", at: [out_x, box_y], width: time_label_width, height: box_height,
+                     size: 11, style: :bold, valign: :center
         pdf.stroke_rectangle [out_x + time_label_width, box_y], in_box_width, box_height
       end
 
