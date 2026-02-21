@@ -71,12 +71,27 @@ class TimecardPdfService
     team = card[:team]
     location_sequence = build_location_sequence(route)
 
-    # Header
+    # Header — logo and race name at top (matching checkin card style)
+    if @race.logo.attached?
+      begin
+        logo_data = @race.logo.download
+        logo_io = StringIO.new(logo_data)
+        pdf.image logo_io, height: 80, position: :center
+        pdf.move_down 6
+      rescue StandardError
+        # skip logo if it can't be loaded
+      end
+    end
+
+    pdf.text @race.name, size: 30, style: :bold, align: :center
+    pdf.move_down 8
+
+    # Team info
     if team
       pdf.text team.name, size: 18, style: :bold
-      pdf.text "##{team.bib_number}", size: 14, style: :bold
+      pdf.text "Team ##{team.bib_number}", size: 14, style: :bold
     else
-      pdf.text "#", size: 14, style: :bold
+      pdf.text "Team #", size: 14, style: :bold
     end
     route_label = route.name || "Route ##{route.id}"
     pdf.text route_label, size: 12, color: "666666"
@@ -88,9 +103,8 @@ class TimecardPdfService
     box_height = 20
     row_height = box_height + 18  # box + spacing
 
-    # Calculate available space for checkpoints (leave room for footer)
-    footer_height = 130
-    available = pdf.cursor - MARGIN - footer_height
+    # Calculate available space for checkpoints
+    available = pdf.cursor - MARGIN
     max_rows = (available / row_height).floor
     # Skip start location (index 0) — timecards begin at CP 1
     display_sequence = location_sequence.drop(1)
@@ -99,13 +113,13 @@ class TimecardPdfService
     rows_to_render.times do |i|
       loc = display_sequence[i]
       is_finish = i == display_sequence.size - 1
-      label = is_finish ? "FINISH" : "CP #{i + 1}"
+      label = is_finish ? "FINISH" : "#{i + 1}"
 
       y_pos = pdf.cursor
 
       # Checkpoint number + name
       pdf.text_box label, at: [0, y_pos], width: 50, size: 10, style: :bold
-      pdf.text_box loc[:name], at: [50, y_pos], width: CARD_WIDTH - 60, size: 9, color: "333333"
+      pdf.text_box loc[:name], at: [50, y_pos], width: CARD_WIDTH - 60, size: 11, color: "333333"
 
       pdf.move_down 12
 
@@ -116,32 +130,17 @@ class TimecardPdfService
       out_box_x = out_label_x + time_label_width
 
       y_box = pdf.cursor
-      pdf.text_box "TiME iN:", at: [0, y_box], width: time_label_width, size: 8, style: :bold
+      pdf.text_box "TiME iN:", at: [0, y_box], width: time_label_width, size: 10, style: :bold
       pdf.stroke_rectangle [in_box_x, y_box], box_width - time_label_width - 4, box_height
 
       unless is_finish
         if out_box_x + box_width - time_label_width - 4 <= CARD_WIDTH
-          pdf.text_box "TiME OUT:", at: [out_label_x, y_box], width: time_label_width, size: 8, style: :bold
+          pdf.text_box "TiME OUT:", at: [out_label_x, y_box], width: time_label_width, size: 10, style: :bold
           pdf.stroke_rectangle [out_box_x, y_box], box_width - time_label_width - 4, box_height
         end
       end
 
       pdf.move_down box_height + 6
-    end
-
-    # Footer — race name and logo
-    pdf.move_cursor_to MARGIN + footer_height
-    pdf.text @race.name, size: 26, style: :bold, align: :center
-
-    if @race.logo.attached?
-      begin
-        logo_data = @race.logo.download
-        logo_io = StringIO.new(logo_data)
-        pdf.move_down 6
-        pdf.image logo_io, height: 80, position: :center
-      rescue StandardError
-        # skip logo if it can't be loaded
-      end
     end
   end
 
