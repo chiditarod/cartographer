@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_20_135846) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_21_054346) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -112,6 +112,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_20_135846) do
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.integer "blank_timecards_per_route", default: 0, null: false
+    t.text "checkin_card_content", default: "## Food Drive Information\n\nFood poundage pre-dropped _______________\n\nFood Poundage on Race Day + _______________\n\nTotal Food Poundage = _______________\n"
     t.index ["name"], name: "index_races_on_name", unique: true
   end
 

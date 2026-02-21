@@ -111,11 +111,15 @@
 - E2E test CSV fixture at `e2e/test-data/teams.csv` for team import tests
 - When adding new API routes, E2E server must be restarted (kill ports 3099/5199) for new routes to be recognized
 - `csv` gem must be explicitly included in Gemfile (not a default gem in Ruby 3.4+)
+- `CheckinCardPdfService.call(race, teams, blank_count: 0)` — generates 2-up landscape LETTER PDF with logo, race name, team info, tilde divider (tear-off), and configurable markdown content
+- `GET /api/v1/races/:race_id/checkin_cards/export_pdf` — returns check-in card PDF; 422 if no teams assigned to routes
+- Race model has `checkin_card_content` text column with default Food Drive markdown — editable in race form textarea
+- Check-in card markdown renderer supports `## Heading`, `**bold**`, `*italic*`, `___` blanks (drawn as horizontal lines), and empty lines
 - `bulk_assign` controller uses `.select { |a| a.respond_to?(:permit) }` to handle empty arrays from Rails params
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (224 tests, all passing, ~87% coverage)
+- `bundle exec rspec` — Run all RSpec tests (233 tests, all passing, ~88% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
 - `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (28 tests: 26 seeded + 2 fresh)

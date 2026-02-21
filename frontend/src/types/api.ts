@@ -33,6 +33,7 @@ export interface Race {
   route_count: number;
   team_count: number;
   blank_timecards_per_route: number;
+  checkin_card_content: string;
   logo_url: string | null;
   start?: { id: number; name: string };
   finish?: { id: number; name: string };

@@ -21,6 +21,7 @@ interface RaceFormData {
   finish_id: string;
   location_ids: number[];
   blank_timecards_per_route: string;
+  checkin_card_content: string;
 }
 
 interface RaceFormProps {
@@ -45,6 +46,7 @@ function toFormData(race?: Race): RaceFormData {
     finish_id: race?.finish_id != null ? String(race.finish_id) : '',
     location_ids: race?.location_ids ?? [],
     blank_timecards_per_route: race?.blank_timecards_per_route != null ? String(race.blank_timecards_per_route) : '0',
+    checkin_card_content: race?.checkin_card_content ?? '',
   };
 }
 
@@ -93,7 +95,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
   }, [logoFile]);
 
   const handleChange = (field: keyof Omit<RaceFormData, 'location_ids'>) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
     if (validationErrors.length > 0) setValidationErrors([]);
@@ -142,6 +144,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
       finish_id: Number(form.finish_id),
       location_ids: form.location_ids,
       blank_timecards_per_route: Number(form.blank_timecards_per_route),
+      checkin_card_content: form.checkin_card_content,
     };
     onSubmit(data, logoFile, deleteLogo);
   };
@@ -299,6 +302,20 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
           onChange={handleChange('finish_id')}
           options={locationOptions}
           placeholder="Select finish..."
+        />
+      </div>
+
+      <div>
+        <label htmlFor="race-checkin-card-content" className="block text-sm font-medium text-gray-700 mb-1">
+          Check-in Card Content (Markdown)
+        </label>
+        <textarea
+          id="race-checkin-card-content"
+          value={form.checkin_card_content}
+          onChange={handleChange('checkin_card_content')}
+          rows={6}
+          className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          placeholder="## Heading&#10;Content with ___ blanks"
         />
       </div>
 

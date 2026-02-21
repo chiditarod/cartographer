@@ -19,6 +19,7 @@ Rails.application.routes.draw do
           end
         end
         get 'timecards/export_pdf', to: 'timecards#export_pdf'
+        get 'checkin_cards/export_pdf', to: 'checkin_cards#export_pdf'
         post 'generate_legs', to: 'operations#generate_legs'
         post 'generate_routes', to: 'operations#generate_routes'
         post 'rank_routes', to: 'operations#rank_routes'

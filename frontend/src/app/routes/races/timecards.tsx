@@ -192,6 +192,23 @@ export function TimecardsRoute() {
       .catch((err) => notify(err.message ?? 'PDF generation failed', 'error'));
   };
 
+  const handleDownloadCheckinCards = () => {
+    fetch(`/api/v1/races/${raceId}/checkin_cards/export_pdf`)
+      .then((res) => {
+        if (!res.ok) return res.json().then((b) => { throw new Error(b.error); });
+        return res.blob();
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `race-${raceId}-checkin-cards.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch((err) => notify(err.message ?? 'PDF generation failed', 'error'));
+  };
+
   const teamsForRoute = (routeId: number) =>
     teamList.filter((t) => t.route_id === routeId);
 
@@ -377,14 +394,24 @@ export function TimecardsRoute() {
             {routesWithTeams.length} route{routesWithTeams.length !== 1 ? 's' : ''}
             {spareCount > 0 && ` + ${spareCount} spare card${spareCount !== 1 ? 's' : ''}`}
           </p>
-          <Button
-            id="download-timecards-pdf-btn"
-            variant="primary"
-            disabled={assignedCount === 0}
-            onClick={handleDownloadPdf}
-          >
-            Download Timecards PDF
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              id="download-timecards-pdf-btn"
+              variant="primary"
+              disabled={assignedCount === 0}
+              onClick={handleDownloadPdf}
+            >
+              Download Timecards PDF
+            </Button>
+            <Button
+              id="download-checkin-cards-pdf-btn"
+              variant="secondary"
+              disabled={assignedCount === 0}
+              onClick={handleDownloadCheckinCards}
+            >
+              Download Check-in Cards PDF
+            </Button>
+          </div>
         </div>
       </div>
 
