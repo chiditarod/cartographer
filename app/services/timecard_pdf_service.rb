@@ -123,7 +123,7 @@ class TimecardPdfService
       pdf.text_box loc[:name], at: [label_col_width, y_pos], width: CARD_WIDTH - label_col_width,
                    size: 14, color: "333333"
 
-      pdf.move_down 22
+      pdf.move_down 16
 
       # TIME IN / TIME OUT boxes (finish only gets TIME IN)
       half_width = (CARD_WIDTH - 8) / 2.0
