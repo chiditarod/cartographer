@@ -111,10 +111,10 @@
 - E2E test CSV fixture at `e2e/test-data/teams.csv` for team import tests
 - When adding new API routes, E2E server must be restarted (kill ports 3099/5199) for new routes to be recognized
 - `csv` gem must be explicitly included in Gemfile (not a default gem in Ruby 3.4+)
-- `CheckinCardPdfService.call(race, teams, blank_count: 0)` — generates 2-up landscape LETTER PDF with logo, race name, team info, tilde divider (tear-off), and configurable markdown content
+- `CheckinCardPdfService.call(race, teams, blank_count: 0)` — generates 2-up landscape LETTER PDF with race name, team info, and 3×3 collection grid (Toiletries/Food/Money × Pre-Event/Day-Of/Total)
 - `GET /api/v1/races/:race_id/checkin_cards/export_pdf` — returns check-in card PDF; 422 if no teams assigned to routes
-- Race model has `checkin_card_content` text column with default Food Drive markdown — editable in race form textarea
-- Check-in card markdown renderer: `## Heading` → 18pt bold centered, `___` lines → stacked gray panels with right-aligned fill lines, `**bold ___**` → darker panel with bold label
+- Check-in card grid: grey rounded-rect input boxes, horizontal divider between Day-Of and Total rows; cell height auto-fills available space (capped at 110pt)
+- Race model still has `checkin_card_content` text column (DB field retained) but it is no longer rendered in the PDF; textarea removed from race form
 - Race model has `blank_checkin_cards` integer column (default 0) — separate from `blank_timecards_per_route`; controls spare blank check-in cards appended to PDF
 - `bulk_assign` controller uses `.select { |a| a.respond_to?(:permit) }` to handle empty arrays from Rails params
 
