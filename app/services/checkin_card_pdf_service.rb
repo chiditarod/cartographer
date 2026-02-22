@@ -57,18 +57,6 @@ class CheckinCardPdfService
   def render_card(pdf, card)
     team = card[:team]
 
-    # Logo
-    if @race.logo.attached?
-      begin
-        logo_data = @race.logo.download
-        logo_io = StringIO.new(logo_data)
-        pdf.image logo_io, height: 80, position: :center
-        pdf.move_down 6
-      rescue StandardError
-        # skip logo if it can't be loaded
-      end
-    end
-
     # Race name
     pdf.text @race.name, size: 22, style: :bold, align: :center
     pdf.move_down 4
@@ -82,20 +70,12 @@ class CheckinCardPdfService
              size: 9, align: :center, color: "666666"
     pdf.move_down 12
 
-    # Team info (top section)
+    # Team info
     render_team_info(pdf, team)
-    pdf.move_down 8
+    pdf.move_down 16
 
-    # Tilde divider
-    pdf.text "~" * 50, size: 10, align: :center, color: "999999"
-    pdf.move_down 8
-
-    # Team info (tear-off section)
-    render_team_info(pdf, team)
-    pdf.move_down 12
-
-    # Markdown content
-    render_markdown(pdf, @race.checkin_card_content || "")
+    # Collection grid (Toiletries, Food, Money × Pre-Event, Day-Of, Total)
+    render_collection_grid(pdf)
   end
 
   def render_team_info(pdf, team)
@@ -123,71 +103,65 @@ class CheckinCardPdfService
     end
   end
 
-  def render_markdown(pdf, content)
-    content.each_line do |raw_line|
-      line = raw_line.chomp
+  def render_collection_grid(pdf)
+    col_labels = %w[Toiletries Food Money]
+    row_labels = ["Pre-Event", "Day-Of", "Total"]
 
-      if line.strip.empty?
-        pdf.move_down 10
-        next
-      end
+    label_w = 72
+    gap = 8
+    header_h = 18
+    divider_space = 14
 
-      # ## Heading → 18pt bold centered
-      if line =~ /\A\s*##\s+(.+)/
-        heading = Regexp.last_match(1)
-        pdf.text heading, size: 18, style: :bold, align: :center
-        pdf.move_down 6
-        next
-      end
+    data_col_w = (CARD_WIDTH - label_w - gap * 4) / 3.0
 
-      # Lines with ___ blanks → render as stacked panel
-      if line.include?("___")
-        bold = line.include?("**")
-        label = line.gsub(/\*\*/, "").gsub(/_{3,}/, "").strip
-        render_panel(pdf, label, bold: bold)
-        next
-      end
+    # Calculate cell height to fill available space
+    available = pdf.cursor - header_h - gap * 3 - divider_space
+    cell_h = [available / 3.0, 110].min
 
-      # Regular text
-      rendered = escape_html(line)
-      rendered = rendered.gsub(/\*\*(.+?)\*\*/, '<b>\1</b>')
-      rendered = rendered.gsub(/\*(.+?)\*/, '<i>\1</i>')
-      pdf.text rendered, size: 12, inline_format: true
-    end
-  end
-
-  def render_panel(pdf, label, bold: false)
-    panel_h = 50
     y = pdf.cursor
 
-    # Filled rounded rectangle background
-    bg_color = bold ? "E0E0E0" : "F0F0F0"
-    pdf.fill_color bg_color
-    pdf.fill_rounded_rectangle [0, y], CARD_WIDTH, panel_h, 4
-    pdf.fill_color "000000"
+    # Column headers
+    col_labels.each_with_index do |label, i|
+      x = label_w + gap + i * (data_col_w + gap)
+      pdf.text_box label, at: [x, y], width: data_col_w, height: header_h,
+                   size: 11, style: :bold, align: :center, valign: :bottom
+    end
+    y -= header_h + gap
 
-    # Thin border
-    pdf.line_width = 0.5
-    pdf.stroke_rounded_rectangle [0, y], CARD_WIDTH, panel_h, 4
+    # Pre-Event row
+    render_grid_row(pdf, row_labels[0], y, label_w, data_col_w, cell_h, gap)
+    y -= cell_h + gap
 
-    # Label text inside panel
-    label_size = bold ? 16 : 14
-    label_style = bold ? :bold : :normal
-    pdf.text_box label, at: [10, y - 8], width: CARD_WIDTH - 20,
-                 size: label_size, style: label_style
+    # Day-Of row
+    render_grid_row(pdf, row_labels[1], y, label_w, data_col_w, cell_h, gap)
+    y -= cell_h + 6
 
-    # Right-aligned fill line
-    line_w = 150
-    line_x = CARD_WIDTH - line_w - 10
-    line_y = y - 38
-    pdf.line_width = bold ? 1.5 : 0.75
-    pdf.stroke { pdf.line [line_x, line_y], [CARD_WIDTH - 10, line_y] }
+    # Horizontal divider
+    pdf.stroke_color "BBBBBB"
+    pdf.line_width = 1.0
+    pdf.stroke { pdf.line [label_w, y], [CARD_WIDTH, y] }
+    pdf.stroke_color "000000"
+    y -= 6
+
+    # Total row
+    render_grid_row(pdf, row_labels[2], y, label_w, data_col_w, cell_h, gap)
 
     pdf.line_width = 1
-    pdf.move_cursor_to y - panel_h - 10
   end
 
-  def escape_html(text)
-    text.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;")
+  def render_grid_row(pdf, label, y, label_w, col_w, cell_h, gap)
+    pdf.text_box label, at: [0, y], width: label_w, height: cell_h,
+                 size: 11, style: :bold, valign: :center
+
+    3.times do |i|
+      x = label_w + gap + i * (col_w + gap)
+
+      pdf.fill_color "F0F0F0"
+      pdf.fill_rounded_rectangle [x, y], col_w, cell_h, 4
+      pdf.fill_color "000000"
+
+      pdf.line_width = 0.5
+      pdf.stroke_rounded_rectangle [x, y], col_w, cell_h, 4
+    end
   end
 end

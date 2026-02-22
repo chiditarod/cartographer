@@ -316,20 +316,6 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
         />
       </div>
 
-      <div>
-        <label htmlFor="race-checkin-card-content" className="block text-sm font-medium text-gray-700 mb-1">
-          Check-in Card Content (Markdown)
-        </label>
-        <textarea
-          id="race-checkin-card-content"
-          value={form.checkin_card_content}
-          onChange={handleChange('checkin_card_content')}
-          rows={6}
-          className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          placeholder="## Heading&#10;Content with ___ blanks"
-        />
-      </div>
-
       <LocationPicker
         selectedIds={form.location_ids}
         onChange={(ids) => {
