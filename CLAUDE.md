@@ -111,18 +111,22 @@
 - E2E test CSV fixture at `e2e/test-data/teams.csv` for team import tests
 - When adding new API routes, E2E server must be restarted (kill ports 3099/5199) for new routes to be recognized
 - `csv` gem must be explicitly included in Gemfile (not a default gem in Ruby 3.4+)
-- `CheckinCardPdfService.call(race, teams, blank_count: 0)` — generates 2-up landscape LETTER PDF with logo, race name, team info, tilde divider (tear-off), and configurable markdown content
+- `CheckinCardPdfService.call(race, teams, blank_count: 0)` — generates 2-up landscape LETTER PDF with race name, team info, and 3×3 collection grid (Toiletries/Food/Money × Pre-Event/Day-Of/Total)
 - `GET /api/v1/races/:race_id/checkin_cards/export_pdf` — returns check-in card PDF; 422 if no teams assigned to routes
-- Race model has `checkin_card_content` text column with default Food Drive markdown — editable in race form textarea
-- Check-in card markdown renderer: `## Heading` → 18pt bold centered, `___` lines → stacked gray panels with right-aligned fill lines, `**bold ___**` → darker panel with bold label
+- Check-in card grid: grey rounded-rect input boxes, horizontal divider between Day-Of and Total rows; cell height auto-fills available space (capped at 110pt); boxes shrink vertically when team names are long
+- Check-in card header: race name (22pt bold centered), "Checkin Card" subtitle, then team name (24pt bold centered) and team number (20pt bold centered) — no instruction text
+- Race model still has `checkin_card_content` text column (DB field retained) but it is no longer rendered in the PDF; textarea removed from race form
 - Race model has `blank_checkin_cards` integer column (default 0) — separate from `blank_timecards_per_route`; controls spare blank check-in cards appended to PDF
 - `bulk_assign` controller uses `.select { |a| a.respond_to?(:permit) }` to handle empty arrays from Rails params
+- Route `notes` (text, nullable) — user-facing inline editable field for sorting notes; never rendered in any PDF export
+- `ClickToEditNotes` component (`frontend/src/components/ui/click-to-edit-notes.tsx`) — click-to-edit with textarea, Save/Cancel, Escape to cancel, Ctrl/Cmd+Enter to save; uses `testIdPrefix` prop for data-testid patterns
+- Notes appear in routes list (race page) and route drop cards (teams page) via `ClickToEditNotes`
 
 ## Commands
 
 - `bundle exec rspec` — Run all RSpec tests (233 tests, all passing, ~88% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
-- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (28 tests: 26 seeded + 2 fresh)
+- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (30 tests: 28 seeded + 2 fresh)
 - `cd e2e && npx playwright test --project=seeded` — Run only seeded E2E tests
 - `cd e2e && npx playwright test --project=fresh` — Run only fresh E2E tests

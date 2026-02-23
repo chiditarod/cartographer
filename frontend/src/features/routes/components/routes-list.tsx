@@ -6,10 +6,11 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Spinner } from '@/components/ui/spinner';
 import { Badge } from '@/components/ui/badge';
 import { LegDistanceStrip } from '@/features/routes/components/leg-distance-strip';
+import { ClickToEditNotes } from '@/components/ui/click-to-edit-notes';
 import { abbreviateLocation } from '@/utils/location';
 import type { RouteSummary } from '@/types/api';
 
-type SortKey = 'selected' | 'name' | 'distance' | 'leg_count' | 'rarity_score';
+type SortKey = 'selected' | 'name' | 'distance' | 'rarity_score';
 type SortDir = 'asc' | 'desc';
 
 interface RoutesListProps {
@@ -46,9 +47,6 @@ function sortRoutes(routes: RouteSummary[], key: SortKey | null, dir: SortDir, s
       }
       case 'distance':
         cmp = a.distance - b.distance;
-        break;
-      case 'leg_count':
-        cmp = a.leg_count - b.leg_count;
         break;
       case 'rarity_score': {
         const aScore = a.rarity_score ?? -1;
@@ -94,7 +92,7 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
 
   const selectable = selectedIds !== undefined && onSelectionChange !== undefined;
   const allSelected = selectable && routes.length > 0 && routes.every((r) => selectedIds.has(r.id));
-  const colSpan = selectable ? 6 : 5;
+  const colSpan = selectable ? 5 : 4;
 
   const toggleRoute = (id: number) => {
     if (!onSelectionChange || !selectedIds) return;
@@ -160,21 +158,18 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
             <th className={thClass} onClick={() => handleSort('distance')}>
               Distance<SortIndicator sortKey="distance" current={sortKey} direction={sortDir} />
             </th>
-            <th className={thClass} onClick={() => handleSort('leg_count')}>
-              Legs<SortIndicator sortKey="leg_count" current={sortKey} direction={sortDir} />
-            </th>
             <th className={thClass} onClick={() => handleSort('rarity_score')}>
               Rarity<SortIndicator sortKey="rarity_score" current={sortKey} direction={sortDir} />
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
+              Notes
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {sortedRoutes.map((route) => (
+        <tbody className="bg-white">
+          {sortedRoutes.map((route, idx) => (
             <React.Fragment key={route.id}>
-              <tr>
+              <tr className={idx > 0 ? 'border-t border-gray-200' : ''}>
                 {selectable && (
                   <td className="w-10 px-3 py-4">
                     <input
@@ -186,26 +181,28 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
                     />
                   </td>
                 )}
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {route.name || `Route #${route.id}`}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {route.distance} {route.distance_unit}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {route.leg_count} / {route.target_leg_count}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {route.rarity_score !== null ? route.rarity_score : '—'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <Link
                     id={`view-route-${route.id}`}
                     to={`/races/${raceId}/routes/${route.id}`}
                     className="text-indigo-600 hover:text-indigo-900"
                   >
-                    View
+                    {route.name || `Route #${route.id}`}
                   </Link>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {route.distance} {route.distance_unit}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {route.rarity_score !== null ? route.rarity_score : '—'}
+                </td>
+                <td className="px-6 py-4 text-sm">
+                  <ClickToEditNotes
+                    raceId={raceId}
+                    routeId={route.id}
+                    notes={route.notes}
+                    testIdPrefix="route-notes"
+                  />
                 </td>
               </tr>
               {route.location_sequence.length > 0 && (

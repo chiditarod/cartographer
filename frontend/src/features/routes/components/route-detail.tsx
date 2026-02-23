@@ -1,12 +1,9 @@
-import { useState, type FormEvent } from 'react';
-
 import type { RouteDetail as RouteDetailType } from '@/types/api';
 import { Card, CardHeader, CardBody } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ClickToEditName } from '@/components/ui/click-to-edit-name';
 import { RouteMap } from '@/features/routes/components/route-map';
 import { LegDistanceStrip } from '@/features/routes/components/leg-distance-strip';
-import { useUpdateRoute } from '@/features/routes/api/update-route';
 
 interface RouteDetailProps {
   route: RouteDetailType;
@@ -14,14 +11,6 @@ interface RouteDetailProps {
 }
 
 export function RouteDetail({ route, raceId }: RouteDetailProps) {
-  const [name, setName] = useState(route.name ?? '');
-  const updateRoute = useUpdateRoute();
-
-  const handleSaveName = (e: FormEvent) => {
-    e.preventDefault();
-    updateRoute.mutate({ raceId, routeId: route.id, data: { name } });
-  };
-
   const handleExportCsv = () => {
     const blob = new Blob([route.csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -51,7 +40,13 @@ export function RouteDetail({ route, raceId }: RouteDetailProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <h2 id="route-name" className="text-lg font-semibold text-gray-900">
-              {route.name || `Route #${route.id}`}
+              <ClickToEditName
+                raceId={raceId}
+                routeId={route.id}
+                name={route.name}
+                fallback={`Route #${route.id}`}
+                testIdPrefix="route-name"
+              />
             </h2>
             <div className="flex gap-2">
               <Button id="route-download-pdf-btn" variant="secondary" size="sm" onClick={handleExportPdf}>
@@ -64,38 +59,12 @@ export function RouteDetail({ route, raceId }: RouteDetailProps) {
           </div>
         </CardHeader>
         <CardBody>
-          <form id="route-name-form" onSubmit={handleSaveName} className="flex items-end gap-3 mb-6">
-            <div className="flex-1">
-              <Input
-                id="route-name-input"
-                label="Route Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter a name for this route"
-              />
-            </div>
-            <Button id="route-save-btn" type="submit" size="sm" loading={updateRoute.isPending}>
-              Save
-            </Button>
-          </form>
 
           <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             <div>
               <dt className="text-sm font-medium text-gray-500">Total Distance</dt>
               <dd className="mt-1 text-sm text-gray-900">
                 {route.distance} {route.distance_unit}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Legs</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {route.leg_count} / {route.target_leg_count}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Complete</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {route.complete ? 'Yes' : 'No'}
               </dd>
             </div>
           </dl>

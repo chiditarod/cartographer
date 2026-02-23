@@ -142,6 +142,7 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
               onClick={handleGeocodeLocations}
               loading={geocodeLocations.isPending}
               disabled={isAnyRunning || !race}
+              title="Add GPS coordinates to all locations (run this after adding any new locations)"
             >
               Geocode Locations
             </Button>
@@ -150,6 +151,7 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
               onClick={handleGenerateLegs}
               loading={generateLegs.isPending}
               disabled={isAnyRunning}
+              title="Build out legs between all locations (run this after adding any new locations)"
             >
               Generate Legs
             </Button>
@@ -158,6 +160,7 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
               onClick={handleGenerateRoutes}
               loading={generateRoutes.isPending}
               disabled={isAnyRunning}
+              title="Run the route generation algorithm"
             >
               Generate Routes
             </Button>
@@ -166,6 +169,7 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
               onClick={handleRankRoutes}
               loading={rankRoutes.isPending}
               disabled={isAnyRunning}
+              title="Rank each route in terms of checkpoint-at-location rarity"
             >
               Rank Routes
             </Button>
@@ -173,6 +177,7 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
               id="btn-auto-select"
               onClick={() => setShowAutoSelect(true)}
               disabled={isAnyRunning || completeRouteCount === 0}
+              title="Select the best distribution of checkpoints & locations"
             >
               Auto-Select
             </Button>
@@ -182,6 +187,7 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
                 variant="danger"
                 onClick={() => setShowDeleteAllRoutes(true)}
                 disabled={isAnyRunning}
+                title="Delete all routes for this race"
               >
                 Delete All Routes
               </Button>

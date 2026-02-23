@@ -12,6 +12,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { Modal } from '@/components/ui/modal';
 import { Notification } from '@/components/ui/notification';
 import { formatMutationError } from '@/utils/format';
+import { ClickToEditName } from '@/components/ui/click-to-edit-name';
+import { ClickToEditNotes } from '@/components/ui/click-to-edit-notes';
 import { abbreviateLocation, buildLocationColorMap } from '@/utils/location';
 import type { Team, RouteSummary } from '@/types/api';
 
@@ -488,6 +490,7 @@ export function TeamsRoute() {
             {completeRoutes.map((route) => (
               <RouteDropCard
                 key={route.id}
+                raceId={raceId}
                 route={route}
                 teams={teamsForRoute(route.id)}
                 showDistance={showDistance}
@@ -513,6 +516,7 @@ export function TeamsRoute() {
 }
 
 interface RouteDropCardProps {
+  raceId: number;
   route: RouteSummary;
   teams: Team[];
   showDistance: boolean;
@@ -525,6 +529,7 @@ interface RouteDropCardProps {
 }
 
 function RouteDropCard({
+  raceId,
   route,
   teams,
   showDistance,
@@ -546,17 +551,25 @@ function RouteDropCard({
       className="bg-white rounded-lg border-2 border-dashed border-gray-200 p-3 min-h-[120px] hover:border-indigo-300 transition-colors"
       data-testid={`route-drop-${route.id}`}
     >
-      <h4 className="text-sm font-semibold text-gray-900 mb-2">
-        {route.name || `Route #${route.id}`}
-        <span className="ml-2 text-xs font-normal text-gray-500">
+      <div className="flex items-center gap-2 mb-2">
+        <h4 className="text-sm font-semibold text-gray-900">
+          <ClickToEditName
+            raceId={raceId}
+            routeId={route.id}
+            name={route.name}
+            fallback={`Route #${route.id}`}
+            testIdPrefix="route-card-name"
+          />
+        </h4>
+        <span className="text-xs text-gray-500">
           ({teams.length} team{teams.length !== 1 ? 's' : ''})
         </span>
         {showDistance && distanceDisplay && (
-          <span className="ml-2 text-xs font-normal text-gray-500">
+          <span className="text-xs text-gray-500">
             &middot; {distanceDisplay}
           </span>
         )}
-      </h4>
+      </div>
       {showPath && route.location_sequence.length > 0 && (
         <div className="flex flex-wrap items-center gap-0.5 mb-2">
           {route.location_sequence.map((loc, i) => (
@@ -569,6 +582,14 @@ function RouteDropCard({
           ))}
         </div>
       )}
+      <div className="mb-2">
+        <ClickToEditNotes
+          raceId={raceId}
+          routeId={route.id}
+          notes={route.notes}
+          testIdPrefix="route-card-notes"
+        />
+      </div>
       <div className="space-y-1">
         {teams
           .sort((a, b) => a.bib_number - b.bib_number)

@@ -29,18 +29,6 @@ RSpec.describe CheckinCardPdfService do
     expect(pdf_data).to start_with('%PDF')
   end
 
-  it 'works with a logo' do
-    race.logo.attach(
-      io: StringIO.new(File.binread(Rails.root.join('public', 'mock-route-map.png'))),
-      filename: 'logo.png',
-      content_type: 'image/png'
-    )
-    FactoryBot.create(:team, race: race, route: route, bib_number: 1)
-
-    pdf_data = CheckinCardPdfService.call(race, race.teams.where.not(route_id: nil))
-    expect(pdf_data).to start_with('%PDF')
-  end
-
   it 'adds spare blank cards' do
     FactoryBot.create(:team, race: race, route: route, bib_number: 1)
 
@@ -50,8 +38,7 @@ RSpec.describe CheckinCardPdfService do
     expect(page_count).to eq(2) # 3 cards (1 team + 2 blanks) = 2 pages
   end
 
-  it 'renders custom checkin_card_content' do
-    race.update!(checkin_card_content: "## Custom Heading\n\nSome content here")
+  it 'renders collection grid' do
     FactoryBot.create(:team, race: race, route: route, bib_number: 1)
 
     pdf_data = CheckinCardPdfService.call(race, race.teams.where.not(route_id: nil))
