@@ -5,7 +5,7 @@ module Api
     class TeamsController < BaseController
       def index
         race = Race.find(params[:race_id])
-        teams = race.teams.includes(:route).order(:bib_number)
+        teams = race.teams.includes(:route).order(:dogtag_id)
         render json: teams.map { |t| serialize_team(t) }
       end
 
@@ -62,21 +62,30 @@ module Api
           end
         end
 
-        teams = race.teams.includes(:route).order(:bib_number)
+        teams = race.teams.includes(:route).order(:dogtag_id)
+        render json: teams.map { |t| serialize_team(t) }
+      end
+
+      def clear_bibs
+        race = Race.find(params[:race_id])
+        race.teams.update_all(bib_number: nil)
+        teams = race.teams.includes(:route).order(:dogtag_id)
         render json: teams.map { |t| serialize_team(t) }
       end
 
       private
 
       def team_params
-        params.require(:team).permit(:name, :bib_number, :route_id)
+        params.require(:team).permit(:name, :dogtag_id, :bib_number, :route_id)
       end
 
       def serialize_team(t)
         {
           id: t.id,
           name: t.name,
+          dogtag_id: t.dogtag_id,
           bib_number: t.bib_number,
+          display_number: t.display_number,
           race_id: t.race_id,
           route_id: t.route_id,
           route_name: t.route&.name

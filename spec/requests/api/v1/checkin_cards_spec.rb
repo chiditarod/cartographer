@@ -8,7 +8,7 @@ RSpec.describe 'Api::V1::CheckinCards', type: :request do
     let(:race) { route.race }
 
     it 'returns a PDF when teams are assigned' do
-      FactoryBot.create(:team, race: race, route: route, bib_number: 1)
+      FactoryBot.create(:team, race: race, route: route, dogtag_id: 1)
 
       get "/api/v1/races/#{race.id}/checkin_cards/export_pdf"
       expect(response).to have_http_status(:ok)
@@ -24,7 +24,7 @@ RSpec.describe 'Api::V1::CheckinCards', type: :request do
     end
 
     it 'returns 422 when teams exist but none are assigned to routes' do
-      FactoryBot.create(:team, race: race, bib_number: 1) # no route
+      FactoryBot.create(:team, race: race, dogtag_id: 1) # no route
 
       get "/api/v1/races/#{race.id}/checkin_cards/export_pdf"
       expect(response).to have_http_status(:unprocessable_entity)

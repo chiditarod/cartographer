@@ -5,11 +5,19 @@ class Team < ApplicationRecord
   belongs_to :route, optional: true
 
   validates :name, presence: true
-  validates :bib_number, presence: true,
+  validates :dogtag_id, presence: true,
     numericality: { only_integer: true, greater_than: 0 },
     uniqueness: { scope: :race_id }
+  validates :bib_number,
+    numericality: { only_integer: true, greater_than: 0 },
+    uniqueness: { scope: :race_id, allow_nil: true },
+    allow_nil: true
 
   validate :route_belongs_to_race
+
+  def display_number
+    bib_number || dogtag_id
+  end
 
   private
 

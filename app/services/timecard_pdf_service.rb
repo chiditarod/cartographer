@@ -52,7 +52,7 @@ class TimecardPdfService
     sorted_routes = by_route.keys.sort_by { |r| r.name || "Route ##{r.id}" }
 
     sorted_routes.each do |route|
-      teams = by_route[route].sort_by { |p| p[:team].bib_number }
+      teams = by_route[route].sort_by { |p| p[:team].dogtag_id }
       teams.each do |pair|
         cards << { team: pair[:team], route: route, blank: false }
       end
@@ -89,7 +89,7 @@ class TimecardPdfService
     # Team info
     if team
       pdf.text team.name, size: 18, style: :bold
-      pdf.text "Team ##{team.bib_number}", size: 14, style: :bold
+      pdf.text "Team ##{team.display_number}", size: 14, style: :bold
     else
       # Blank team name fill line
       y = pdf.cursor

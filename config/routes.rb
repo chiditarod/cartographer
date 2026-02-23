@@ -16,6 +16,7 @@ Rails.application.routes.draw do
           collection do
             post 'import_csv'
             post 'bulk_assign'
+            post 'clear_bibs'
           end
         end
         get 'timecards/export_pdf', to: 'timecards#export_pdf'

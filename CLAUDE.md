@@ -92,19 +92,22 @@
 - `SelectionFrequencyMatrix` is wrapped in a `sticky top-0 z-20` container with opaque `bg-gray-50` background so it stays visible while scrolling routes
 - Matrix table has `max-h-[40vh] overflow-y-auto` to prevent dominating viewport with many locations
 - For sticky positioning: ancestor elements with `overflow: auto/hidden/scroll` create containing blocks — the sticky element sticks relative to the nearest scrolling ancestor, not the viewport
-- `Team` model: `belongs_to :race`, `belongs_to :route, optional: true` — unique bib_number scoped to race, custom validation that route belongs to same race
+- `Team` model: `belongs_to :race`, `belongs_to :route, optional: true` — unique `dogtag_id` scoped to race (required, from CSV import), optional `bib_number` (user-assigned, unique when set), custom validation that route belongs to same race
+- `Team#display_number` returns `bib_number || dogtag_id` — used in all UI badges and PDF renderings
 - `Route` model has `has_many :teams, dependent: :nullify` — deleting a route unassigns its teams rather than destroying them
-- `TeamCsvImporter.call(race, csv_text)` — auto-detects `number` and `name` columns (case-insensitive), upserts by bib_number, returns `{ imported:, skipped:, total: }`
-- CSV import uses `find_or_initialize_by(bib_number:)` for upsert — re-importing updates names for existing bibs
+- `TeamCsvImporter.call(race, csv_text)` — auto-detects `number` and `name` columns (case-insensitive), upserts by `dogtag_id`, returns `{ imported:, skipped:, total: }`
+- CSV import uses `find_or_initialize_by(dogtag_id:)` for upsert — re-importing updates names for existing dogtag_ids
+- `POST /api/v1/races/:race_id/teams/clear_bibs` — sets `bib_number = nil` for all teams in a race, returns updated teams
 - `TeamsController` follows same patterns as RoutesController: `params[:id] == 'all'` for delete-all, nested under races
 - `POST /api/v1/races/:race_id/teams/bulk_assign` with `{ assignments: [{ team_id:, route_id: }] }` — clears all assignments first, then applies new ones in a transaction
-- `TimecardPdfService.call(race, team_route_pairs, blank_count_per_route: 0)` — generates 2-up LETTER landscape PDF; cards sorted by route name then bib number; spare blanks appended per route
+- `TimecardPdfService.call(race, team_route_pairs, blank_count_per_route: 0)` — generates 2-up LETTER landscape PDF; cards sorted by route name then dogtag_id; uses `team.display_number` for team # labels; spare blanks appended per route
 - `GET /api/v1/races/:race_id/timecards/export_pdf` — returns 422 if no teams assigned to routes
 - Race serialization includes `team_count` and `blank_timecards_per_route` fields
 - Race form includes "Spare Timecards Per Route" field (4-column grid row with num_stops, max_teams, people_per_team)
 - Teams page at `/races/:id/teams` — CSV upload, drag-and-drop team assignment board, bulk assign dropdown, PDF generation; only shows routes that are `selected` on the race page (not all complete routes)
 - Teams page has Distance and Path toggle switches (`#toggle-show-distance`, `#toggle-show-path`) that show route distance and location badge arrow path inside each route drop card
-- Teams page Auto-Assign button (`#auto-assign-btn`) opens confirmation modal, then round-robin distributes all teams (sorted by bib_number) across selected routes; confirm button is `#confirm-auto-assign`
+- Teams page Auto-Assign button (`#auto-assign-btn`) opens confirmation modal, then round-robin distributes all teams (sorted by dogtag_id) across selected routes; confirm button is `#confirm-auto-assign`
+- Teams page "Team Bib #s" button (`#team-bibs-btn`) opens modal to assign custom bib numbers; Enter saves and advances to next row; `#clear-all-bibs-btn` resets all bib numbers to null
 - Teams page uses native HTML5 DnD API (no extra dependencies) — `draggable`, `onDragStart/Over/Drop`
 - Race page header has "Teams" button (id=`teams-link`) with team count badge
 - E2E reset endpoint clears `Team.delete_all` before other destroys
@@ -124,7 +127,7 @@
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (233 tests, all passing, ~88% coverage)
+- `bundle exec rspec` — Run all RSpec tests (244 tests, all passing, ~88% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
 - `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (30 tests: 28 seeded + 2 fresh)

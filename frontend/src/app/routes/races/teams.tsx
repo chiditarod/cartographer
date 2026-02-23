@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useRace } from '@/features/races/api/get-race';
 import { useRoutes } from '@/features/routes/api/get-routes';
@@ -6,6 +6,8 @@ import { useTeams } from '@/features/teams/api/get-teams';
 import { useImportTeamsCsv } from '@/features/teams/api/import-teams-csv';
 import { useBulkAssignTeams } from '@/features/teams/api/bulk-assign-teams';
 import { useDeleteTeam } from '@/features/teams/api/delete-team';
+import { useUpdateTeam } from '@/features/teams/api/update-team';
+import { useClearTeamBibs } from '@/features/teams/api/clear-team-bibs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
@@ -26,12 +28,15 @@ export function TeamsRoute() {
   const importCsvMutation = useImportTeamsCsv(raceId);
   const bulkAssignMutation = useBulkAssignTeams(raceId);
   const deleteTeamMutation = useDeleteTeam(raceId);
+  const updateTeamMutation = useUpdateTeam(raceId);
+  const clearBibsMutation = useClearTeamBibs(raceId);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [notification, setNotification] = useState<string | null>(null);
   const [notificationVariant, setNotificationVariant] = useState<'success' | 'error'>('success');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAutoAssignModal, setShowAutoAssignModal] = useState(false);
+  const [showBibModal, setShowBibModal] = useState(false);
   const [dragTeamId, setDragTeamId] = useState<number | null>(null);
   const [bulkAssignRouteId, setBulkAssignRouteId] = useState<string>('');
   const [selectedTeamIds, setSelectedTeamIds] = useState<Set<number>>(new Set());
@@ -172,7 +177,7 @@ export function TeamsRoute() {
     // Only distribute unassigned teams (or teams assigned to non-selected routes)
     const toAssign = teamList
       .filter((t) => !t.route_id || !routeIds.includes(t.route_id))
-      .sort((a, b) => a.bib_number - b.bib_number);
+      .sort((a, b) => a.dogtag_id - b.dogtag_id);
 
     if (toAssign.length === 0) {
       setShowAutoAssignModal(false);
@@ -323,6 +328,15 @@ export function TeamsRoute() {
         </div>
       </Modal>
 
+      <BibNumberModal
+        open={showBibModal}
+        onClose={() => setShowBibModal(false)}
+        teams={teamList}
+        updateTeamMutation={updateTeamMutation}
+        clearBibsMutation={clearBibsMutation}
+        onNotify={notify}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -337,6 +351,16 @@ export function TeamsRoute() {
           </h1>
         </div>
         <div className="flex items-center gap-4">
+          {teamList.length > 0 && (
+            <Button
+              id="team-bibs-btn"
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowBibModal(true)}
+            >
+              Team Bib #s
+            </Button>
+          )}
           <div className="flex items-center gap-1.5">
             <button
               id="toggle-show-distance"
@@ -520,7 +544,7 @@ export function TeamsRoute() {
                       className="rounded border-gray-300"
                     />
                     <span className="inline-flex items-center justify-center w-8 h-6 rounded bg-indigo-100 text-indigo-800 text-xs font-bold">
-                      {team.bib_number}
+                      {team.display_number}
                     </span>
                     <span className="text-sm text-gray-900 truncate">{team.name}</span>
                   </div>
@@ -559,6 +583,152 @@ export function TeamsRoute() {
       )}
 
     </div>
+  );
+}
+
+interface BibNumberModalProps {
+  open: boolean;
+  onClose: () => void;
+  teams: Team[];
+  updateTeamMutation: ReturnType<typeof useUpdateTeam>;
+  clearBibsMutation: ReturnType<typeof useClearTeamBibs>;
+  onNotify: (msg: string, variant?: 'success' | 'error') => void;
+}
+
+function BibNumberModal({
+  open,
+  onClose,
+  teams,
+  updateTeamMutation,
+  clearBibsMutation,
+  onNotify,
+}: BibNumberModalProps) {
+  const [bibValues, setBibValues] = useState<Record<number, string>>({});
+  const inputRefs = useRef<Map<number, HTMLInputElement>>(new Map());
+  const sortedTeams = useMemo(
+    () => [...teams].sort((a, b) => a.dogtag_id - b.dogtag_id),
+    [teams],
+  );
+
+  // Sync bibValues with teams data when modal opens or teams change
+  useEffect(() => {
+    if (open) {
+      const values: Record<number, string> = {};
+      teams.forEach((t) => {
+        values[t.id] = t.bib_number != null ? String(t.bib_number) : '';
+      });
+      setBibValues(values);
+    }
+  }, [open, teams]);
+
+  const handleSaveBib = (teamId: number, index: number) => {
+    const raw = bibValues[teamId]?.trim() ?? '';
+    const newBib = raw === '' ? null : Number(raw);
+
+    // Validate
+    if (newBib !== null && (isNaN(newBib) || newBib <= 0 || !Number.isInteger(newBib))) {
+      onNotify('Bib # must be a positive integer', 'error');
+      return;
+    }
+
+    const team = teams.find((t) => t.id === teamId);
+    if (!team) return;
+
+    // Skip save if unchanged
+    if (newBib === team.bib_number) {
+      // Just advance focus
+      const nextTeam = sortedTeams[index + 1];
+      if (nextTeam) inputRefs.current.get(nextTeam.id)?.focus();
+      return;
+    }
+
+    updateTeamMutation.mutate(
+      { teamId, bib_number: newBib },
+      {
+        onSuccess: () => {
+          const nextTeam = sortedTeams[index + 1];
+          if (nextTeam) inputRefs.current.get(nextTeam.id)?.focus();
+        },
+        onError: (err) => {
+          onNotify(formatMutationError(err) ?? 'Failed to update bib number', 'error');
+        },
+      },
+    );
+  };
+
+  const handleClearAll = () => {
+    clearBibsMutation.mutate(undefined, {
+      onSuccess: () => {
+        onNotify('All bib numbers cleared.');
+      },
+      onError: (err) => {
+        onNotify(formatMutationError(err) ?? 'Failed to clear bib numbers', 'error');
+      },
+    });
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Team Bib #s">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            Assign custom bib numbers to teams. Press Enter to save and advance.
+          </p>
+          <Button
+            id="clear-all-bibs-btn"
+            variant="danger"
+            size="sm"
+            loading={clearBibsMutation.isPending}
+            onClick={handleClearAll}
+          >
+            Clear all Bib #s
+          </Button>
+        </div>
+
+        <div className="max-h-[60vh] overflow-y-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-white border-b border-gray-200">
+              <tr>
+                <th className="text-left py-2 px-2 font-medium text-gray-700">Team Name</th>
+                <th className="text-left py-2 px-2 font-medium text-gray-700 w-20">ID</th>
+                <th className="text-left py-2 px-2 font-medium text-gray-700 w-24">Bib #</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedTeams.map((team, index) => (
+                <tr key={team.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="py-1.5 px-2 text-gray-900">{team.name}</td>
+                  <td className="py-1.5 px-2 text-gray-500">{team.dogtag_id}</td>
+                  <td className="py-1.5 px-2">
+                    <input
+                      ref={(el) => {
+                        if (el) inputRefs.current.set(team.id, el);
+                        else inputRefs.current.delete(team.id);
+                      }}
+                      data-testid={`bib-input-${team.id}`}
+                      type="text"
+                      inputMode="numeric"
+                      value={bibValues[team.id] ?? ''}
+                      onChange={(e) =>
+                        setBibValues((prev) => ({ ...prev, [team.id]: e.target.value }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSaveBib(team.id, index);
+                        }
+                      }}
+                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="-"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -639,7 +809,7 @@ function RouteDropCard({
       </div>
       <div className="space-y-1">
         {teams
-          .sort((a, b) => a.bib_number - b.bib_number)
+          .sort((a, b) => a.dogtag_id - b.dogtag_id)
           .map((team) => (
             <div
               key={team.id}
@@ -649,7 +819,7 @@ function RouteDropCard({
             >
               <div className="flex items-center gap-1.5">
                 <span className="inline-flex items-center justify-center w-7 h-5 rounded bg-indigo-200 text-indigo-800 text-xs font-bold">
-                  {team.bib_number}
+                  {team.display_number}
                 </span>
                 <span className="text-xs text-gray-800 truncate">{team.name}</span>
               </div>

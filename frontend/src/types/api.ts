@@ -105,7 +105,9 @@ export interface JobStatus {
 export interface Team {
   id: number;
   name: string;
-  bib_number: number;
+  dogtag_id: number;
+  bib_number: number | null;
+  display_number: number;
   race_id: number;
   route_id: number | null;
   route_name: string | null;

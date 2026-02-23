@@ -38,7 +38,7 @@ class TeamCsvImporter
         next
       end
 
-      team = @race.teams.find_or_initialize_by(bib_number: bib)
+      team = @race.teams.find_or_initialize_by(dogtag_id: bib)
       team.name = name
       team.save!
       imported += 1
