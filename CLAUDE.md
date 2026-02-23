@@ -113,7 +113,8 @@
 - `csv` gem must be explicitly included in Gemfile (not a default gem in Ruby 3.4+)
 - `CheckinCardPdfService.call(race, teams, blank_count: 0)` — generates 2-up landscape LETTER PDF with race name, team info, and 3×3 collection grid (Toiletries/Food/Money × Pre-Event/Day-Of/Total)
 - `GET /api/v1/races/:race_id/checkin_cards/export_pdf` — returns check-in card PDF; 422 if no teams assigned to routes
-- Check-in card grid: grey rounded-rect input boxes, horizontal divider between Day-Of and Total rows; cell height auto-fills available space (capped at 110pt)
+- Check-in card grid: grey rounded-rect input boxes, horizontal divider between Day-Of and Total rows; cell height auto-fills available space (capped at 110pt); boxes shrink vertically when team names are long
+- Check-in card header: race name (22pt bold centered), "Checkin Card" subtitle, then team name (24pt bold centered) and team number (20pt bold centered) — no instruction text
 - Race model still has `checkin_card_content` text column (DB field retained) but it is no longer rendered in the PDF; textarea removed from race form
 - Race model has `blank_checkin_cards` integer column (default 0) — separate from `blank_timecards_per_route`; controls spare blank check-in cards appended to PDF
 - `bulk_assign` controller uses `.select { |a| a.respond_to?(:permit) }` to handle empty arrays from Rails params
