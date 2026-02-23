@@ -334,6 +334,7 @@ export function TeamsRoute() {
         teams={teamList}
         updateTeamMutation={updateTeamMutation}
         clearBibsMutation={clearBibsMutation}
+        deleteTeamMutation={deleteTeamMutation}
         onNotify={notify}
       />
 
@@ -592,6 +593,7 @@ interface BibNumberModalProps {
   teams: Team[];
   updateTeamMutation: ReturnType<typeof useUpdateTeam>;
   clearBibsMutation: ReturnType<typeof useClearTeamBibs>;
+  deleteTeamMutation: ReturnType<typeof useDeleteTeam>;
   onNotify: (msg: string, variant?: 'success' | 'error') => void;
 }
 
@@ -601,32 +603,53 @@ function BibNumberModal({
   teams,
   updateTeamMutation,
   clearBibsMutation,
+  deleteTeamMutation,
   onNotify,
 }: BibNumberModalProps) {
   const [bibValues, setBibValues] = useState<Record<number, string>>({});
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const inputRefs = useRef<Map<number, HTMLInputElement>>(new Map());
+  // Track pending auto-populated values that should not be overwritten by query refresh
+  const pendingAutoValues = useRef<Record<number, string>>({});
   const sortedTeams = useMemo(
     () => [...teams].sort((a, b) => a.dogtag_id - b.dogtag_id),
     [teams],
   );
 
-  // Sync bibValues with teams data when modal opens or teams change
+  // Sync bibValues with teams data when modal opens or teams refresh
   useEffect(() => {
     if (open) {
       const values: Record<number, string> = {};
       teams.forEach((t) => {
-        values[t.id] = t.bib_number != null ? String(t.bib_number) : '';
+        // Preserve pending auto-populated values over server state
+        if (pendingAutoValues.current[t.id] !== undefined) {
+          values[t.id] = pendingAutoValues.current[t.id];
+        } else {
+          values[t.id] = t.bib_number != null ? String(t.bib_number) : '';
+        }
       });
       setBibValues(values);
     }
   }, [open, teams]);
+
+  // Reset selection and pending values when modal closes
+  useEffect(() => {
+    if (!open) {
+      setSelectedIds(new Set());
+      setShowDeleteConfirm(false);
+      pendingAutoValues.current = {};
+    }
+  }, [open]);
 
   const advanceToNext = (index: number, savedBib: number | null) => {
     const nextTeam = sortedTeams[index + 1];
     if (nextTeam) {
       // Auto-populate next row with saved value + 1
       if (savedBib !== null) {
-        setBibValues((prev) => ({ ...prev, [nextTeam.id]: String(savedBib + 1) }));
+        const nextVal = String(savedBib + 1);
+        pendingAutoValues.current[nextTeam.id] = nextVal;
+        setBibValues((prev) => ({ ...prev, [nextTeam.id]: nextVal }));
       }
       // Focus and select the next input
       const nextInput = inputRefs.current.get(nextTeam.id);
@@ -640,6 +663,9 @@ function BibNumberModal({
   const handleSaveBib = (teamId: number, index: number) => {
     const raw = bibValues[teamId]?.trim() ?? '';
     const newBib = raw === '' ? null : Number(raw);
+
+    // Clear pending auto-value for this team since user is saving it
+    delete pendingAutoValues.current[teamId];
 
     // Validate
     if (newBib !== null && (isNaN(newBib) || newBib <= 0 || !Number.isInteger(newBib))) {
@@ -670,6 +696,7 @@ function BibNumberModal({
   };
 
   const handleClearAll = () => {
+    pendingAutoValues.current = {};
     clearBibsMutation.mutate(undefined, {
       onSuccess: () => {
         onNotify('All bib numbers cleared.');
@@ -680,6 +707,53 @@ function BibNumberModal({
     });
   };
 
+  const toggleSelect = (teamId: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(teamId)) next.delete(teamId);
+      else next.add(teamId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sortedTeams.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedTeams.map((t) => t.id)));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    const ids = Array.from(selectedIds);
+    let completed = 0;
+    let failed = 0;
+
+    ids.forEach((teamId) => {
+      deleteTeamMutation.mutate(teamId, {
+        onSuccess: () => {
+          completed++;
+          if (completed + failed === ids.length) {
+            setSelectedIds(new Set());
+            setShowDeleteConfirm(false);
+            onNotify(`Deleted ${completed} team${completed !== 1 ? 's' : ''}.`);
+          }
+        },
+        onError: () => {
+          failed++;
+          if (completed + failed === ids.length) {
+            setSelectedIds(new Set());
+            setShowDeleteConfirm(false);
+            onNotify(
+              `Deleted ${completed} team${completed !== 1 ? 's' : ''}, ${failed} failed.`,
+              failed > 0 ? 'error' : 'success',
+            );
+          }
+        },
+      });
+    });
+  };
+
   return (
     <Modal open={open} onClose={onClose} title="Team Details">
       <div className="space-y-4">
@@ -687,21 +761,67 @@ function BibNumberModal({
           <p className="text-sm text-gray-600">
             Assign custom bib numbers to teams. Press Enter to save and advance.
           </p>
-          <Button
-            id="clear-all-bibs-btn"
-            variant="danger"
-            size="sm"
-            loading={clearBibsMutation.isPending}
-            onClick={handleClearAll}
-          >
-            Clear all Bib #s
-          </Button>
+          <div className="flex items-center gap-2">
+            {selectedIds.size > 0 && (
+              <Button
+                id="delete-selected-teams-btn"
+                variant="danger"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                Delete ({selectedIds.size})
+              </Button>
+            )}
+            <Button
+              id="clear-all-bibs-btn"
+              variant="secondary"
+              size="sm"
+              loading={clearBibsMutation.isPending}
+              onClick={handleClearAll}
+            >
+              Clear all Bib #s
+            </Button>
+          </div>
         </div>
+
+        {showDeleteConfirm && (
+          <div className="bg-red-50 border border-red-200 rounded p-3 flex items-center justify-between">
+            <p className="text-sm text-red-800">
+              Delete {selectedIds.size} team{selectedIds.size !== 1 ? 's' : ''}? This cannot be undone.
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                id="confirm-delete-selected-teams"
+                variant="danger"
+                size="sm"
+                loading={deleteTeamMutation.isPending}
+                onClick={handleDeleteSelected}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="max-h-[60vh] overflow-y-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-white border-b border-gray-200">
               <tr>
+                <th className="py-2 px-2 w-8">
+                  <input
+                    type="checkbox"
+                    checked={sortedTeams.length > 0 && selectedIds.size === sortedTeams.length}
+                    onChange={toggleSelectAll}
+                    className="rounded border-gray-300"
+                  />
+                </th>
                 <th className="text-left py-2 px-2 font-medium text-gray-700">Team Name</th>
                 <th className="text-left py-2 px-2 font-medium text-gray-700 w-20">ID</th>
                 <th className="text-left py-2 px-2 font-medium text-gray-700 w-24">Bib #</th>
@@ -710,6 +830,14 @@ function BibNumberModal({
             <tbody>
               {sortedTeams.map((team, index) => (
                 <tr key={team.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="py-1.5 px-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(team.id)}
+                      onChange={() => toggleSelect(team.id)}
+                      className="rounded border-gray-300"
+                    />
+                  </td>
                   <td className="py-1.5 px-2 text-gray-900">{team.name}</td>
                   <td className="py-1.5 px-2 text-gray-500">{team.dogtag_id}</td>
                   <td className="py-1.5 px-2">
@@ -722,9 +850,11 @@ function BibNumberModal({
                       type="text"
                       inputMode="numeric"
                       value={bibValues[team.id] ?? ''}
-                      onChange={(e) =>
-                        setBibValues((prev) => ({ ...prev, [team.id]: e.target.value }))
-                      }
+                      onChange={(e) => {
+                        // User manually editing clears any pending auto-value
+                        delete pendingAutoValues.current[team.id];
+                        setBibValues((prev) => ({ ...prev, [team.id]: e.target.value }));
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
