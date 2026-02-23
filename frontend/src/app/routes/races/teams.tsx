@@ -955,6 +955,7 @@ function BibNumberModal({
                             e.preventDefault();
                             handleSaveName(team.id);
                           } else if (e.key === 'Escape') {
+                            e.stopPropagation();
                             setEditingNameId(null);
                           }
                         }}
