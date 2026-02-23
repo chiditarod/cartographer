@@ -57,6 +57,7 @@ export interface RouteSummary {
   name: string | null;
   race_id: number;
   complete: boolean;
+  custom: boolean;
   distance: number;
   distance_unit: 'mi' | 'km';
   leg_count: number;

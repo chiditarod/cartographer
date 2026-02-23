@@ -36,7 +36,11 @@ class Route < ApplicationRecord
   end
 
   def has_all_legs?
-    legs.size == target_leg_count
+    if custom?
+      legs.size >= 1 && legs.last.finish == race.finish
+    else
+      legs.size == target_leg_count
+    end
   end
 
   def target_leg_count
@@ -56,12 +60,14 @@ class Route < ApplicationRecord
   end
 
   def validate_leg_count
+    return if custom?
     unless legs.size == target_leg_count
       errors.add(:legs, "This race requires a route to have exactly #{race.num_stops + 1} legs (currently #{legs.size} legs)")
     end
   end
 
   def validate_finish_not_used_until_end
+    return if custom?
     return unless legs.size < target_leg_count
 
     if legs.map(&:finish).include?(race.finish)
@@ -70,7 +76,7 @@ class Route < ApplicationRecord
   end
 
   def validate_finish_is_at_end
-    return unless legs.size == target_leg_count
+    return unless has_all_legs?
 
     unless legs.last.finish == race.finish
       errors.add(:legs, "The last leg needs to finish at: #{race.finish}. Currently: #{legs.last.finish}")
@@ -78,6 +84,7 @@ class Route < ApplicationRecord
   end
 
   def validate_route_length
+    return if custom?
     total = legs.map(&:distance).reduce(&:+) || 0
     if total < race.min_total_distance_m
       errors.add(:legs, "Route length is too short (#{Distances.m_to_s(total, race.distance_unit)} < #{race.min_total_distance} #{race.distance_unit})")
@@ -89,6 +96,7 @@ class Route < ApplicationRecord
 
   # TODO: add descriptive leg details about each error found
   def validate_leg_distances
+    return if custom?
     distances = legs.map(&:distance)
     if distances.any? { |l| l < race.min_leg_distance_m }
       errors.add(:legs, "cannot use a leg with distance < #{race.min_leg_distance} #{race.distance_unit}")
@@ -187,6 +195,7 @@ class Route < ApplicationRecord
   end
 
   def check_leg_threshold
+    return if custom?
     self.leg_threshold_crossed ||= (legs.size >= target_leg_count)
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_23_184906) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_23_194033) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -127,6 +127,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_23_184906) do
     t.decimal "rarity_score", precision: 5, scale: 1
     t.boolean "selected"
     t.text "notes"
+    t.boolean "custom", default: false, null: false
   end
 
   create_table "teams", force: :cascade do |t|

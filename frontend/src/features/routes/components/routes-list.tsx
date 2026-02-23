@@ -189,6 +189,9 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
                   >
                     {route.name || `Route #${route.id}`}
                   </Link>
+                  {route.custom && (
+                    <span className="ml-1"><Badge variant="info">Custom</Badge></span>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {route.distance} {route.distance_unit}

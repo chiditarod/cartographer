@@ -9,7 +9,7 @@ class RankRoutesJob < ApplicationJob
     begin
       race = Race.find(race_id)
 
-      routes = race.routes.complete.includes(legs: [:start, :finish])
+      routes = race.routes.complete.where(custom: false).includes(legs: [:start, :finish])
       n = routes.size
       job_status.update!(total: n)
 

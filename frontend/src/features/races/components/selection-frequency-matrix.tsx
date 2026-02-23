@@ -15,7 +15,7 @@ export function SelectionFrequencyMatrix({
   selectedRouteIds,
   locationColorMap,
 }: SelectionFrequencyMatrixProps) {
-  const filteredRoutes = routes.filter((r) => selectedRouteIds.has(r.id));
+  const filteredRoutes = routes.filter((r) => selectedRouteIds.has(r.id) && !r.custom);
   const positionUsage = buildPositionUsage(filteredRoutes);
   const numCPs = race.num_stops;
   const colBounds = buildColBounds(positionUsage, numCPs);
