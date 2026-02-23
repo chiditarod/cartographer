@@ -23,6 +23,8 @@ class TeamCsvExporter
     number_col = headers.find { |h| h.downcase == "number" }
     raise ExportError, "Stored CSV is missing 'number' column" unless number_col
 
+    name_col_index = headers.index { |h| h.downcase == "name" }
+
     # Build lookup: dogtag_id -> team
     teams_by_dogtag = @race.teams.includes(:route).index_by(&:dogtag_id)
 
@@ -41,6 +43,8 @@ class TeamCsvExporter
         next unless team
 
         fields = row.fields
+        # Overwrite the source name with the current team name
+        fields[name_col_index] = team.name if name_col_index
         new_row = fields[0...insert_at] +
                   [team&.bib_number, team&.route&.name] +
                   fields[insert_at..]
