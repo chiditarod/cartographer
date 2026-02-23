@@ -162,17 +162,51 @@ export function TeamsRoute() {
 
   const handleAutoAssign = () => {
     if (completeRoutes.length === 0 || teamList.length === 0) return;
-    const sortedTeams = [...teamList].sort((a, b) => a.bib_number - b.bib_number);
     const routeIds = completeRoutes.map((r) => r.id);
-    const assignments = sortedTeams.map((team, i) => ({
-      team_id: team.id,
-      route_id: routeIds[i % routeIds.length],
-    }));
+
+    // Preserve existing assignments
+    const alreadyAssigned = teamList
+      .filter((t) => t.route_id && routeIds.includes(t.route_id))
+      .map((t) => ({ team_id: t.id, route_id: t.route_id! }));
+
+    // Only distribute unassigned teams (or teams assigned to non-selected routes)
+    const toAssign = teamList
+      .filter((t) => !t.route_id || !routeIds.includes(t.route_id))
+      .sort((a, b) => a.bib_number - b.bib_number);
+
+    if (toAssign.length === 0) {
+      setShowAutoAssignModal(false);
+      notify('All teams are already assigned.');
+      return;
+    }
+
+    // Count current team load per route (from preserved assignments)
+    const routeLoad = new Map<number, number>();
+    routeIds.forEach((rid) => routeLoad.set(rid, 0));
+    alreadyAssigned.forEach((a) => routeLoad.set(a.route_id, (routeLoad.get(a.route_id) ?? 0) + 1));
+
+    // Round-robin unassigned teams into the least-loaded routes
+    const newAssignments = toAssign.map((team) => {
+      // Find the route with the fewest teams
+      let minRoute = routeIds[0];
+      let minCount = routeLoad.get(routeIds[0]) ?? 0;
+      for (const rid of routeIds) {
+        const count = routeLoad.get(rid) ?? 0;
+        if (count < minCount) {
+          minCount = count;
+          minRoute = rid;
+        }
+      }
+      routeLoad.set(minRoute, minCount + 1);
+      return { team_id: team.id, route_id: minRoute };
+    });
+
+    const assignments = [...alreadyAssigned, ...newAssignments];
     bulkAssignMutation.mutate(assignments, {
       onSuccess: () => {
         setShowAutoAssignModal(false);
         setSelectedTeamIds(new Set());
-        notify(`Balanced ${teamList.length} teams across ${routeIds.length} routes.`);
+        notify(`Assigned ${toAssign.length} unassigned team${toAssign.length !== 1 ? 's' : ''} across ${routeIds.length} routes.`);
       },
     });
   };
@@ -252,15 +286,28 @@ export function TeamsRoute() {
         onClose={() => setShowAutoAssignModal(false)}
         title="Auto-Assign Teams"
       >
-        <p className="text-sm text-gray-600 mb-4">
-          This will evenly distribute all {teamList.length} teams across{' '}
-          {completeRoutes.length} selected route{completeRoutes.length !== 1 ? 's' : ''} (
-          {Math.floor(teamList.length / (completeRoutes.length || 1))}
-          {teamList.length % (completeRoutes.length || 1) > 0
-            ? `–${Math.floor(teamList.length / (completeRoutes.length || 1)) + 1}`
-            : ''}{' '}
-          teams per route). Any existing assignments will be replaced.
-        </p>
+        <div className="text-sm text-gray-600 mb-4 space-y-2">
+          {unassignedTeams.length > 0 ? (
+            <>
+              <p>
+                <span className="font-medium text-gray-900">{unassignedTeams.length}</span>{' '}
+                unassigned team{unassignedTeams.length !== 1 ? 's' : ''} will be evenly
+                distributed across{' '}
+                <span className="font-medium text-gray-900">{completeRoutes.length}</span>{' '}
+                selected route{completeRoutes.length !== 1 ? 's' : ''}.
+              </p>
+              {assignedCount > 0 && (
+                <p>
+                  {assignedCount} team{assignedCount !== 1 ? 's' : ''} already assigned to
+                  routes will keep {assignedCount !== 1 ? 'their' : 'its'} current
+                  assignment{assignedCount !== 1 ? 's' : ''}.
+                </p>
+              )}
+            </>
+          ) : (
+            <p>All teams are already assigned to routes. No changes will be made.</p>
+          )}
+        </div>
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={() => setShowAutoAssignModal(false)}>
             Cancel
