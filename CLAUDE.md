@@ -107,7 +107,7 @@
 - Teams page at `/races/:id/teams` — CSV upload, drag-and-drop team assignment board, bulk assign dropdown, PDF generation; only shows routes that are `selected` on the race page (not all complete routes)
 - Teams page has Distance and Path toggle switches (`#toggle-show-distance`, `#toggle-show-path`) that show route distance and location badge arrow path inside each route drop card
 - Teams page Auto-Assign button (`#auto-assign-btn`) opens confirmation modal, then round-robin distributes all teams (sorted by dogtag_id) across selected routes; confirm button is `#confirm-auto-assign`
-- Teams page "Team Bib #s" button (`#team-bibs-btn`) opens modal to assign custom bib numbers; Enter saves and advances to next row; `#clear-all-bibs-btn` resets all bib numbers to null
+- Teams page "Team Details" button (`#team-bibs-btn`) in the Edit box opens modal to assign custom bib numbers; Enter saves, auto-populates next row with value+1, and advances focus; `#clear-all-bibs-btn` resets all bib numbers to null
 - Teams page uses native HTML5 DnD API (no extra dependencies) — `draggable`, `onDragStart/Over/Drop`
 - Race page header has "Teams" button (id=`teams-link`) with team count badge
 - E2E reset endpoint clears `Team.delete_all` before other destroys

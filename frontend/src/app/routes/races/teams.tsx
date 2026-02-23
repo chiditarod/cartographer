@@ -351,16 +351,6 @@ export function TeamsRoute() {
           </h1>
         </div>
         <div className="flex items-center gap-4">
-          {teamList.length > 0 && (
-            <Button
-              id="team-bibs-btn"
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowBibModal(true)}
-            >
-              Team Bib #s
-            </Button>
-          )}
           <div className="flex items-center gap-1.5">
             <button
               id="toggle-show-distance"
@@ -430,20 +420,30 @@ export function TeamsRoute() {
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Assign</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Edit</h2>
           <p className="text-sm text-gray-600 mb-3">
             {assignedCount} of {teamList.length} team{teamList.length !== 1 ? 's' : ''} assigned
             across {routesWithTeams.length} route{routesWithTeams.length !== 1 ? 's' : ''}
           </p>
           <div className="flex items-center gap-3">
+            {teamList.length > 0 && (
+              <Button
+                id="team-bibs-btn"
+                variant="primary"
+                size="sm"
+                onClick={() => setShowBibModal(true)}
+              >
+                Team Details
+              </Button>
+            )}
             {completeRoutes.length > 0 && teamList.length > 0 && (
               <Button
                 id="auto-assign-btn"
-                variant="primary"
+                variant="secondary"
                 size="sm"
                 onClick={() => setShowAutoAssignModal(true)}
               >
-                Auto-Assign
+                Auto-Assign routes
               </Button>
             )}
             {assignedCount > 0 && (
@@ -454,7 +454,7 @@ export function TeamsRoute() {
                 loading={bulkAssignMutation.isPending}
                 onClick={handleUnassignAll}
               >
-                Unassign All
+                Unassign all routes
               </Button>
             )}
           </div>
@@ -621,6 +621,22 @@ function BibNumberModal({
     }
   }, [open, teams]);
 
+  const advanceToNext = (index: number, savedBib: number | null) => {
+    const nextTeam = sortedTeams[index + 1];
+    if (nextTeam) {
+      // Auto-populate next row with saved value + 1
+      if (savedBib !== null) {
+        setBibValues((prev) => ({ ...prev, [nextTeam.id]: String(savedBib + 1) }));
+      }
+      // Focus and select the next input
+      const nextInput = inputRefs.current.get(nextTeam.id);
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.select();
+      }
+    }
+  };
+
   const handleSaveBib = (teamId: number, index: number) => {
     const raw = bibValues[teamId]?.trim() ?? '';
     const newBib = raw === '' ? null : Number(raw);
@@ -636,9 +652,7 @@ function BibNumberModal({
 
     // Skip save if unchanged
     if (newBib === team.bib_number) {
-      // Just advance focus
-      const nextTeam = sortedTeams[index + 1];
-      if (nextTeam) inputRefs.current.get(nextTeam.id)?.focus();
+      advanceToNext(index, newBib);
       return;
     }
 
@@ -646,8 +660,7 @@ function BibNumberModal({
       { teamId, bib_number: newBib },
       {
         onSuccess: () => {
-          const nextTeam = sortedTeams[index + 1];
-          if (nextTeam) inputRefs.current.get(nextTeam.id)?.focus();
+          advanceToNext(index, newBib);
         },
         onError: (err) => {
           onNotify(formatMutationError(err) ?? 'Failed to update bib number', 'error');
@@ -668,7 +681,7 @@ function BibNumberModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Team Bib #s">
+    <Modal open={open} onClose={onClose} title="Team Details">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-600">
