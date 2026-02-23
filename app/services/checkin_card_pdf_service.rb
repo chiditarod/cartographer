@@ -63,16 +63,11 @@ class CheckinCardPdfService
 
     # Subtitle
     pdf.text "Checkin Card", size: 14, align: :center
-    pdf.move_down 4
-
-    # Instruction
-    pdf.text "This will help you navigate getting registered today.",
-             size: 9, align: :center, color: "666666"
-    pdf.move_down 12
+    pdf.move_down 8
 
     # Team info
     render_team_info(pdf, team)
-    pdf.move_down 16
+    pdf.move_down 12
 
     # Collection grid (Toiletries, Food, Money × Pre-Event, Day-Of, Total)
     render_collection_grid(pdf)
@@ -80,26 +75,25 @@ class CheckinCardPdfService
 
   def render_team_info(pdf, team)
     if team
-      pdf.text "Team Name: #{team.name}", size: 12, style: :bold
-      pdf.text "Team ##{team.bib_number}", size: 12, style: :bold
+      pdf.text team.name, size: 24, style: :bold, align: :center
+      pdf.text "Team ##{team.bib_number}", size: 20, style: :bold, align: :center
     else
       # Longer fill lines for blank cards
       y = pdf.cursor
-      label = "Team Name: "
-      label_w = pdf.width_of(label, size: 12, style: :bold)
-      pdf.draw_text label, at: [0, y - 12], size: 12, style: :bold
-      line_end = CARD_WIDTH - 10
+      line_start = CARD_WIDTH * 0.15
+      line_end = CARD_WIDTH * 0.85
       pdf.line_width = 0.75
-      pdf.stroke { pdf.line [label_w, y - 14], [line_end, y - 14] }
-      pdf.move_down 18
+      pdf.stroke { pdf.line [line_start, y - 14], [line_end, y - 14] }
+      pdf.move_down 22
 
       y = pdf.cursor
       label = "Team #"
-      label_w = pdf.width_of(label, size: 12, style: :bold)
-      pdf.draw_text label, at: [0, y - 12], size: 12, style: :bold
-      pdf.stroke { pdf.line [label_w, y - 14], [label_w + 80, y - 14] }
+      label_w = pdf.width_of(label, size: 20, style: :bold)
+      center_x = (CARD_WIDTH - label_w - 80) / 2.0
+      pdf.draw_text label, at: [center_x, y - 20], size: 20, style: :bold
+      pdf.stroke { pdf.line [center_x + label_w, y - 22], [center_x + label_w + 80, y - 22] }
       pdf.line_width = 1
-      pdf.move_down 16
+      pdf.move_down 24
     end
   end
 
