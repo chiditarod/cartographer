@@ -124,10 +124,17 @@
 - Route `notes` (text, nullable) — user-facing inline editable field for sorting notes; never rendered in any PDF export
 - `ClickToEditNotes` component (`frontend/src/components/ui/click-to-edit-notes.tsx`) — click-to-edit with textarea, Save/Cancel, Escape to cancel, Ctrl/Cmd+Enter to save; uses `testIdPrefix` prop for data-testid patterns
 - Notes appear in routes list (race page) and route drop cards (teams page) via `ClickToEditNotes`
+- Route `custom` (boolean, default false) — custom routes skip all distance validations, leg count validation, and can have fewer legs than `num_stops + 1`; completeness requires `legs.size >= 1 && legs.last.finish == race.finish`
+- `POST /api/v1/races/:race_id/routes` creates custom route — body `{ route: { name, location_ids } }` where `location_ids` are intermediate checkpoints (start/finish auto-added); returns 422 if any leg missing or locations outside pool
+- `GET /api/v1/races/:race_id/legs` returns all legs where both start and finish are in the race's location pool — used by guided route builder for adjacency map
+- `CreateRouteModal` component — guided builder that shows reachable locations from current path tail; uses `useRaceLegs` for adjacency, `useCreateRoute` for submission
+- RankRoutesJob and RouteBalancer filter `where(custom: false)` — custom routes excluded from rarity scoring and auto-selection
+- SelectionFrequencyMatrix filters out custom routes from heat-map calculation
+- E2E seed: avoid creating all-pairs legs (causes RouteGenerator to find 120+ routes and timeout); sequential chain legs + mirror callback provide sufficient connectivity
 
 ## Commands
 
-- `bundle exec rspec` — Run all RSpec tests (244 tests, all passing, ~88% coverage)
+- `bundle exec rspec` — Run all RSpec tests (254 tests, all passing, ~88% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
 - `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (30 tests: 28 seeded + 2 fresh)
