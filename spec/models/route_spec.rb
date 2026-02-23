@@ -143,6 +143,74 @@ RSpec.describe Route, type: :model do
     end
   end
 
+  describe 'custom routes' do
+    let(:race) { FactoryBot.create(:race, :with_locations) }
+
+    it 'is valid with fewer legs than num_stops + 1' do
+      # Create a custom route with just 1 leg (start -> some checkpoint -> finish would be 2 legs, but just 1 is ok)
+      leg = FactoryBot.create(:leg, start: race.start, finish: race.locations.reject { |l| l == race.start || l == race.finish }.first)
+      race.locations << leg.finish unless race.locations.include?(leg.finish)
+      route = Route.create!(race: race, custom: true)
+      route.legs << leg
+      expect(route).to be_valid
+    end
+
+    it 'is complete when last leg ends at finish' do
+      intermediates = race.locations.reject { |l| l == race.start || l == race.finish }
+      cp = intermediates.first
+      leg1 = FactoryBot.create(:leg, start: race.start, finish: cp)
+      leg2 = FactoryBot.create(:leg, start: cp, finish: race.finish)
+      route = Route.create!(race: race, custom: true)
+      route.legs << leg1
+      route.legs << leg2
+      route.save!
+      expect(route.complete).to be true
+    end
+
+    it 'is not complete without leg ending at finish' do
+      intermediates = race.locations.reject { |l| l == race.start || l == race.finish }
+      cp = intermediates.first
+      leg1 = FactoryBot.create(:leg, start: race.start, finish: cp)
+      route = Route.create!(race: race, custom: true)
+      route.legs << leg1
+      route.save!
+      expect(route.complete).to be false
+    end
+
+    it 'skips leg distance validation' do
+      intermediates = race.locations.reject { |l| l == race.start || l == race.finish }
+      cp = intermediates.first
+      leg1 = FactoryBot.create(:leg, start: race.start, finish: cp, distance: 0.01) # tiny distance
+      leg2 = FactoryBot.create(:leg, start: cp, finish: race.finish, distance: 0.01)
+      route = Route.create!(race: race, custom: true)
+      route.legs << leg1
+      route.legs << leg2
+      expect(route).to be_valid
+    end
+
+    it 'skips total distance validation' do
+      intermediates = race.locations.reject { |l| l == race.start || l == race.finish }
+      cp = intermediates.first
+      leg1 = FactoryBot.create(:leg, start: race.start, finish: cp, distance: 100_000) # huge distance
+      leg2 = FactoryBot.create(:leg, start: cp, finish: race.finish, distance: 100_000)
+      route = Route.create!(race: race, custom: true)
+      route.legs << leg1
+      route.legs << leg2
+      route.save!
+      # Would fail for non-custom route but should be valid for custom
+      expect(route).to be_valid
+    end
+
+    it 'still validates locations in race pool' do
+      outside_loc = FactoryBot.create(:location)
+      leg = FactoryBot.create(:leg, start: race.start, finish: outside_loc)
+      route = Route.create!(race: race, custom: true)
+      route.legs << leg
+      expect(route).to be_invalid
+      expect(route.errors[:legs].join).to include('not allowed in this race')
+    end
+  end
+
   describe '#to_s' do
     it 'returns "EMPTY" when route has no legs' do
       route = FactoryBot.create(:route)

@@ -47,6 +47,13 @@ module Api
             content_type: original.logo.content_type
           )
         end
+        if original.dogtag_csv.attached?
+          copy.dogtag_csv.attach(
+            io: StringIO.new(original.dogtag_csv.download),
+            filename: original.dogtag_csv.filename.to_s,
+            content_type: original.dogtag_csv.content_type
+          )
+        end
         render json: serialize_race(copy), status: :created
       end
 
@@ -89,6 +96,7 @@ module Api
           checkin_card_content: r.checkin_card_content,
           blank_checkin_cards: r.blank_checkin_cards,
           logo_url: r.logo.attached? ? rails_blob_path(r.logo, only_path: true) : nil,
+          has_dogtag_csv: r.dogtag_csv.attached?,
           created_at: r.created_at,
           updated_at: r.updated_at
         }

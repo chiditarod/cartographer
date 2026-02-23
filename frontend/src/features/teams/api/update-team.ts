@@ -3,29 +3,29 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
 import type { Team } from '@/types/api';
 
-interface CreateTeamParams {
-  name: string;
-  dogtag_id: number;
+interface UpdateTeamParams {
+  bib_number: number | null;
 }
 
-export function createTeam(
+export function updateTeam(
   raceId: number,
-  params: CreateTeamParams,
+  teamId: number,
+  params: UpdateTeamParams,
 ): Promise<Team> {
-  return apiFetch<Team>(`/races/${raceId}/teams`, {
-    method: 'POST',
+  return apiFetch<Team>(`/races/${raceId}/teams/${teamId}`, {
+    method: 'PATCH',
     body: JSON.stringify({ team: params }),
   });
 }
 
-export function useCreateTeam(raceId: number) {
+export function useUpdateTeam(raceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (params: CreateTeamParams) => createTeam(raceId, params),
+    mutationFn: ({ teamId, ...params }: UpdateTeamParams & { teamId: number }) =>
+      updateTeam(raceId, teamId, params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams', raceId] });
-      queryClient.invalidateQueries({ queryKey: ['race', raceId] });
     },
   });
 }

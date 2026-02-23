@@ -77,6 +77,80 @@ RSpec.describe 'Api::V1::Routes', type: :request do
     end
   end
 
+  describe 'POST /api/v1/races/:race_id/routes' do
+    let(:race_for_create) { FactoryBot.create(:race, :with_locations) }
+
+    before do
+      # Create legs between locations so routes can be built
+      locs = race_for_create.locations.to_a
+      locs.each do |start_loc|
+        locs.each do |finish_loc|
+          next if start_loc == finish_loc
+          Leg.find_or_create_by!(start: start_loc, finish: finish_loc) do |l|
+            l.distance = 1500
+          end
+        end
+      end
+    end
+
+    it 'creates custom route with intermediates' do
+      intermediates = race_for_create.locations.reject { |l|
+        l == race_for_create.start || l == race_for_create.finish
+      }
+      cp = intermediates.first
+
+      expect {
+        post "/api/v1/races/#{race_for_create.id}/routes",
+             params: { route: { name: 'Custom Route', location_ids: [cp.id] } },
+             as: :json
+      }.to change(Route, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+      json = JSON.parse(response.body)
+      expect(json['custom']).to be true
+      expect(json['name']).to eq('Custom Route')
+      expect(json['complete']).to be true
+    end
+
+    it 'creates direct start-to-finish route with 0 intermediates' do
+      expect {
+        post "/api/v1/races/#{race_for_create.id}/routes",
+             params: { route: { location_ids: [] } },
+             as: :json
+      }.to change(Route, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+      json = JSON.parse(response.body)
+      expect(json['custom']).to be true
+      expect(json['complete']).to be true
+      expect(json['leg_count']).to eq(1)
+    end
+
+    it 'returns 422 when leg missing between locations' do
+      outside1 = FactoryBot.create(:location)
+      outside2 = FactoryBot.create(:location)
+      race_for_create.locations << outside1 << outside2
+      # No leg between outside1 and outside2
+
+      post "/api/v1/races/#{race_for_create.id}/routes",
+           params: { route: { location_ids: [outside1.id, outside2.id] } },
+           as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it 'returns 422 for locations outside race pool' do
+      outside_loc = FactoryBot.create(:location)
+      post "/api/v1/races/#{race_for_create.id}/routes",
+           params: { route: { location_ids: [outside_loc.id] } },
+           as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('not in race pool')
+    end
+  end
+
   describe 'DELETE /api/v1/races/:race_id/routes/:id' do
     it 'deletes a route' do
       expect {

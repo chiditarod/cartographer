@@ -16,6 +16,7 @@ class Race < ApplicationRecord
   has_many :routes
   has_many :teams, dependent: :destroy
   has_one_attached :logo
+  has_one_attached :dogtag_csv
 
   validate :acceptable_logo, if: -> { logo.attached? }
 

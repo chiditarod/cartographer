@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_23_080348) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_23_194033) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -127,16 +127,19 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_23_080348) do
     t.decimal "rarity_score", precision: 5, scale: 1
     t.boolean "selected"
     t.text "notes"
+    t.boolean "custom", default: false, null: false
   end
 
   create_table "teams", force: :cascade do |t|
     t.bigint "race_id", null: false
     t.bigint "route_id"
     t.string "name", null: false
-    t.integer "bib_number", null: false
+    t.integer "dogtag_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["race_id", "bib_number"], name: "index_teams_on_race_id_and_bib_number", unique: true
+    t.integer "bib_number"
+    t.index ["race_id", "bib_number"], name: "index_teams_on_race_id_and_bib_number", unique: true, where: "(bib_number IS NOT NULL)"
+    t.index ["race_id", "dogtag_id"], name: "index_teams_on_race_id_and_dogtag_id", unique: true
     t.index ["race_id"], name: "index_teams_on_race_id"
     t.index ["route_id"], name: "index_teams_on_route_id"
   end

@@ -6,7 +6,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       resources :locations
       resources :races do
-        resources :routes, only: [:index, :show, :update, :destroy] do
+        resources :routes, only: [:index, :create, :show, :update, :destroy] do
           get 'export_csv', on: :collection
           get 'export_pdf', on: :collection
           get 'export_pdf', on: :member
@@ -15,11 +15,14 @@ Rails.application.routes.draw do
         resources :teams, only: [:index, :create, :update, :destroy] do
           collection do
             post 'import_csv'
+            get 'export_csv'
             post 'bulk_assign'
+            post 'clear_bibs'
           end
         end
         get 'timecards/export_pdf', to: 'timecards#export_pdf'
         get 'checkin_cards/export_pdf', to: 'checkin_cards#export_pdf'
+        get 'legs', to: 'legs#race_legs'
         post 'generate_legs', to: 'operations#generate_legs'
         post 'generate_routes', to: 'operations#generate_routes'
         post 'rank_routes', to: 'operations#rank_routes'

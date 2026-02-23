@@ -13,7 +13,7 @@ class RouteBalancer
   def self.call(race, count)
     return [] if count <= 0
 
-    routes = race.routes.complete.includes(legs: [:start, :finish])
+    routes = race.routes.complete.where(custom: false).includes(legs: [:start, :finish])
     return [] if routes.empty?
 
     num_stops = race.num_stops

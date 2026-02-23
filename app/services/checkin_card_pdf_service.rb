@@ -45,7 +45,7 @@ class CheckinCardPdfService
   private
 
   def build_card_data
-    cards = @teams.order(:bib_number).map { |t| { team: t, blank: false } }
+    cards = @teams.order(:dogtag_id).map { |t| { team: t, blank: false } }
 
     @blank_count.times do
       cards << { team: nil, blank: true }
@@ -76,7 +76,7 @@ class CheckinCardPdfService
   def render_team_info(pdf, team)
     if team
       pdf.text team.name, size: 24, style: :bold, align: :center
-      pdf.text "Team ##{team.bib_number}", size: 20, style: :bold, align: :center
+      pdf.text "Team ##{team.display_number}", size: 20, style: :bold, align: :center
     else
       # Longer fill lines for blank cards
       y = pdf.cursor

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useRace } from '@/features/races/api/get-race';
 import { useRoutes } from '@/features/routes/api/get-routes';
@@ -6,6 +6,9 @@ import { useTeams } from '@/features/teams/api/get-teams';
 import { useImportTeamsCsv } from '@/features/teams/api/import-teams-csv';
 import { useBulkAssignTeams } from '@/features/teams/api/bulk-assign-teams';
 import { useDeleteTeam } from '@/features/teams/api/delete-team';
+import { useUpdateTeam } from '@/features/teams/api/update-team';
+import { useClearTeamBibs } from '@/features/teams/api/clear-team-bibs';
+import { useCreateTeam } from '@/features/teams/api/create-team';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
@@ -26,12 +29,16 @@ export function TeamsRoute() {
   const importCsvMutation = useImportTeamsCsv(raceId);
   const bulkAssignMutation = useBulkAssignTeams(raceId);
   const deleteTeamMutation = useDeleteTeam(raceId);
+  const updateTeamMutation = useUpdateTeam(raceId);
+  const clearBibsMutation = useClearTeamBibs(raceId);
+  const createTeamMutation = useCreateTeam(raceId);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [notification, setNotification] = useState<string | null>(null);
   const [notificationVariant, setNotificationVariant] = useState<'success' | 'error'>('success');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAutoAssignModal, setShowAutoAssignModal] = useState(false);
+  const [showBibModal, setShowBibModal] = useState(false);
   const [dragTeamId, setDragTeamId] = useState<number | null>(null);
   const [bulkAssignRouteId, setBulkAssignRouteId] = useState<string>('');
   const [selectedTeamIds, setSelectedTeamIds] = useState<Set<number>>(new Set());
@@ -162,17 +169,51 @@ export function TeamsRoute() {
 
   const handleAutoAssign = () => {
     if (completeRoutes.length === 0 || teamList.length === 0) return;
-    const sortedTeams = [...teamList].sort((a, b) => a.bib_number - b.bib_number);
     const routeIds = completeRoutes.map((r) => r.id);
-    const assignments = sortedTeams.map((team, i) => ({
-      team_id: team.id,
-      route_id: routeIds[i % routeIds.length],
-    }));
+
+    // Preserve existing assignments
+    const alreadyAssigned = teamList
+      .filter((t) => t.route_id && routeIds.includes(t.route_id))
+      .map((t) => ({ team_id: t.id, route_id: t.route_id! }));
+
+    // Only distribute unassigned teams (or teams assigned to non-selected routes)
+    const toAssign = teamList
+      .filter((t) => !t.route_id || !routeIds.includes(t.route_id))
+      .sort((a, b) => a.dogtag_id - b.dogtag_id);
+
+    if (toAssign.length === 0) {
+      setShowAutoAssignModal(false);
+      notify('All teams are already assigned.');
+      return;
+    }
+
+    // Count current team load per route (from preserved assignments)
+    const routeLoad = new Map<number, number>();
+    routeIds.forEach((rid) => routeLoad.set(rid, 0));
+    alreadyAssigned.forEach((a) => routeLoad.set(a.route_id, (routeLoad.get(a.route_id) ?? 0) + 1));
+
+    // Round-robin unassigned teams into the least-loaded routes
+    const newAssignments = toAssign.map((team) => {
+      // Find the route with the fewest teams
+      let minRoute = routeIds[0];
+      let minCount = routeLoad.get(routeIds[0]) ?? 0;
+      for (const rid of routeIds) {
+        const count = routeLoad.get(rid) ?? 0;
+        if (count < minCount) {
+          minCount = count;
+          minRoute = rid;
+        }
+      }
+      routeLoad.set(minRoute, minCount + 1);
+      return { team_id: team.id, route_id: minRoute };
+    });
+
+    const assignments = [...alreadyAssigned, ...newAssignments];
     bulkAssignMutation.mutate(assignments, {
       onSuccess: () => {
         setShowAutoAssignModal(false);
         setSelectedTeamIds(new Set());
-        notify(`Balanced ${teamList.length} teams across ${routeIds.length} routes.`);
+        notify(`Assigned ${toAssign.length} unassigned team${toAssign.length !== 1 ? 's' : ''} across ${routeIds.length} routes.`);
       },
     });
   };
@@ -192,6 +233,23 @@ export function TeamsRoute() {
         URL.revokeObjectURL(url);
       })
       .catch((err) => notify(err.message ?? 'PDF generation failed', 'error'));
+  };
+
+  const handleExportEnrichedCsv = () => {
+    fetch(`/api/v1/races/${raceId}/teams/export_csv`)
+      .then((res) => {
+        if (!res.ok) return res.json().then((b) => { throw new Error(b.error); });
+        return res.blob();
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `race-${raceId}-teams-enriched.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch((err) => notify(err.message ?? 'CSV export failed', 'error'));
   };
 
   const handleDownloadCheckinCards = () => {
@@ -252,15 +310,28 @@ export function TeamsRoute() {
         onClose={() => setShowAutoAssignModal(false)}
         title="Auto-Assign Teams"
       >
-        <p className="text-sm text-gray-600 mb-4">
-          This will evenly distribute all {teamList.length} teams across{' '}
-          {completeRoutes.length} selected route{completeRoutes.length !== 1 ? 's' : ''} (
-          {Math.floor(teamList.length / (completeRoutes.length || 1))}
-          {teamList.length % (completeRoutes.length || 1) > 0
-            ? `–${Math.floor(teamList.length / (completeRoutes.length || 1)) + 1}`
-            : ''}{' '}
-          teams per route). Any existing assignments will be replaced.
-        </p>
+        <div className="text-sm text-gray-600 mb-4 space-y-2">
+          {unassignedTeams.length > 0 ? (
+            <>
+              <p>
+                <span className="font-medium text-gray-900">{unassignedTeams.length}</span>{' '}
+                unassigned team{unassignedTeams.length !== 1 ? 's' : ''} will be evenly
+                distributed across{' '}
+                <span className="font-medium text-gray-900">{completeRoutes.length}</span>{' '}
+                selected route{completeRoutes.length !== 1 ? 's' : ''}.
+              </p>
+              {assignedCount > 0 && (
+                <p>
+                  {assignedCount} team{assignedCount !== 1 ? 's' : ''} already assigned to
+                  routes will keep {assignedCount !== 1 ? 'their' : 'its'} current
+                  assignment{assignedCount !== 1 ? 's' : ''}.
+                </p>
+              )}
+            </>
+          ) : (
+            <p>All teams are already assigned to routes. No changes will be made.</p>
+          )}
+        </div>
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={() => setShowAutoAssignModal(false)}>
             Cancel
@@ -275,6 +346,17 @@ export function TeamsRoute() {
           </Button>
         </div>
       </Modal>
+
+      <BibNumberModal
+        open={showBibModal}
+        onClose={() => setShowBibModal(false)}
+        teams={teamList}
+        updateTeamMutation={updateTeamMutation}
+        clearBibsMutation={clearBibsMutation}
+        deleteTeamMutation={deleteTeamMutation}
+        createTeamMutation={createTeamMutation}
+        onNotify={notify}
+      />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -359,20 +441,30 @@ export function TeamsRoute() {
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Assign</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Edit</h2>
           <p className="text-sm text-gray-600 mb-3">
             {assignedCount} of {teamList.length} team{teamList.length !== 1 ? 's' : ''} assigned
             across {routesWithTeams.length} route{routesWithTeams.length !== 1 ? 's' : ''}
           </p>
           <div className="flex items-center gap-3">
+            {teamList.length > 0 && (
+              <Button
+                id="team-bibs-btn"
+                variant="primary"
+                size="sm"
+                onClick={() => setShowBibModal(true)}
+              >
+                Team Details
+              </Button>
+            )}
             {completeRoutes.length > 0 && teamList.length > 0 && (
               <Button
                 id="auto-assign-btn"
-                variant="primary"
+                variant="secondary"
                 size="sm"
                 onClick={() => setShowAutoAssignModal(true)}
               >
-                Auto-Assign
+                Auto-Assign routes
               </Button>
             )}
             {assignedCount > 0 && (
@@ -383,7 +475,7 @@ export function TeamsRoute() {
                 loading={bulkAssignMutation.isPending}
                 onClick={handleUnassignAll}
               >
-                Unassign All
+                Unassign all routes
               </Button>
             )}
           </div>
@@ -412,6 +504,14 @@ export function TeamsRoute() {
               onClick={handleDownloadCheckinCards}
             >
               Download Check-in Cards PDF
+            </Button>
+            <Button
+              id="export-enriched-csv-btn"
+              variant="secondary"
+              disabled={!race.has_dogtag_csv || teamList.length === 0}
+              onClick={handleExportEnrichedCsv}
+            >
+              Export Enriched CSV
             </Button>
           </div>
         </div>
@@ -473,7 +573,7 @@ export function TeamsRoute() {
                       className="rounded border-gray-300"
                     />
                     <span className="inline-flex items-center justify-center w-8 h-6 rounded bg-indigo-100 text-indigo-800 text-xs font-bold">
-                      {team.bib_number}
+                      {team.display_number}
                     </span>
                     <span className="text-sm text-gray-900 truncate">{team.name}</span>
                   </div>
@@ -512,6 +612,386 @@ export function TeamsRoute() {
       )}
 
     </div>
+  );
+}
+
+interface BibNumberModalProps {
+  open: boolean;
+  onClose: () => void;
+  teams: Team[];
+  updateTeamMutation: ReturnType<typeof useUpdateTeam>;
+  clearBibsMutation: ReturnType<typeof useClearTeamBibs>;
+  deleteTeamMutation: ReturnType<typeof useDeleteTeam>;
+  createTeamMutation: ReturnType<typeof useCreateTeam>;
+  onNotify: (msg: string, variant?: 'success' | 'error') => void;
+}
+
+function BibNumberModal({
+  open,
+  onClose,
+  teams,
+  updateTeamMutation,
+  clearBibsMutation,
+  deleteTeamMutation,
+  createTeamMutation,
+  onNotify,
+}: BibNumberModalProps) {
+  const [bibValues, setBibValues] = useState<Record<number, string>>({});
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newDogtag, setNewDogtag] = useState('');
+  const [addError, setAddError] = useState<string | null>(null);
+  const newNameRef = useRef<HTMLInputElement>(null);
+  const inputRefs = useRef<Map<number, HTMLInputElement>>(new Map());
+  // Track pending auto-populated values that should not be overwritten by query refresh
+  const pendingAutoValues = useRef<Record<number, string>>({});
+  const sortedTeams = useMemo(
+    () => [...teams].sort((a, b) => a.dogtag_id - b.dogtag_id),
+    [teams],
+  );
+
+  // Sync bibValues with teams data when modal opens or teams refresh
+  useEffect(() => {
+    if (open) {
+      const values: Record<number, string> = {};
+      teams.forEach((t) => {
+        // Preserve pending auto-populated values over server state
+        if (pendingAutoValues.current[t.id] !== undefined) {
+          values[t.id] = pendingAutoValues.current[t.id];
+        } else {
+          values[t.id] = t.bib_number != null ? String(t.bib_number) : '';
+        }
+      });
+      setBibValues(values);
+    }
+  }, [open, teams]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!open) {
+      setSelectedIds(new Set());
+      setShowDeleteConfirm(false);
+      setNewName('');
+      setNewDogtag('');
+      setAddError(null);
+      pendingAutoValues.current = {};
+    }
+  }, [open]);
+
+  const advanceToNext = (index: number, savedBib: number | null) => {
+    const nextTeam = sortedTeams[index + 1];
+    if (nextTeam) {
+      // Auto-populate next row with saved value + 1
+      if (savedBib !== null) {
+        const nextVal = String(savedBib + 1);
+        pendingAutoValues.current[nextTeam.id] = nextVal;
+        setBibValues((prev) => ({ ...prev, [nextTeam.id]: nextVal }));
+      }
+      // Focus and select the next input
+      const nextInput = inputRefs.current.get(nextTeam.id);
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.select();
+      }
+    }
+  };
+
+  const handleSaveBib = (teamId: number, index: number) => {
+    const raw = bibValues[teamId]?.trim() ?? '';
+    const newBib = raw === '' ? null : Number(raw);
+
+    // Clear pending auto-value for this team since user is saving it
+    delete pendingAutoValues.current[teamId];
+
+    // Validate
+    if (newBib !== null && (isNaN(newBib) || newBib <= 0 || !Number.isInteger(newBib))) {
+      onNotify('Bib # must be a positive integer', 'error');
+      return;
+    }
+
+    const team = teams.find((t) => t.id === teamId);
+    if (!team) return;
+
+    // Skip save if unchanged
+    if (newBib === team.bib_number) {
+      advanceToNext(index, newBib);
+      return;
+    }
+
+    updateTeamMutation.mutate(
+      { teamId, bib_number: newBib },
+      {
+        onSuccess: () => {
+          advanceToNext(index, newBib);
+        },
+        onError: (err) => {
+          onNotify(formatMutationError(err) ?? 'Failed to update bib number', 'error');
+        },
+      },
+    );
+  };
+
+  const handleClearAll = () => {
+    pendingAutoValues.current = {};
+    clearBibsMutation.mutate(undefined, {
+      onSuccess: () => {
+        onNotify('All bib numbers cleared.');
+      },
+      onError: (err) => {
+        onNotify(formatMutationError(err) ?? 'Failed to clear bib numbers', 'error');
+      },
+    });
+  };
+
+  const toggleSelect = (teamId: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(teamId)) next.delete(teamId);
+      else next.add(teamId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sortedTeams.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedTeams.map((t) => t.id)));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    const ids = Array.from(selectedIds);
+    let completed = 0;
+    let failed = 0;
+
+    ids.forEach((teamId) => {
+      deleteTeamMutation.mutate(teamId, {
+        onSuccess: () => {
+          completed++;
+          if (completed + failed === ids.length) {
+            setSelectedIds(new Set());
+            setShowDeleteConfirm(false);
+            onNotify(`Deleted ${completed} team${completed !== 1 ? 's' : ''}.`);
+          }
+        },
+        onError: () => {
+          failed++;
+          if (completed + failed === ids.length) {
+            setSelectedIds(new Set());
+            setShowDeleteConfirm(false);
+            onNotify(
+              `Deleted ${completed} team${completed !== 1 ? 's' : ''}, ${failed} failed.`,
+              failed > 0 ? 'error' : 'success',
+            );
+          }
+        },
+      });
+    });
+  };
+
+  const handleAddTeam = () => {
+    setAddError(null);
+    const trimmedName = newName.trim();
+    const trimmedDogtag = newDogtag.trim();
+
+    if (!trimmedName) {
+      setAddError('Name is required.');
+      return;
+    }
+    if (!trimmedDogtag) {
+      setAddError('ID is required.');
+      return;
+    }
+    const dogtagNum = Number(trimmedDogtag);
+    if (isNaN(dogtagNum) || !Number.isInteger(dogtagNum) || dogtagNum <= 0) {
+      setAddError('ID must be a positive integer.');
+      return;
+    }
+    if (teams.some((t) => t.dogtag_id === dogtagNum)) {
+      setAddError(`ID ${dogtagNum} already exists.`);
+      return;
+    }
+
+    createTeamMutation.mutate(
+      { name: trimmedName, dogtag_id: dogtagNum },
+      {
+        onSuccess: () => {
+          setNewName('');
+          setNewDogtag('');
+          setAddError(null);
+          onNotify(`Team "${trimmedName}" added.`);
+          newNameRef.current?.focus();
+        },
+        onError: (err) => {
+          setAddError(formatMutationError(err) ?? 'Failed to add team.');
+        },
+      },
+    );
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Team Details" size="lg">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            Assign custom bib numbers to teams. Press Enter to save and advance.
+          </p>
+          <div className="flex items-center gap-2">
+            {selectedIds.size > 0 && (
+              <Button
+                id="delete-selected-teams-btn"
+                variant="danger"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                Delete ({selectedIds.size})
+              </Button>
+            )}
+            <Button
+              id="clear-all-bibs-btn"
+              variant="secondary"
+              size="sm"
+              loading={clearBibsMutation.isPending}
+              onClick={handleClearAll}
+            >
+              Clear all Bib #s
+            </Button>
+          </div>
+        </div>
+
+        {showDeleteConfirm && (
+          <div className="bg-red-50 border border-red-200 rounded p-3 flex items-center justify-between">
+            <p className="text-sm text-red-800">
+              Delete {selectedIds.size} team{selectedIds.size !== 1 ? 's' : ''}? This cannot be undone.
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                id="confirm-delete-selected-teams"
+                variant="danger"
+                size="sm"
+                loading={deleteTeamMutation.isPending}
+                onClick={handleDeleteSelected}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <div className="max-h-[60vh] overflow-y-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-white border-b border-gray-200">
+              <tr>
+                <th className="py-2 px-2 w-8">
+                  <input
+                    type="checkbox"
+                    checked={sortedTeams.length > 0 && selectedIds.size === sortedTeams.length}
+                    onChange={toggleSelectAll}
+                    className="rounded border-gray-300"
+                  />
+                </th>
+                <th className="text-left py-2 px-2 font-medium text-gray-700">Team Name</th>
+                <th className="text-left py-2 px-2 font-medium text-gray-700 w-20">ID</th>
+                <th className="text-left py-2 px-2 font-medium text-gray-700 w-24">Bib #</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedTeams.map((team, index) => (
+                <tr key={team.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="py-1.5 px-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(team.id)}
+                      onChange={() => toggleSelect(team.id)}
+                      className="rounded border-gray-300"
+                    />
+                  </td>
+                  <td className="py-1.5 px-2 text-gray-900">{team.name}</td>
+                  <td className="py-1.5 px-2 text-gray-500">{team.dogtag_id}</td>
+                  <td className="py-1.5 px-2">
+                    <input
+                      ref={(el) => {
+                        if (el) inputRefs.current.set(team.id, el);
+                        else inputRefs.current.delete(team.id);
+                      }}
+                      data-testid={`bib-input-${team.id}`}
+                      type="text"
+                      inputMode="numeric"
+                      value={bibValues[team.id] ?? ''}
+                      onChange={(e) => {
+                        // User manually editing clears any pending auto-value
+                        delete pendingAutoValues.current[team.id];
+                        setBibValues((prev) => ({ ...prev, [team.id]: e.target.value }));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSaveBib(team.id, index);
+                        }
+                      }}
+                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="-"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Add Team form */}
+        <div className="border-t border-gray-200 pt-4">
+          <h4 className="text-sm font-medium text-gray-700 mb-2">Add Team</h4>
+          <div className="flex items-start gap-2">
+            <div className="flex-1">
+              <input
+                ref={newNameRef}
+                id="add-team-name"
+                type="text"
+                value={newName}
+                onChange={(e) => { setNewName(e.target.value); setAddError(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTeam(); } }}
+                placeholder="Team name"
+                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div className="w-24">
+              <input
+                id="add-team-dogtag"
+                type="text"
+                inputMode="numeric"
+                value={newDogtag}
+                onChange={(e) => { setNewDogtag(e.target.value); setAddError(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTeam(); } }}
+                placeholder="ID"
+                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <Button
+              id="add-team-btn"
+              variant="primary"
+              size="sm"
+              loading={createTeamMutation.isPending}
+              onClick={handleAddTeam}
+            >
+              Add
+            </Button>
+          </div>
+          {addError && (
+            <p className="text-xs text-red-600 mt-1">{addError}</p>
+          )}
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -592,7 +1072,7 @@ function RouteDropCard({
       </div>
       <div className="space-y-1">
         {teams
-          .sort((a, b) => a.bib_number - b.bib_number)
+          .sort((a, b) => a.dogtag_id - b.dogtag_id)
           .map((team) => (
             <div
               key={team.id}
@@ -602,7 +1082,7 @@ function RouteDropCard({
             >
               <div className="flex items-center gap-1.5">
                 <span className="inline-flex items-center justify-center w-7 h-5 rounded bg-indigo-200 text-indigo-800 text-xs font-bold">
-                  {team.bib_number}
+                  {team.display_number}
                 </span>
                 <span className="text-xs text-gray-800 truncate">{team.name}</span>
               </div>

@@ -9,6 +9,7 @@ import { RaceDetail } from '@/features/races/components/race-detail';
 import { SelectionFrequencyMatrix } from '@/features/races/components/selection-frequency-matrix';
 import { OperationPanel } from '@/features/operations/components/operation-panel';
 import { RoutesList } from '@/features/routes/components/routes-list';
+import { CreateRouteModal } from '@/features/routes/components/create-route-modal';
 import { useRoutes } from '@/features/routes/api/get-routes';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -33,6 +34,7 @@ export function RaceRoute() {
   const [notification, setNotification] = useState<string | null>(null);
   const [selectedRouteIds, setSelectedRouteIds] = useState<Set<number>>(new Set());
   const [proportionalPaths, setProportionalPaths] = useState(false);
+  const [showCreateRouteModal, setShowCreateRouteModal] = useState(false);
   const initializedFromApi = useRef(false);
 
   // Reset initialization flag when navigating to a different race
@@ -126,6 +128,13 @@ export function RaceRoute() {
           </Button>
         </div>
       </Modal>
+
+      <CreateRouteModal
+        open={showCreateRouteModal}
+        onClose={() => setShowCreateRouteModal(false)}
+        race={race}
+        locationColorMap={locationColorMap}
+      />
 
       <Modal
         open={showDeleteSelectedModal}
@@ -250,6 +259,15 @@ export function RaceRoute() {
               <span className="text-xs text-gray-500">Distance view</span>
             </div>
             <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={!race.leg_count || race.leg_count === 0}
+                onClick={() => setShowCreateRouteModal(true)}
+                id="create-custom-route-btn"
+              >
+                Create Custom Route
+              </Button>
               <Button
                 variant="secondary"
                 size="sm"

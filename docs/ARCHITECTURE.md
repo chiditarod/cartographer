@@ -38,7 +38,7 @@ JobStatus (standalone)
 | Model | Notable Fields |
 |-------|---------------|
 | Race | `name`, `num_stops`, `max_teams`, `people_per_team`, `min/max_total_distance`, `min/max_leg_distance`, `start_id`, `finish_id`, `distance_unit` (enum: mi=0, km=1) |
-| Route | `race_id`, `complete` (bool, set by before_save), `name`, `rarity_score` (decimal 0-100), `leg_threshold_crossed` |
+| Route | `race_id`, `complete` (bool, set by before_save), `custom` (bool, default false), `name`, `rarity_score` (decimal 0-100), `leg_threshold_crossed` |
 | Leg | `start_id`, `finish_id`, `distance` (float, meters) |
 | Location | `name`, `max_capacity`, `ideal_capacity`, `street_address`, `city`, `state`, `zip`, `lat`, `lng` |
 | JobStatus | `job_type`, `status`, `progress`, `total`, `message`, `metadata` (jsonb) |
@@ -67,6 +67,7 @@ All under `/api/v1/`.
 | PATCH | `/races/:id` | races#update | Handles `delete_logo` param |
 | DELETE | `/races/:id` | races#destroy | |
 | POST | `/races/:id/duplicate` | races#duplicate | Copies race + locations + logo blob, prepends "Copy of" |
+| POST | `/races/:race_id/routes` | routes#create | Creates custom route from ordered `location_ids` |
 | GET | `/races/:race_id/routes` | routes#index | |
 | GET | `/races/:race_id/routes/:id` | routes#show | Includes `location_sequence` |
 | PATCH | `/races/:race_id/routes/:id` | routes#update | |
@@ -74,6 +75,7 @@ All under `/api/v1/`.
 | GET | `/races/:race_id/routes/export_csv` | routes#export_csv | Optional `?ids=1,2,3` filter |
 | GET | `/races/:race_id/routes/:id/export_pdf` | routes#export_pdf | Single route PDF |
 | GET | `/races/:race_id/routes/export_pdf` | routes#export_pdf (collection) | `?ids=1,2,3` for batch PDF |
+| GET | `/races/:race_id/legs` | legs#race_legs | All legs within race location pool |
 | GET | `/legs` | legs#index | |
 | DELETE | `/legs/:id` | legs#destroy | `id=all` deletes all |
 | POST | `/geocode` | operations#geocode | |

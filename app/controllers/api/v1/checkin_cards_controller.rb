@@ -5,7 +5,7 @@ module Api
     class CheckinCardsController < BaseController
       def export_pdf
         race = Race.find(params[:race_id])
-        teams = race.teams.where.not(route_id: nil).order(:bib_number)
+        teams = race.teams.where.not(route_id: nil).order(:dogtag_id)
 
         if teams.empty?
           render json: { error: "No teams are assigned to routes" }, status: :unprocessable_entity

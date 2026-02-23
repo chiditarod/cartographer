@@ -36,6 +36,7 @@ export interface Race {
   checkin_card_content: string;
   blank_checkin_cards: number;
   logo_url: string | null;
+  has_dogtag_csv: boolean;
   start?: { id: number; name: string };
   finish?: { id: number; name: string };
   locations?: { id: number; name: string; street_address: string }[];
@@ -57,6 +58,7 @@ export interface RouteSummary {
   name: string | null;
   race_id: number;
   complete: boolean;
+  custom: boolean;
   distance: number;
   distance_unit: 'mi' | 'km';
   leg_count: number;
@@ -105,7 +107,9 @@ export interface JobStatus {
 export interface Team {
   id: number;
   name: string;
-  bib_number: number;
+  dogtag_id: number;
+  bib_number: number | null;
+  display_number: number;
   race_id: number;
   route_id: number | null;
   route_name: string | null;

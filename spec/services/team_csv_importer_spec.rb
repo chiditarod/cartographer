@@ -13,7 +13,7 @@ RSpec.describe TeamCsvImporter do
     expect(result[:skipped]).to eq(0)
     expect(result[:total]).to eq(2)
     expect(race.teams.count).to eq(2)
-    expect(race.teams.find_by(bib_number: 1).name).to eq("Alpha Team")
+    expect(race.teams.find_by(dogtag_id: 1).name).to eq("Alpha Team")
   end
 
   it 'auto-detects column names case-insensitively' do
@@ -43,13 +43,13 @@ RSpec.describe TeamCsvImporter do
     expect(result[:skipped]).to eq(1)
   end
 
-  it 'upserts on re-import (updates name for existing bib)' do
-    FactoryBot.create(:team, race: race, bib_number: 1, name: "Old Name")
+  it 'upserts on re-import (updates name for existing dogtag_id)' do
+    FactoryBot.create(:team, race: race, dogtag_id: 1, name: "Old Name")
     csv = "number,name\n1,New Name\n"
     result = TeamCsvImporter.call(race, csv)
 
     expect(result[:imported]).to eq(1)
     expect(race.teams.count).to eq(1)
-    expect(race.teams.find_by(bib_number: 1).name).to eq("New Name")
+    expect(race.teams.find_by(dogtag_id: 1).name).to eq("New Name")
   end
 end
