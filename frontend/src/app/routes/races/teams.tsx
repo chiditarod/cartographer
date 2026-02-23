@@ -464,7 +464,7 @@ export function TeamsRoute() {
                 size="sm"
                 onClick={() => setShowAutoAssignModal(true)}
               >
-                Auto-Assign routes
+                Balance Teams
               </Button>
             )}
             {assignedCount > 0 && (
@@ -475,7 +475,7 @@ export function TeamsRoute() {
                 loading={bulkAssignMutation.isPending}
                 onClick={handleUnassignAll}
               >
-                Unassign all routes
+                Unassign All Teams
               </Button>
             )}
           </div>
@@ -639,6 +639,8 @@ function BibNumberModal({
   const [bibValues, setBibValues] = useState<Record<number, string>>({});
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [editingNameId, setEditingNameId] = useState<number | null>(null);
+  const [editingNameValue, setEditingNameValue] = useState('');
   const [newName, setNewName] = useState('');
   const [newDogtag, setNewDogtag] = useState('');
   const [addError, setAddError] = useState<string | null>(null);
@@ -672,6 +674,8 @@ function BibNumberModal({
     if (!open) {
       setSelectedIds(new Set());
       setShowDeleteConfirm(false);
+      setEditingNameId(null);
+      setEditingNameValue('');
       setNewName('');
       setNewDogtag('');
       setAddError(null);
@@ -742,6 +746,30 @@ function BibNumberModal({
         onNotify(formatMutationError(err) ?? 'Failed to clear bib numbers', 'error');
       },
     });
+  };
+
+  const handleSaveName = (teamId: number) => {
+    const trimmed = editingNameValue.trim();
+    if (!trimmed) {
+      onNotify('Team name cannot be blank', 'error');
+      return;
+    }
+    const team = teams.find((t) => t.id === teamId);
+    if (!team || trimmed === team.name) {
+      setEditingNameId(null);
+      return;
+    }
+    updateTeamMutation.mutate(
+      { teamId, name: trimmed },
+      {
+        onSuccess: () => {
+          setEditingNameId(null);
+        },
+        onError: (err) => {
+          onNotify(formatMutationError(err) ?? 'Failed to update name', 'error');
+        },
+      },
+    );
   };
 
   const toggleSelect = (teamId: number) => {
@@ -839,16 +867,15 @@ function BibNumberModal({
             Assign custom bib numbers to teams. Press Enter to save and advance.
           </p>
           <div className="flex items-center gap-2">
-            {selectedIds.size > 0 && (
-              <Button
-                id="delete-selected-teams-btn"
-                variant="danger"
-                size="sm"
-                onClick={() => setShowDeleteConfirm(true)}
-              >
-                Delete ({selectedIds.size})
-              </Button>
-            )}
+            <Button
+              id="delete-selected-teams-btn"
+              variant="danger"
+              size="sm"
+              disabled={selectedIds.size === 0}
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              {selectedIds.size > 0 ? `Delete (${selectedIds.size})` : 'Delete'}
+            </Button>
             <Button
               id="clear-all-bibs-btn"
               variant="secondary"
@@ -915,7 +942,38 @@ function BibNumberModal({
                       className="rounded border-gray-300"
                     />
                   </td>
-                  <td className="py-1.5 px-2 text-gray-900">{team.name}</td>
+                  <td className="py-1.5 px-2 text-gray-900">
+                    {editingNameId === team.id ? (
+                      <input
+                        data-testid={`name-input-${team.id}`}
+                        type="text"
+                        autoFocus
+                        value={editingNameValue}
+                        onChange={(e) => setEditingNameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveName(team.id);
+                          } else if (e.key === 'Escape') {
+                            setEditingNameId(null);
+                          }
+                        }}
+                        onBlur={() => handleSaveName(team.id)}
+                        className="w-full px-2 py-0.5 border border-indigo-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    ) : (
+                      <span
+                        data-testid={`name-display-${team.id}`}
+                        className="cursor-pointer hover:text-indigo-600"
+                        onClick={() => {
+                          setEditingNameId(team.id);
+                          setEditingNameValue(team.name);
+                        }}
+                      >
+                        {team.name}
+                      </span>
+                    )}
+                  </td>
                   <td className="py-1.5 px-2 text-gray-500">{team.dogtag_id}</td>
                   <td className="py-1.5 px-2">
                     <input
