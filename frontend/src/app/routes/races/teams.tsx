@@ -8,6 +8,7 @@ import { useBulkAssignTeams } from '@/features/teams/api/bulk-assign-teams';
 import { useDeleteTeam } from '@/features/teams/api/delete-team';
 import { useUpdateTeam } from '@/features/teams/api/update-team';
 import { useClearTeamBibs } from '@/features/teams/api/clear-team-bibs';
+import { useCreateTeam } from '@/features/teams/api/create-team';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
@@ -30,6 +31,7 @@ export function TeamsRoute() {
   const deleteTeamMutation = useDeleteTeam(raceId);
   const updateTeamMutation = useUpdateTeam(raceId);
   const clearBibsMutation = useClearTeamBibs(raceId);
+  const createTeamMutation = useCreateTeam(raceId);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [notification, setNotification] = useState<string | null>(null);
@@ -335,6 +337,7 @@ export function TeamsRoute() {
         updateTeamMutation={updateTeamMutation}
         clearBibsMutation={clearBibsMutation}
         deleteTeamMutation={deleteTeamMutation}
+        createTeamMutation={createTeamMutation}
         onNotify={notify}
       />
 
@@ -594,6 +597,7 @@ interface BibNumberModalProps {
   updateTeamMutation: ReturnType<typeof useUpdateTeam>;
   clearBibsMutation: ReturnType<typeof useClearTeamBibs>;
   deleteTeamMutation: ReturnType<typeof useDeleteTeam>;
+  createTeamMutation: ReturnType<typeof useCreateTeam>;
   onNotify: (msg: string, variant?: 'success' | 'error') => void;
 }
 
@@ -604,11 +608,16 @@ function BibNumberModal({
   updateTeamMutation,
   clearBibsMutation,
   deleteTeamMutation,
+  createTeamMutation,
   onNotify,
 }: BibNumberModalProps) {
   const [bibValues, setBibValues] = useState<Record<number, string>>({});
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newDogtag, setNewDogtag] = useState('');
+  const [addError, setAddError] = useState<string | null>(null);
+  const newNameRef = useRef<HTMLInputElement>(null);
   const inputRefs = useRef<Map<number, HTMLInputElement>>(new Map());
   // Track pending auto-populated values that should not be overwritten by query refresh
   const pendingAutoValues = useRef<Record<number, string>>({});
@@ -633,11 +642,14 @@ function BibNumberModal({
     }
   }, [open, teams]);
 
-  // Reset selection and pending values when modal closes
+  // Reset state when modal closes
   useEffect(() => {
     if (!open) {
       setSelectedIds(new Set());
       setShowDeleteConfirm(false);
+      setNewName('');
+      setNewDogtag('');
+      setAddError(null);
       pendingAutoValues.current = {};
     }
   }, [open]);
@@ -754,8 +766,48 @@ function BibNumberModal({
     });
   };
 
+  const handleAddTeam = () => {
+    setAddError(null);
+    const trimmedName = newName.trim();
+    const trimmedDogtag = newDogtag.trim();
+
+    if (!trimmedName) {
+      setAddError('Name is required.');
+      return;
+    }
+    if (!trimmedDogtag) {
+      setAddError('ID is required.');
+      return;
+    }
+    const dogtagNum = Number(trimmedDogtag);
+    if (isNaN(dogtagNum) || !Number.isInteger(dogtagNum) || dogtagNum <= 0) {
+      setAddError('ID must be a positive integer.');
+      return;
+    }
+    if (teams.some((t) => t.dogtag_id === dogtagNum)) {
+      setAddError(`ID ${dogtagNum} already exists.`);
+      return;
+    }
+
+    createTeamMutation.mutate(
+      { name: trimmedName, dogtag_id: dogtagNum },
+      {
+        onSuccess: () => {
+          setNewName('');
+          setNewDogtag('');
+          setAddError(null);
+          onNotify(`Team "${trimmedName}" added.`);
+          newNameRef.current?.focus();
+        },
+        onError: (err) => {
+          setAddError(formatMutationError(err) ?? 'Failed to add team.');
+        },
+      },
+    );
+  };
+
   return (
-    <Modal open={open} onClose={onClose} title="Team Details">
+    <Modal open={open} onClose={onClose} title="Team Details" size="lg">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-600">
@@ -869,6 +921,49 @@ function BibNumberModal({
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Add Team form */}
+        <div className="border-t border-gray-200 pt-4">
+          <h4 className="text-sm font-medium text-gray-700 mb-2">Add Team</h4>
+          <div className="flex items-start gap-2">
+            <div className="flex-1">
+              <input
+                ref={newNameRef}
+                id="add-team-name"
+                type="text"
+                value={newName}
+                onChange={(e) => { setNewName(e.target.value); setAddError(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTeam(); } }}
+                placeholder="Team name"
+                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div className="w-24">
+              <input
+                id="add-team-dogtag"
+                type="text"
+                inputMode="numeric"
+                value={newDogtag}
+                onChange={(e) => { setNewDogtag(e.target.value); setAddError(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTeam(); } }}
+                placeholder="ID"
+                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <Button
+              id="add-team-btn"
+              variant="primary"
+              size="sm"
+              loading={createTeamMutation.isPending}
+              onClick={handleAddTeam}
+            >
+              Add
+            </Button>
+          </div>
+          {addError && (
+            <p className="text-xs text-red-600 mt-1">{addError}</p>
+          )}
         </div>
       </div>
     </Modal>
