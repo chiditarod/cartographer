@@ -41,11 +41,17 @@ test.describe('Routes', () => {
       if ((await viewLinks.count()) > 0) {
         await viewLinks.first().click();
 
-        const nameInput = page.locator('#route-name-input');
-        await expect(nameInput).toBeVisible({ timeout: 10000 });
+        const display = page.locator('[data-testid^="route-name-display-"]').first();
+        await expect(display).toBeVisible({ timeout: 10000 });
+        await display.click();
+
+        const nameInput = page.locator('[data-testid^="route-name-input-"]').first();
+        await expect(nameInput).toBeVisible();
         await nameInput.fill('Alpha Route');
-        await page.locator('#route-save-btn').click();
-        await expect(page.locator('#route-name')).toHaveText('Alpha Route', { timeout: 10000 });
+
+        const saveBtn = page.locator('[data-testid^="route-name-save-"]').first();
+        await saveBtn.click();
+        await expect(display).toHaveText('Alpha Route', { timeout: 10000 });
       }
     });
   });
