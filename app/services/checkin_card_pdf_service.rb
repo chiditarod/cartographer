@@ -131,8 +131,8 @@ class CheckinCardPdfService
     y -= cell_h + 6
 
     # Horizontal divider
-    pdf.stroke_color "BBBBBB"
-    pdf.line_width = 1.0
+    pdf.stroke_color "999999"
+    pdf.line_width = 2.0
     pdf.stroke { pdf.line [label_w, y], [CARD_WIDTH, y] }
     pdf.stroke_color "000000"
     y -= 6
