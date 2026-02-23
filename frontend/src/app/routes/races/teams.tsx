@@ -12,6 +12,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Modal } from '@/components/ui/modal';
 import { Notification } from '@/components/ui/notification';
 import { formatMutationError } from '@/utils/format';
+import { ClickToEditNotes } from '@/components/ui/click-to-edit-notes';
 import { abbreviateLocation, buildLocationColorMap } from '@/utils/location';
 import type { Team, RouteSummary } from '@/types/api';
 
@@ -488,6 +489,7 @@ export function TeamsRoute() {
             {completeRoutes.map((route) => (
               <RouteDropCard
                 key={route.id}
+                raceId={raceId}
                 route={route}
                 teams={teamsForRoute(route.id)}
                 showDistance={showDistance}
@@ -513,6 +515,7 @@ export function TeamsRoute() {
 }
 
 interface RouteDropCardProps {
+  raceId: number;
   route: RouteSummary;
   teams: Team[];
   showDistance: boolean;
@@ -525,6 +528,7 @@ interface RouteDropCardProps {
 }
 
 function RouteDropCard({
+  raceId,
   route,
   teams,
   showDistance,
@@ -569,6 +573,14 @@ function RouteDropCard({
           ))}
         </div>
       )}
+      <div className="mb-2">
+        <ClickToEditNotes
+          raceId={raceId}
+          routeId={route.id}
+          notes={route.notes}
+          testIdPrefix="route-card-notes"
+        />
+      </div>
       <div className="space-y-1">
         {teams
           .sort((a, b) => a.bib_number - b.bib_number)

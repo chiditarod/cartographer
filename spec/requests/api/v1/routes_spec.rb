@@ -17,6 +17,14 @@ RSpec.describe 'Api::V1::Routes', type: :request do
       end
     end
 
+    it 'includes notes in each route' do
+      route.update!(notes: 'Test note')
+      get "/api/v1/races/#{race.id}/routes"
+      json = JSON.parse(response.body)
+      matching = json.find { |r| r['id'] == route.id }
+      expect(matching['notes']).to eq('Test note')
+    end
+
     it 'includes location_sequence in each route' do
       get "/api/v1/races/#{race.id}/routes"
       json = JSON.parse(response.body)
@@ -49,6 +57,23 @@ RSpec.describe 'Api::V1::Routes', type: :request do
             params: { route: { name: 'Route Alpha' } }
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)['name']).to eq('Route Alpha')
+    end
+
+    it 'updates route notes' do
+      patch "/api/v1/races/#{race.id}/routes/#{route.id}",
+            params: { route: { notes: 'Sorting note for this route' } }
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['notes']).to eq('Sorting note for this route')
+    end
+
+    it 'clears route notes' do
+      route.update!(notes: 'Temporary note')
+      patch "/api/v1/races/#{race.id}/routes/#{route.id}",
+            params: { route: { notes: '' } }
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['notes']).to eq('')
     end
   end
 

@@ -65,6 +65,7 @@ export interface RouteSummary {
   leg_distances: { distance: number; distance_display: string }[];
   rarity_score: number | null;
   selected: boolean;
+  notes: string | null;
   created_at: string;
 }
 

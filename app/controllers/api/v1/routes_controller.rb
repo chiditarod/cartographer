@@ -84,7 +84,7 @@ module Api
       private
 
       def route_params
-        params.require(:route).permit(:name, :selected)
+        params.require(:route).permit(:name, :selected, :notes)
       end
 
       def serialize_route(r, include_details: false)
@@ -99,6 +99,7 @@ module Api
           target_leg_count: r.target_leg_count,
           rarity_score: r.rarity_score,
           selected: r.selected,
+          notes: r.notes,
           created_at: r.created_at,
           location_sequence: if r.legs.any?
             r.legs.map { |l| { id: l.start.id, name: l.start.name } } +

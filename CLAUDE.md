@@ -118,12 +118,15 @@
 - Race model still has `checkin_card_content` text column (DB field retained) but it is no longer rendered in the PDF; textarea removed from race form
 - Race model has `blank_checkin_cards` integer column (default 0) — separate from `blank_timecards_per_route`; controls spare blank check-in cards appended to PDF
 - `bulk_assign` controller uses `.select { |a| a.respond_to?(:permit) }` to handle empty arrays from Rails params
+- Route `notes` (text, nullable) — user-facing inline editable field for sorting notes; never rendered in any PDF export
+- `ClickToEditNotes` component (`frontend/src/components/ui/click-to-edit-notes.tsx`) — click-to-edit with textarea, Save/Cancel, Escape to cancel, Ctrl/Cmd+Enter to save; uses `testIdPrefix` prop for data-testid patterns
+- Notes appear in routes list (race page) and route drop cards (teams page) via `ClickToEditNotes`
 
 ## Commands
 
 - `bundle exec rspec` — Run all RSpec tests (233 tests, all passing, ~88% coverage)
 - `cd frontend && npm run build` — Build frontend (outputs to `../public/spa/`)
 - `cd frontend && npm run dev` — Start Vite dev server
-- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (28 tests: 26 seeded + 2 fresh)
+- `cd e2e && npx playwright test --reporter=list` — Run all Playwright E2E tests (30 tests: 28 seeded + 2 fresh)
 - `cd e2e && npx playwright test --project=seeded` — Run only seeded E2E tests
 - `cd e2e && npx playwright test --project=fresh` — Run only fresh E2E tests

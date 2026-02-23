@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Spinner } from '@/components/ui/spinner';
 import { Badge } from '@/components/ui/badge';
 import { LegDistanceStrip } from '@/features/routes/components/leg-distance-strip';
+import { ClickToEditNotes } from '@/components/ui/click-to-edit-notes';
 import { abbreviateLocation } from '@/utils/location';
 import type { RouteSummary } from '@/types/api';
 
@@ -236,6 +237,16 @@ export function RoutesList({ raceId, locationColorMap, selectedIds, onSelectionC
                   </td>
                 </tr>
               )}
+              <tr>
+                <td colSpan={colSpan} className="px-6 pb-4 pt-0">
+                  <ClickToEditNotes
+                    raceId={raceId}
+                    routeId={route.id}
+                    notes={route.notes}
+                    testIdPrefix="route-notes"
+                  />
+                </td>
+              </tr>
             </React.Fragment>
           ))}
         </tbody>
