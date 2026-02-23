@@ -26,8 +26,10 @@ class TeamCsvExporter
     # Build lookup: dogtag_id -> team
     teams_by_dogtag = @race.teams.includes(:route).index_by(&:dogtag_id)
 
-    # Build enriched CSV
-    enriched_headers = rows.headers + %w[bib_number route_name]
+    # Insert bib_number and route_name after column 2 (0-indexed)
+    insert_at = [2, headers.size].min
+    enriched_headers = headers.dup
+    enriched_headers.insert(insert_at, "bib_number", "route_name")
 
     CSV.generate do |csv|
       csv << enriched_headers
@@ -35,10 +37,10 @@ class TeamCsvExporter
         dogtag_id = row[number_col].to_s.strip.to_i
         team = teams_by_dogtag[dogtag_id]
 
-        new_row = row.fields + [
-          team&.bib_number,
-          team&.route&.name
-        ]
+        fields = row.fields
+        new_row = fields[0...insert_at] +
+                  [team&.bib_number, team&.route&.name] +
+                  fields[insert_at..]
         csv << new_row
       end
     end
