@@ -300,7 +300,7 @@ export function TeamsRoute() {
             loading={deleteTeamMutation.isPending}
             onClick={handleDeleteImported}
           >
-            Delete Imported
+            Delete Imported Teams
           </Button>
         </div>
       </Modal>
@@ -406,7 +406,7 @@ export function TeamsRoute() {
       {/* Top row: Import | Assign | Generate */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Import</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Import Teams</h2>
           <input
             ref={fileInputRef}
             id="csv-file-input"
@@ -422,7 +422,7 @@ export function TeamsRoute() {
               loading={importCsvMutation.isPending}
               onClick={handleFileUpload}
             >
-              Upload CSV
+              Import Dogtag CSV
             </Button>
             {race.has_dogtag_csv && (
               <Button
@@ -431,12 +431,12 @@ export function TeamsRoute() {
                 size="sm"
                 onClick={() => setShowDeleteModal(true)}
               >
-                Delete Imported
+                Delete Imported Teams
               </Button>
             )}
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            CSV with &quot;number&quot; and &quot;name&quot; columns.
+            CSV of Finalized Teams from Dogtag.
           </p>
         </div>
 
