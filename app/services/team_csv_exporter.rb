@@ -37,6 +37,9 @@ class TeamCsvExporter
         dogtag_id = row[number_col].to_s.strip.to_i
         team = teams_by_dogtag[dogtag_id]
 
+        # Skip rows whose team has been deleted
+        next unless team
+
         fields = row.fields
         new_row = fields[0...insert_at] +
                   [team&.bib_number, team&.route&.name] +
