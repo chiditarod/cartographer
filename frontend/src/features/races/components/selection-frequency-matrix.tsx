@@ -15,7 +15,7 @@ export function SelectionFrequencyMatrix({
   selectedRouteIds,
   locationColorMap,
 }: SelectionFrequencyMatrixProps) {
-  const filteredRoutes = routes.filter((r) => selectedRouteIds.has(r.id) && !r.custom);
+  const filteredRoutes = routes.filter((r) => selectedRouteIds.has(r.id));
   const positionUsage = buildPositionUsage(filteredRoutes);
   const numCPs = race.num_stops;
   const colBounds = buildColBounds(positionUsage, numCPs);
@@ -26,7 +26,7 @@ export function SelectionFrequencyMatrix({
     <div className="rounded-lg border border-indigo-200 bg-indigo-50 overflow-hidden transition-all duration-300 ease-in-out">
       <div className="px-5 py-3">
         <h3 className="text-xs font-medium text-indigo-600 mb-2">
-          Selection Frequency — {filteredRoutes.length} route{filteredRoutes.length !== 1 ? 's' : ''}
+          Selection Frequency — {selectedRouteIds.size} route{selectedRouteIds.size !== 1 ? 's' : ''} selected
         </h3>
         <div className="overflow-x-auto max-h-[40vh] overflow-y-auto">
           <table className="min-w-full text-sm">

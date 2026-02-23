@@ -129,7 +129,7 @@
 - `GET /api/v1/races/:race_id/legs` returns all legs where both start and finish are in the race's location pool — used by guided route builder for adjacency map
 - `CreateRouteModal` component — guided builder that shows reachable locations from current path tail; uses `useRaceLegs` for adjacency, `useCreateRoute` for submission
 - RankRoutesJob and RouteBalancer filter `where(custom: false)` — custom routes excluded from rarity scoring and auto-selection
-- SelectionFrequencyMatrix filters out custom routes from heat-map calculation
+- SelectionFrequencyMatrix includes all selected routes (including custom) in heat-map calculation
 - E2E seed: avoid creating all-pairs legs (causes RouteGenerator to find 120+ routes and timeout); sequential chain legs + mirror callback provide sufficient connectivity
 - Race model has `has_one_attached :dogtag_csv` — stores original Dogtag CSV on team import; re-import replaces the blob
 - `TeamCsvExporter.call(race)` — reads stored CSV blob, matches `number` column to `dogtag_id`, appends `bib_number` and `route_name` columns, returns enriched CSV string

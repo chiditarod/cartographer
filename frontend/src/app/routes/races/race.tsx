@@ -229,7 +229,7 @@ export function RaceRoute() {
         />
 
         <div>
-          {routes && routes.some((r) => selectedRouteIds.has(r.id) && !r.custom) && (
+          {selectedRouteIds.size > 0 && routes && (
             <div className="sticky top-0 z-20 bg-gray-50 pb-4 -mx-8 px-8 pt-2 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.06)]">
               <SelectionFrequencyMatrix
                 race={race}
