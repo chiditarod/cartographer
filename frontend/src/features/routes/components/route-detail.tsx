@@ -86,18 +86,6 @@ export function RouteDetail({ route, raceId }: RouteDetailProps) {
                 {route.distance} {route.distance_unit}
               </dd>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Legs</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {route.leg_count} / {route.target_leg_count}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Complete</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {route.complete ? 'Yes' : 'No'}
-              </dd>
-            </div>
           </dl>
 
           {route.legs.length > 0 && <LegDistanceStrip route={route} />}

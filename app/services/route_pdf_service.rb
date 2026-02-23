@@ -57,7 +57,7 @@ class RoutePdfService
   def draw_header(pdf)
     logo_height = 50
     logo_width = 0
-    route_title = @route.name || "Route ##{@route.id}"
+    route_title = @route.name.presence || "Route ##{@route.id}"
 
     if @race.logo.attached?
       begin
