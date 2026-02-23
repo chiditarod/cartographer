@@ -84,11 +84,11 @@ export function TeamsRoute() {
     });
   };
 
-  const handleDeleteAll = () => {
-    deleteTeamMutation.mutate('all', {
+  const handleDeleteImported = () => {
+    deleteTeamMutation.mutate('imported', {
       onSuccess: () => {
         setShowDeleteModal(false);
-        notify('All teams deleted.');
+        notify('Imported teams deleted.');
         setSelectedTeamIds(new Set());
       },
     });
@@ -285,10 +285,10 @@ export function TeamsRoute() {
       <Modal
         open={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        title="Delete All Teams"
+        title="Delete Imported Teams"
       >
         <p className="text-sm text-gray-600 mb-4">
-          Are you sure you want to delete all {teamList.length} teams? This cannot be undone.
+          Are you sure you want to delete all teams imported from CSV? Manually created teams will be kept. This cannot be undone.
         </p>
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
@@ -298,9 +298,9 @@ export function TeamsRoute() {
             id="confirm-delete-all-teams"
             variant="danger"
             loading={deleteTeamMutation.isPending}
-            onClick={handleDeleteAll}
+            onClick={handleDeleteImported}
           >
-            Delete All
+            Delete Imported
           </Button>
         </div>
       </Modal>
@@ -424,14 +424,14 @@ export function TeamsRoute() {
             >
               Upload CSV
             </Button>
-            {teamList.length > 0 && (
+            {race.has_dogtag_csv && (
               <Button
                 id="delete-all-teams-btn"
                 variant="danger"
                 size="sm"
                 onClick={() => setShowDeleteModal(true)}
               >
-                Delete All ({teamList.length})
+                Delete Imported
               </Button>
             )}
           </div>

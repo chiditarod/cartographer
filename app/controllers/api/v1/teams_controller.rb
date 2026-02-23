@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "csv"
+
 module Api
   module V1
     class TeamsController < BaseController
@@ -28,6 +30,23 @@ module Api
           count = race.teams.count
           race.teams.destroy_all
           render json: { message: "Deleted #{count} teams" }
+        elsif params[:id] == "imported"
+          unless race.dogtag_csv.attached?
+            render json: { error: "No Dogtag CSV stored for this race" }, status: :unprocessable_entity
+            return
+          end
+
+          csv_text = race.dogtag_csv.download
+          rows = CSV.parse(csv_text, headers: true)
+          number_col = rows.headers.compact.map(&:strip).find { |h| h.downcase == "number" }
+          dogtag_ids = rows.map { |r| r[number_col].to_s.strip.to_i }.select { |id| id > 0 }
+
+          teams = race.teams.where(dogtag_id: dogtag_ids)
+          count = teams.count
+          teams.destroy_all
+          race.dogtag_csv.purge
+
+          render json: { message: "Deleted #{count} imported team#{count != 1 ? 's' : ''}" }
         else
           team = race.teams.find(params[:id])
           team.destroy!
