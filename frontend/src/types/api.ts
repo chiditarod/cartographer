@@ -36,6 +36,7 @@ export interface Race {
   checkin_card_content: string;
   blank_checkin_cards: number;
   logo_url: string | null;
+  has_dogtag_csv: boolean;
   start?: { id: number; name: string };
   finish?: { id: number; name: string };
   locations?: { id: number; name: string; street_address: string }[];

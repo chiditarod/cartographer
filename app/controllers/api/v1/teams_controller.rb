@@ -44,8 +44,25 @@ module Api
 
         csv_text = params[:file].read
         result = TeamCsvImporter.call(race, csv_text)
-        render json: result
+
+        params[:file].rewind
+        race.dogtag_csv.attach(params[:file])
+
+        render json: result.merge(has_dogtag_csv: race.dogtag_csv.attached?)
       rescue TeamCsvImporter::ImportError => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
+      def export_csv
+        race = Race.find(params[:race_id])
+        unless race.dogtag_csv.attached?
+          render json: { error: "No Dogtag CSV stored for this race" }, status: :unprocessable_entity
+          return
+        end
+
+        enriched = TeamCsvExporter.call(race)
+        send_data enriched, filename: "race-#{race.id}-teams-enriched.csv", type: "text/csv"
+      rescue TeamCsvExporter::ExportError => e
         render json: { error: e.message }, status: :unprocessable_entity
       end
 

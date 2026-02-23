@@ -235,6 +235,23 @@ export function TeamsRoute() {
       .catch((err) => notify(err.message ?? 'PDF generation failed', 'error'));
   };
 
+  const handleExportEnrichedCsv = () => {
+    fetch(`/api/v1/races/${raceId}/teams/export_csv`)
+      .then((res) => {
+        if (!res.ok) return res.json().then((b) => { throw new Error(b.error); });
+        return res.blob();
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `race-${raceId}-teams-enriched.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch((err) => notify(err.message ?? 'CSV export failed', 'error'));
+  };
+
   const handleDownloadCheckinCards = () => {
     fetch(`/api/v1/races/${raceId}/checkin_cards/export_pdf`)
       .then((res) => {
@@ -487,6 +504,14 @@ export function TeamsRoute() {
               onClick={handleDownloadCheckinCards}
             >
               Download Check-in Cards PDF
+            </Button>
+            <Button
+              id="export-enriched-csv-btn"
+              variant="secondary"
+              disabled={!race.has_dogtag_csv || teamList.length === 0}
+              onClick={handleExportEnrichedCsv}
+            >
+              Export Enriched CSV
             </Button>
           </div>
         </div>

@@ -15,6 +15,7 @@ Rails.application.routes.draw do
         resources :teams, only: [:index, :create, :update, :destroy] do
           collection do
             post 'import_csv'
+            get 'export_csv'
             post 'bulk_assign'
             post 'clear_bibs'
           end
