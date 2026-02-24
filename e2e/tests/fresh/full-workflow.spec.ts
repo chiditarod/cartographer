@@ -24,7 +24,15 @@ test.describe('Full Workflow (fresh DB)', () => {
       });
     }
 
-    // Step 2: Create a race with all 3 locations
+    // Step 2: Geocode locations from the Locations page
+    await test.step('geocode locations', async () => {
+      await page.goto('/locations');
+      await page.locator('#btn-geocode').click();
+      await expect(page.locator('[data-testid="progress-bar"]')).toBeVisible({ timeout: 10_000 });
+      await expect(page.locator('[data-testid="op-geocode-progress"] [data-testid="progress-status"][data-status="completed"]')).toBeVisible({ timeout: 30_000 });
+    });
+
+    // Step 3: Create a race with all 3 locations
     await test.step('create race', async () => {
       await page.goto('/races/new');
 
@@ -52,15 +60,6 @@ test.describe('Full Workflow (fresh DB)', () => {
       await expect(page.locator('#race-page-title')).toHaveText('Workflow Test Race', { timeout: 10_000 });
     });
 
-    // Step 3: Geocode locations (MOCK_MAP=true on the server handles mock responses)
-    await test.step('geocode locations', async () => {
-      await page.locator('#btn-geocode').click();
-      await expect(page.locator('[data-testid="progress-bar"]')).toBeVisible({ timeout: 10_000 });
-
-      // Wait for the geocode job's progress bar to show "Completed"
-      await expect(page.locator('[data-testid="op-geocode-progress"] [data-testid="progress-status"][data-status="completed"]')).toBeVisible({ timeout: 30_000 });
-    });
-
     // Step 4: Generate legs (MOCK_MAP=true means mock mode is automatic, but enable checkbox too)
     await test.step('generate legs', async () => {
       const mockCheckbox = page.locator('#mock-mode-checkbox');
@@ -69,7 +68,7 @@ test.describe('Full Workflow (fresh DB)', () => {
       }
 
       await page.locator('#btn-generate-legs').click();
-      await expect(page.locator('[data-testid="progress-bar"]').nth(1)).toBeVisible({ timeout: 10_000 });
+      await expect(page.locator('[data-testid="progress-bar"]')).toBeVisible({ timeout: 10_000 });
 
       await expect(page.locator('[data-testid="op-generate-legs-progress"] [data-testid="progress-status"][data-status="completed"]')).toBeVisible({ timeout: 30_000 });
     });
