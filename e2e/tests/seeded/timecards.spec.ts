@@ -98,7 +98,7 @@ test.describe('Teams', () => {
     await test.step('delete all teams', async () => {
       await page.locator('#delete-all-teams-btn').click();
       await page.locator('#confirm-delete-all-teams').click();
-      await expect(page.locator('[data-testid="notification"]')).toContainText('All teams deleted', { timeout: 10000 });
+      await expect(page.locator('[data-testid="notification"]')).toContainText('Imported teams deleted', { timeout: 10000 });
     });
   });
 });
