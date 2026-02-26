@@ -6,14 +6,12 @@ import { Modal } from '@/components/ui/modal';
 import { JobProgress } from '@/features/operations/components/job-progress';
 import { useGenerateLegs } from '@/features/operations/api/generate-legs';
 import { useGenerateRoutes } from '@/features/operations/api/generate-routes';
-import { useGeocodeLocations } from '@/features/operations/api/geocode-locations';
 import { useRankRoutes } from '@/features/operations/api/rank-routes';
 import { useAutoSelectRoutes } from '@/features/operations/api/auto-select';
 import { AutoSelectModal } from '@/features/operations/components/auto-select-modal';
 import { useDeleteAllRoutes } from '@/features/routes/api/delete-all-routes';
 import { useRoutes } from '@/features/routes/api/get-routes';
 import { useJobPoller } from '@/hooks/use-job-poller';
-import { useRace } from '@/features/races/api/get-race';
 
 interface OperationPanelProps {
   raceId: number;
@@ -24,24 +22,21 @@ interface OperationPanelProps {
 export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: OperationPanelProps) {
   const [mockMode, setMockMode] = useState(false);
   const [showDeleteAllRoutes, setShowDeleteAllRoutes] = useState(false);
-  const { data: race } = useRace(raceId);
   const { data: routes } = useRoutes(raceId);
   const deleteAllRoutes = useDeleteAllRoutes(raceId);
 
   const generateLegs = useGenerateLegs();
   const generateRoutes = useGenerateRoutes();
-  const geocodeLocations = useGeocodeLocations();
   const rankRoutes = useRankRoutes();
   const autoSelect = useAutoSelectRoutes();
   const [showAutoSelect, setShowAutoSelect] = useState(false);
 
   const legsPoller = useJobPoller();
   const routesPoller = useJobPoller();
-  const geocodePoller = useJobPoller();
   const rankPoller = useJobPoller();
 
   const isAnyRunning =
-    legsPoller.isPolling || routesPoller.isPolling || geocodePoller.isPolling || rankPoller.isPolling;
+    legsPoller.isPolling || routesPoller.isPolling || rankPoller.isPolling;
 
   // Track which jobs have already triggered onJobComplete to prevent repeated calls
   const completedJobsRef = useRef<Set<number>>(new Set());
@@ -63,16 +58,6 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
     generateRoutes.mutate(raceId, {
       onSuccess: (data) => {
         routesPoller.startPolling(data.job_status_id);
-      },
-    });
-  };
-
-  const handleGeocodeLocations = () => {
-    if (!race) return;
-    geocodePoller.reset();
-    geocodeLocations.mutate(race.location_ids, {
-      onSuccess: (data) => {
-        geocodePoller.startPolling(data.job_status_id);
       },
     });
   };
@@ -102,7 +87,7 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
 
   // Fire onJobComplete when any poller finishes - properly in useEffect, not render body
   useEffect(() => {
-    const pollers = [legsPoller, routesPoller, geocodePoller, rankPoller];
+    const pollers = [legsPoller, routesPoller, rankPoller];
     for (const poller of pollers) {
       if (
         poller.jobStatus &&
@@ -115,13 +100,13 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
         return;
       }
     }
-  }, [legsPoller.jobStatus, routesPoller.jobStatus, geocodePoller.jobStatus, rankPoller.jobStatus, legsPoller.isPolling, routesPoller.isPolling, geocodePoller.isPolling, rankPoller.isPolling, onJobComplete]);
+  }, [legsPoller.jobStatus, routesPoller.jobStatus, rankPoller.jobStatus, legsPoller.isPolling, routesPoller.isPolling, rankPoller.isPolling, onJobComplete]);
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="px-4 py-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Operations</h3>
+          <h3 className="text-base font-semibold text-gray-900">Operations</h3>
           <label htmlFor="mock-mode-checkbox" className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
             <input
               id="mock-mode-checkbox"
@@ -134,20 +119,12 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
           </label>
         </div>
       </CardHeader>
-      <CardBody>
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-3">
-            <Button
-              id="btn-geocode"
-              onClick={handleGeocodeLocations}
-              loading={geocodeLocations.isPending}
-              disabled={isAnyRunning || !race}
-              title="Add GPS coordinates to all locations (run this after adding any new locations)"
-            >
-              Geocode Locations
-            </Button>
+      <CardBody className="px-4 py-3">
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
             <Button
               id="btn-generate-legs"
+              size="sm"
               onClick={handleGenerateLegs}
               loading={generateLegs.isPending}
               disabled={isAnyRunning}
@@ -157,6 +134,7 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
             </Button>
             <Button
               id="btn-generate-routes"
+              size="sm"
               onClick={handleGenerateRoutes}
               loading={generateRoutes.isPending}
               disabled={isAnyRunning}
@@ -166,6 +144,7 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
             </Button>
             <Button
               id="btn-rank-routes"
+              size="sm"
               onClick={handleRankRoutes}
               loading={rankRoutes.isPending}
               disabled={isAnyRunning}
@@ -175,6 +154,7 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
             </Button>
             <Button
               id="btn-auto-select"
+              size="sm"
               onClick={() => setShowAutoSelect(true)}
               disabled={isAnyRunning || completeRouteCount === 0}
               title="Select the best distribution of checkpoints & locations"
@@ -185,6 +165,7 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
               <Button
                 id="delete-all-routes-btn"
                 variant="danger"
+                size="sm"
                 onClick={() => setShowDeleteAllRoutes(true)}
                 disabled={isAnyRunning}
                 title="Delete all routes for this race"
@@ -210,16 +191,6 @@ export function OperationPanel({ raceId, onJobComplete, onAutoSelect }: Operatio
               <JobProgress
                 jobStatus={routesPoller.jobStatus}
                 isPolling={routesPoller.isPolling}
-              />
-            </div>
-          )}
-
-          {(geocodePoller.jobStatus || geocodePoller.isPolling) && (
-            <div data-testid="op-geocode-progress">
-              <p className="text-xs font-medium text-gray-500 mb-1">Geocode Locations</p>
-              <JobProgress
-                jobStatus={geocodePoller.jobStatus}
-                isPolling={geocodePoller.isPolling}
               />
             </div>
           )}

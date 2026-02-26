@@ -84,11 +84,11 @@ export function TeamsRoute() {
     });
   };
 
-  const handleDeleteAll = () => {
-    deleteTeamMutation.mutate('all', {
+  const handleDeleteImported = () => {
+    deleteTeamMutation.mutate('imported', {
       onSuccess: () => {
         setShowDeleteModal(false);
-        notify('All teams deleted.');
+        notify('Imported teams deleted.');
         setSelectedTeamIds(new Set());
       },
     });
@@ -285,10 +285,10 @@ export function TeamsRoute() {
       <Modal
         open={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        title="Delete All Teams"
+        title="Delete Imported Teams"
       >
         <p className="text-sm text-gray-600 mb-4">
-          Are you sure you want to delete all {teamList.length} teams? This cannot be undone.
+          Are you sure you want to delete all teams imported from CSV? Manually created teams will be kept. This cannot be undone.
         </p>
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
@@ -298,9 +298,9 @@ export function TeamsRoute() {
             id="confirm-delete-all-teams"
             variant="danger"
             loading={deleteTeamMutation.isPending}
-            onClick={handleDeleteAll}
+            onClick={handleDeleteImported}
           >
-            Delete All
+            Delete Imported Teams
           </Button>
         </div>
       </Modal>
@@ -406,7 +406,7 @@ export function TeamsRoute() {
       {/* Top row: Import | Assign | Generate */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Import</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Import Teams</h2>
           <input
             ref={fileInputRef}
             id="csv-file-input"
@@ -422,21 +422,21 @@ export function TeamsRoute() {
               loading={importCsvMutation.isPending}
               onClick={handleFileUpload}
             >
-              Upload CSV
+              Import Dogtag CSV
             </Button>
-            {teamList.length > 0 && (
+            {race.has_dogtag_csv && (
               <Button
                 id="delete-all-teams-btn"
                 variant="danger"
                 size="sm"
                 onClick={() => setShowDeleteModal(true)}
               >
-                Delete All ({teamList.length})
+                Delete Imported Teams
               </Button>
             )}
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            CSV with &quot;number&quot; and &quot;name&quot; columns.
+            CSV of Finalized Teams from Dogtag.
           </p>
         </div>
 
@@ -464,7 +464,7 @@ export function TeamsRoute() {
                 size="sm"
                 onClick={() => setShowAutoAssignModal(true)}
               >
-                Auto-Assign routes
+                Balance Teams
               </Button>
             )}
             {assignedCount > 0 && (
@@ -475,7 +475,7 @@ export function TeamsRoute() {
                 loading={bulkAssignMutation.isPending}
                 onClick={handleUnassignAll}
               >
-                Unassign all routes
+                Unassign All Teams
               </Button>
             )}
           </div>
@@ -639,6 +639,8 @@ function BibNumberModal({
   const [bibValues, setBibValues] = useState<Record<number, string>>({});
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [editingNameId, setEditingNameId] = useState<number | null>(null);
+  const [editingNameValue, setEditingNameValue] = useState('');
   const [newName, setNewName] = useState('');
   const [newDogtag, setNewDogtag] = useState('');
   const [addError, setAddError] = useState<string | null>(null);
@@ -672,6 +674,8 @@ function BibNumberModal({
     if (!open) {
       setSelectedIds(new Set());
       setShowDeleteConfirm(false);
+      setEditingNameId(null);
+      setEditingNameValue('');
       setNewName('');
       setNewDogtag('');
       setAddError(null);
@@ -742,6 +746,30 @@ function BibNumberModal({
         onNotify(formatMutationError(err) ?? 'Failed to clear bib numbers', 'error');
       },
     });
+  };
+
+  const handleSaveName = (teamId: number) => {
+    const trimmed = editingNameValue.trim();
+    if (!trimmed) {
+      onNotify('Team name cannot be blank', 'error');
+      return;
+    }
+    const team = teams.find((t) => t.id === teamId);
+    if (!team || trimmed === team.name) {
+      setEditingNameId(null);
+      return;
+    }
+    updateTeamMutation.mutate(
+      { teamId, name: trimmed },
+      {
+        onSuccess: () => {
+          setEditingNameId(null);
+        },
+        onError: (err) => {
+          onNotify(formatMutationError(err) ?? 'Failed to update name', 'error');
+        },
+      },
+    );
   };
 
   const toggleSelect = (teamId: number) => {
@@ -839,16 +867,15 @@ function BibNumberModal({
             Assign custom bib numbers to teams. Press Enter to save and advance.
           </p>
           <div className="flex items-center gap-2">
-            {selectedIds.size > 0 && (
-              <Button
-                id="delete-selected-teams-btn"
-                variant="danger"
-                size="sm"
-                onClick={() => setShowDeleteConfirm(true)}
-              >
-                Delete ({selectedIds.size})
-              </Button>
-            )}
+            <Button
+              id="delete-selected-teams-btn"
+              variant="danger"
+              size="sm"
+              disabled={selectedIds.size === 0}
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              {selectedIds.size > 0 ? `Delete (${selectedIds.size})` : 'Delete'}
+            </Button>
             <Button
               id="clear-all-bibs-btn"
               variant="secondary"
@@ -915,7 +942,39 @@ function BibNumberModal({
                       className="rounded border-gray-300"
                     />
                   </td>
-                  <td className="py-1.5 px-2 text-gray-900">{team.name}</td>
+                  <td className="py-1.5 px-2 text-gray-900">
+                    {editingNameId === team.id ? (
+                      <input
+                        data-testid={`name-input-${team.id}`}
+                        type="text"
+                        autoFocus
+                        value={editingNameValue}
+                        onChange={(e) => setEditingNameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveName(team.id);
+                          } else if (e.key === 'Escape') {
+                            e.stopPropagation();
+                            setEditingNameId(null);
+                          }
+                        }}
+                        onBlur={() => handleSaveName(team.id)}
+                        className="w-full px-2 py-0.5 border border-indigo-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    ) : (
+                      <span
+                        data-testid={`name-display-${team.id}`}
+                        className="cursor-pointer hover:text-indigo-600"
+                        onClick={() => {
+                          setEditingNameId(team.id);
+                          setEditingNameValue(team.name);
+                        }}
+                      >
+                        {team.name}
+                      </span>
+                    )}
+                  </td>
                   <td className="py-1.5 px-2 text-gray-500">{team.dogtag_id}</td>
                   <td className="py-1.5 px-2">
                     <input

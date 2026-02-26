@@ -49,7 +49,6 @@ test.describe('Operations', () => {
     });
 
     await test.step('verify button order', async () => {
-      await expect(page.locator('#btn-geocode')).toBeVisible();
       await expect(page.locator('#btn-generate-legs')).toBeVisible();
       await expect(page.locator('#btn-generate-routes')).toBeVisible();
       await expect(page.locator('#btn-rank-routes')).toBeVisible();

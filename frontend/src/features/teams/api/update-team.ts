@@ -4,7 +4,8 @@ import { apiFetch } from '@/lib/api-client';
 import type { Team } from '@/types/api';
 
 interface UpdateTeamParams {
-  bib_number: number | null;
+  bib_number?: number | null;
+  name?: string;
 }
 
 export function updateTeam(

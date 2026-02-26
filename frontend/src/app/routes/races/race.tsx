@@ -8,6 +8,7 @@ import { useBulkSelectRoutes } from '@/features/routes/api/bulk-select-routes';
 import { RaceDetail } from '@/features/races/components/race-detail';
 import { SelectionFrequencyMatrix } from '@/features/races/components/selection-frequency-matrix';
 import { OperationPanel } from '@/features/operations/components/operation-panel';
+import { GeneratePanel } from '@/features/operations/components/generate-panel';
 import { RoutesList } from '@/features/routes/components/routes-list';
 import { CreateRouteModal } from '@/features/routes/components/create-route-modal';
 import { useRoutes } from '@/features/routes/api/get-routes';
@@ -61,38 +62,6 @@ export function RaceRoute() {
 
   const locationColorMap = race.locations ? buildLocationColorMap(race.locations) : new Map();
   const selectionCount = selectedRouteIds.size;
-
-  const handleExportPdf = () => {
-    const url = selectionCount > 0
-      ? `/api/v1/races/${raceId}/routes/export_pdf?ids=${[...selectedRouteIds].join(',')}`
-      : `/api/v1/races/${raceId}/routes/export_pdf`;
-    fetch(url)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = `race-${raceId}-routes.pdf`;
-        link.click();
-        URL.revokeObjectURL(blobUrl);
-      });
-  };
-
-  const handleExportCsv = () => {
-    const url = selectionCount > 0
-      ? `/api/v1/races/${raceId}/routes/export_csv?ids=${[...selectedRouteIds].join(',')}`
-      : `/api/v1/races/${raceId}/routes/export_csv`;
-    fetch(url)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = `race-${raceId}-routes.csv`;
-        link.click();
-        URL.revokeObjectURL(blobUrl);
-      });
-  };
 
   return (
     <div>
@@ -214,19 +183,22 @@ export function RaceRoute() {
       <div className="space-y-6">
         <RaceDetail race={race} locationColorMap={locationColorMap} routes={routes} />
 
-        <OperationPanel
-          raceId={raceId}
-          onJobComplete={() => {
-            queryClient.invalidateQueries({ queryKey: ['race', raceId] });
-            queryClient.invalidateQueries({ queryKey: ['routes', raceId] });
-            queryClient.invalidateQueries({ queryKey: ['stats'] });
-            setNotification('Operation completed successfully.');
-          }}
-          onAutoSelect={(routeIds) => {
-            setSelectedRouteIds(new Set(routeIds));
-            // auto_select endpoint already persists selection to DB
-          }}
-        />
+        <div className="flex gap-4">
+          <OperationPanel
+            raceId={raceId}
+            onJobComplete={() => {
+              queryClient.invalidateQueries({ queryKey: ['race', raceId] });
+              queryClient.invalidateQueries({ queryKey: ['routes', raceId] });
+              queryClient.invalidateQueries({ queryKey: ['stats'] });
+              setNotification('Operation completed successfully.');
+            }}
+            onAutoSelect={(routeIds) => {
+              setSelectedRouteIds(new Set(routeIds));
+              // auto_select endpoint already persists selection to DB
+            }}
+          />
+          <GeneratePanel raceId={raceId} selectedRouteIds={selectedRouteIds} />
+        </div>
 
         <div>
           {selectedRouteIds.size > 0 && routes && (
@@ -267,23 +239,6 @@ export function RaceRoute() {
                 id="create-custom-route-btn"
               >
                 Create Custom Route
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={selectionCount === 0}
-                onClick={handleExportPdf}
-                id="download-pdf-btn"
-              >
-                {selectionCount > 0 ? `Download PDF (${selectionCount})` : 'Download PDF'}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleExportCsv}
-                id="export-csv-btn"
-              >
-                {selectionCount > 0 ? `Export CSV (${selectionCount})` : 'Export CSV'}
               </Button>
               <Button
                 variant="danger"

@@ -61,7 +61,9 @@
 - `RankRoutesJob` computes rarity scores for complete routes — uses `update_column(:rarity_score, ...)` to bypass Route validations/callbacks
 - Rarity algorithm: for each intermediate CP position, score = 1 - (freq/N); normalize sum across positions to 0-100 scale
 - Job pattern: wrap `Race.find` inside `begin...rescue` so `job_status.fail!` is called even if the race isn't found
-- Operation button order: Geocode Locations → Generate Legs → Generate Routes → Rank Routes (matches logical workflow)
+- Geocode button lives on the Locations index page (`/locations`), not on the race page — it's location-centric, not race-specific
+- Race page operation button order: Generate Legs → Generate Routes → Rank Routes → Auto-Select → Delete All Routes (in OperationPanel)
+- Race page has two side-by-side panels: OperationPanel (left) and GeneratePanel (right, with Download PDF + Export CSV)
 - Rarity score is a one-time snapshot — re-run Rank Routes job to refresh after route deletion
 - Active Storage is configured for race logo uploads (PNG/JPEG only, max 5 MB) — `has_one_attached :logo` on Race model
 - Logo upload uses FormData — `apiFetch` skips `Content-Type: application/json` header when body is FormData (browser sets multipart boundary)

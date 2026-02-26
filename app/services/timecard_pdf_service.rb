@@ -4,11 +4,14 @@ class TimecardPdfService
   # LETTER landscape: 792 x 612 pt
   PAGE_WIDTH     = 792
   PAGE_HEIGHT    = 612
-  MARGIN         = 36
+  MARGIN_TOP     = 36
+  MARGIN_RIGHT   = 27   # 36 - 9pt (1/8 inch reduction for right card)
+  MARGIN_BOTTOM  = 36
+  MARGIN_LEFT    = 18   # 36 - 18pt (1/4 inch reduction for left card)
   GUTTER         = 36
   CARD_INSET     = 12
-  CARD_WIDTH     = (PAGE_WIDTH - (MARGIN * 2) - GUTTER) / 2.0 - CARD_INSET
-  CARD_HEIGHT    = PAGE_HEIGHT - (MARGIN * 2)
+  CARD_WIDTH     = (PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT - GUTTER) / 2.0 - CARD_INSET
+  CARD_HEIGHT    = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
 
   def self.call(race, team_route_pairs, blank_count_per_route: 0)
     new(race, team_route_pairs, blank_count_per_route).generate
@@ -25,7 +28,7 @@ class TimecardPdfService
 
     pdf = Prawn::Document.new(
       page_size: [PAGE_WIDTH, PAGE_HEIGHT],
-      margin: MARGIN
+      margin: [MARGIN_TOP, MARGIN_RIGHT, MARGIN_BOTTOM, MARGIN_LEFT]
     )
 
     cards.each_slice(2).with_index do |pair, page_index|
@@ -110,7 +113,7 @@ class TimecardPdfService
     display_sequence = location_sequence.drop(1)
     return if display_sequence.empty?
 
-    available = pdf.cursor - MARGIN
+    available = pdf.cursor - MARGIN_BOTTOM
     num_rows = display_sequence.size
     row_height = available / num_rows.to_f
 
