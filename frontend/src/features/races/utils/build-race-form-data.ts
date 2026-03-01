@@ -31,7 +31,7 @@ export function buildRaceBody({
     'distance_unit',
     'start_id',
     'finish_id',
-    'blank_timecards_per_route',
+    'extra_timecards',
     'checkin_card_content',
     'blank_checkin_cards',
   ] as const;

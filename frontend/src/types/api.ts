@@ -32,7 +32,7 @@ export interface Race {
   location_ids: number[];
   route_count: number;
   team_count: number;
-  blank_timecards_per_route: number;
+  extra_timecards: number;
   checkin_card_content: string;
   blank_checkin_cards: number;
   logo_url: string | null;

@@ -17,7 +17,7 @@ module Api
         pdf_data = TimecardPdfService.call(
           race,
           pairs,
-          blank_count_per_route: race.blank_timecards_per_route
+          extra_blank_count: race.extra_timecards
         )
 
         send_data pdf_data,

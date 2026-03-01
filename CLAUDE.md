@@ -102,10 +102,10 @@
 - `POST /api/v1/races/:race_id/teams/clear_bibs` — sets `bib_number = nil` for all teams in a race, returns updated teams
 - `TeamsController` follows same patterns as RoutesController: `params[:id] == 'all'` for delete-all, nested under races
 - `POST /api/v1/races/:race_id/teams/bulk_assign` with `{ assignments: [{ team_id:, route_id: }] }` — clears all assignments first, then applies new ones in a transaction
-- `TimecardPdfService.call(race, team_route_pairs, blank_count_per_route: 0)` — generates 2-up LETTER landscape PDF; cards sorted by route name then dogtag_id; uses `team.display_number` for team # labels; spare blanks appended per route
+- `TimecardPdfService.call(race, team_route_pairs, extra_blank_count: 0)` — generates 2-up LETTER landscape PDF; cards sorted by route name then dogtag_id; uses `team.display_number` for team # labels; extra blanks appended at end with no route (both team name and route are fill lines)
 - `GET /api/v1/races/:race_id/timecards/export_pdf` — returns 422 if no teams assigned to routes
-- Race serialization includes `team_count` and `blank_timecards_per_route` fields
-- Race form includes "Spare Timecards Per Route" field (4-column grid row with num_stops, max_teams, people_per_team)
+- Race serialization includes `team_count` and `extra_timecards` fields
+- Race form includes "Extra Timecards" field (5-column grid row with num_stops, max_teams, people_per_team, extra_timecards, blank_checkin_cards)
 - Teams page at `/races/:id/teams` — CSV upload, drag-and-drop team assignment board, bulk assign dropdown, PDF generation; only shows routes that are `selected` on the race page (not all complete routes)
 - Teams page has Distance and Path toggle switches (`#toggle-show-distance`, `#toggle-show-path`) that show route distance and location badge arrow path inside each route drop card
 - Teams page Auto-Assign button (`#auto-assign-btn`) opens confirmation modal, then round-robin distributes all teams (sorted by dogtag_id) across selected routes; confirm button is `#confirm-auto-assign`
@@ -121,7 +121,7 @@
 - Check-in card grid: grey rounded-rect input boxes, horizontal divider between Day-Of and Total rows; cell height auto-fills available space (capped at 110pt); boxes shrink vertically when team names are long
 - Check-in card header: race name (22pt bold centered), "Checkin Card" subtitle, then team name (24pt bold centered) and team number (20pt bold centered) — no instruction text
 - Race model still has `checkin_card_content` text column (DB field retained) but it is no longer rendered in the PDF; textarea removed from race form
-- Race model has `blank_checkin_cards` integer column (default 0) — separate from `blank_timecards_per_route`; controls spare blank check-in cards appended to PDF
+- Race model has `blank_checkin_cards` integer column (default 0) — separate from `extra_timecards`; controls spare blank check-in cards appended to PDF
 - `bulk_assign` controller uses `.select { |a| a.respond_to?(:permit) }` to handle empty arrays from Rails params
 - Route `notes` (text, nullable) — user-facing inline editable field for sorting notes; never rendered in any PDF export
 - `ClickToEditNotes` component (`frontend/src/components/ui/click-to-edit-notes.tsx`) — click-to-edit with textarea, Save/Cancel, Escape to cancel, Ctrl/Cmd+Enter to save; uses `testIdPrefix` prop for data-testid patterns

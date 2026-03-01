@@ -20,7 +20,7 @@ interface RaceFormData {
   start_id: string;
   finish_id: string;
   location_ids: number[];
-  blank_timecards_per_route: string;
+  extra_timecards: string;
   blank_checkin_cards: string;
   checkin_card_content: string;
 }
@@ -46,7 +46,7 @@ function toFormData(race?: Race): RaceFormData {
     start_id: race?.start_id != null ? String(race.start_id) : '',
     finish_id: race?.finish_id != null ? String(race.finish_id) : '',
     location_ids: race?.location_ids ?? [],
-    blank_timecards_per_route: race?.blank_timecards_per_route != null ? String(race.blank_timecards_per_route) : '0',
+    extra_timecards: race?.extra_timecards != null ? String(race.extra_timecards) : '0',
     blank_checkin_cards: race?.blank_checkin_cards != null ? String(race.blank_checkin_cards) : '0',
     checkin_card_content: race?.checkin_card_content ?? '',
   };
@@ -145,7 +145,7 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
       start_id: Number(form.start_id),
       finish_id: Number(form.finish_id),
       location_ids: form.location_ids,
-      blank_timecards_per_route: Number(form.blank_timecards_per_route),
+      extra_timecards: Number(form.extra_timecards),
       blank_checkin_cards: Number(form.blank_checkin_cards),
       checkin_card_content: form.checkin_card_content,
     };
@@ -228,11 +228,11 @@ export function RaceForm({ initialData, onSubmit, isSubmitting, error }: RaceFor
         />
         <Input
           id="race-blank-timecards"
-          label="Spare Timecards Per Route"
+          label="Extra Timecards"
           type="number"
           min="0"
-          value={form.blank_timecards_per_route}
-          onChange={handleChange('blank_timecards_per_route')}
+          value={form.extra_timecards}
+          onChange={handleChange('extra_timecards')}
         />
         <Input
           id="race-blank-checkin-cards"

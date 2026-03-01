@@ -13,14 +13,14 @@ class TimecardPdfService
   CARD_WIDTH     = (PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT - GUTTER) / 2.0 - CARD_INSET
   CARD_HEIGHT    = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
 
-  def self.call(race, team_route_pairs, blank_count_per_route: 0)
-    new(race, team_route_pairs, blank_count_per_route).generate
+  def self.call(race, team_route_pairs, extra_blank_count: 0)
+    new(race, team_route_pairs, extra_blank_count).generate
   end
 
-  def initialize(race, team_route_pairs, blank_count_per_route)
+  def initialize(race, team_route_pairs, extra_blank_count)
     @race = race
     @team_route_pairs = team_route_pairs
-    @blank_count_per_route = blank_count_per_route
+    @extra_blank_count = extra_blank_count
   end
 
   def generate
@@ -59,11 +59,11 @@ class TimecardPdfService
       teams.each do |pair|
         cards << { team: pair[:team], route: route, blank: false }
       end
+    end
 
-      # Add spare blanks for this route
-      @blank_count_per_route.times do
-        cards << { team: nil, route: route, blank: true }
-      end
+    # Append extra blank cards (no route assigned)
+    @extra_blank_count.times do
+      cards << { team: nil, route: nil, blank: true }
     end
 
     cards
@@ -72,7 +72,6 @@ class TimecardPdfService
   def render_card(pdf, card)
     route = card[:route]
     team = card[:team]
-    location_sequence = build_location_sequence(route)
 
     # Header — logo and race name at top (matching checkin card style)
     if @race.logo.attached?
@@ -104,12 +103,28 @@ class TimecardPdfService
       pdf.move_down 24
       pdf.text "Team #", size: 14, style: :bold
     end
-    route_label = route.name || "Route ##{route.id}"
-    pdf.text route_label, size: 12, color: "666666"
+
+    if route
+      route_label = route.name || "Route ##{route.id}"
+      pdf.text route_label, size: 12, color: "666666"
+    else
+      # Extra blank card — route fill line
+      y = pdf.cursor
+      label = "Route: "
+      label_w = pdf.width_of(label, size: 12)
+      pdf.draw_text label, at: [0, y - 12], size: 12, color: "666666"
+      pdf.line_width = 0.75
+      pdf.stroke { pdf.line [label_w, y - 14], [CARD_WIDTH - 10, y - 14] }
+      pdf.move_down 18
+    end
     pdf.move_down 6
+
+    # Skip checkpoint rows for extra blank cards (no route)
+    return unless route
 
     # Checkpoint rows — dynamically sized to fill available space
     # Skip start location (index 0) — timecards begin at CP 1
+    location_sequence = build_location_sequence(route)
     display_sequence = location_sequence.drop(1)
     return if display_sequence.empty?
 
