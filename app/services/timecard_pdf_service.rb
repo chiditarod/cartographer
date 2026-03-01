@@ -119,17 +119,18 @@ class TimecardPdfService
     end
     pdf.move_down 6
 
-    # Skip checkpoint rows for extra blank cards (no route)
-    return unless route
-
     # Checkpoint rows — dynamically sized to fill available space
-    # Skip start location (index 0) — timecards begin at CP 1
-    location_sequence = build_location_sequence(route)
-    display_sequence = location_sequence.drop(1)
-    return if display_sequence.empty?
+    if route
+      location_sequence = build_location_sequence(route)
+      display_sequence = location_sequence.drop(1) # Skip start location (index 0)
+      num_rows = display_sequence.size
+    else
+      # Extra blank card — use race num_stops to determine row count (CPs + finish)
+      num_rows = @race.num_stops + 1
+    end
+    return if num_rows == 0
 
     available = pdf.cursor - MARGIN_BOTTOM
-    num_rows = display_sequence.size
     row_height = available / num_rows.to_f
 
     # Layout: big number in left column spanning full row, name + boxes to the right
@@ -142,8 +143,7 @@ class TimecardPdfService
     box_height = [[row_height - 26, 24].max, 36].min
 
     num_rows.times do |i|
-      loc = display_sequence[i]
-      is_finish = i == display_sequence.size - 1
+      is_finish = i == num_rows - 1
       label = is_finish ? "FIN" : "#{i + 1}"
 
       y_pos = pdf.cursor
@@ -152,9 +152,12 @@ class TimecardPdfService
       pdf.text_box label, at: [0, y_pos], width: num_col, height: row_height,
                    size: 24, style: :bold, valign: :center
 
-      # Location name — top of right column
-      pdf.text_box loc[:name], at: [right_x, y_pos - 2], width: right_width,
-                   size: 14, style: :bold, color: "333333"
+      # Location name — top of right column (only for routed cards)
+      if route
+        loc = display_sequence[i]
+        pdf.text_box loc[:name], at: [right_x, y_pos - 2], width: right_width,
+                     size: 14, style: :bold, color: "333333"
+      end
 
       # TIME IN / TIME OUT boxes below location name
       box_y = y_pos - 20
