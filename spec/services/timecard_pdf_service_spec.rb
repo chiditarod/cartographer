@@ -45,11 +45,11 @@ RSpec.describe TimecardPdfService do
     expect(pdf_data).to start_with('%PDF')
   end
 
-  it 'adds spare blank cards per route' do
+  it 'appends extra blank cards without a route' do
     team = FactoryBot.create(:team, race: race, route: route, dogtag_id: 1)
     pairs = [{ team: team, route: route }]
 
-    pdf_data = TimecardPdfService.call(race, pairs, blank_count_per_route: 2)
+    pdf_data = TimecardPdfService.call(race, pairs, extra_blank_count: 2)
     expect(pdf_data).to start_with('%PDF')
     page_count = pdf_data.scan(%r{/Type\s*/Page[^s]}).size
     expect(page_count).to eq(2) # 3 cards (1 team + 2 blanks) = 2 pages

@@ -63,7 +63,7 @@ export function TeamsRoute() {
   const routesWithTeams = completeRoutes.filter((r) =>
     teamList.some((t) => t.route_id === r.id),
   );
-  const spareCount = routesWithTeams.length * race.blank_timecards_per_route;
+  const spareCount = race.extra_timecards;
 
   const notify = (msg: string, variant: 'success' | 'error' = 'success') => {
     setNotification(msg);

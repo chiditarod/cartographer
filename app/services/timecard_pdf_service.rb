@@ -13,14 +13,14 @@ class TimecardPdfService
   CARD_WIDTH     = (PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT - GUTTER) / 2.0 - CARD_INSET
   CARD_HEIGHT    = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
 
-  def self.call(race, team_route_pairs, blank_count_per_route: 0)
-    new(race, team_route_pairs, blank_count_per_route).generate
+  def self.call(race, team_route_pairs, extra_blank_count: 0)
+    new(race, team_route_pairs, extra_blank_count).generate
   end
 
-  def initialize(race, team_route_pairs, blank_count_per_route)
+  def initialize(race, team_route_pairs, extra_blank_count)
     @race = race
     @team_route_pairs = team_route_pairs
-    @blank_count_per_route = blank_count_per_route
+    @extra_blank_count = extra_blank_count
   end
 
   def generate
@@ -59,11 +59,11 @@ class TimecardPdfService
       teams.each do |pair|
         cards << { team: pair[:team], route: route, blank: false }
       end
+    end
 
-      # Add spare blanks for this route
-      @blank_count_per_route.times do
-        cards << { team: nil, route: route, blank: true }
-      end
+    # Append extra blank cards (no route assigned)
+    @extra_blank_count.times do
+      cards << { team: nil, route: nil, blank: true }
     end
 
     cards
@@ -72,7 +72,6 @@ class TimecardPdfService
   def render_card(pdf, card)
     route = card[:route]
     team = card[:team]
-    location_sequence = build_location_sequence(route)
 
     # Header — logo and race name at top (matching checkin card style)
     if @race.logo.attached?
@@ -104,17 +103,34 @@ class TimecardPdfService
       pdf.move_down 24
       pdf.text "Team #", size: 14, style: :bold
     end
-    route_label = route.name || "Route ##{route.id}"
-    pdf.text route_label, size: 12, color: "666666"
+
+    if route
+      route_label = route.name || "Route ##{route.id}"
+      pdf.text route_label, size: 12, color: "666666"
+    else
+      # Extra blank card — route fill line
+      y = pdf.cursor
+      label = "Route: "
+      label_w = pdf.width_of(label, size: 12)
+      pdf.draw_text label, at: [0, y - 12], size: 12, color: "666666"
+      pdf.line_width = 0.75
+      pdf.stroke { pdf.line [label_w, y - 14], [CARD_WIDTH - 10, y - 14] }
+      pdf.move_down 18
+    end
     pdf.move_down 6
 
     # Checkpoint rows — dynamically sized to fill available space
-    # Skip start location (index 0) — timecards begin at CP 1
-    display_sequence = location_sequence.drop(1)
-    return if display_sequence.empty?
+    if route
+      location_sequence = build_location_sequence(route)
+      display_sequence = location_sequence.drop(1) # Skip start location (index 0)
+      num_rows = display_sequence.size
+    else
+      # Extra blank card — use race num_stops to determine row count (CPs + finish)
+      num_rows = @race.num_stops + 1
+    end
+    return if num_rows == 0
 
     available = pdf.cursor - MARGIN_BOTTOM
-    num_rows = display_sequence.size
     row_height = available / num_rows.to_f
 
     # Layout: big number in left column spanning full row, name + boxes to the right
@@ -127,8 +143,7 @@ class TimecardPdfService
     box_height = [[row_height - 26, 24].max, 36].min
 
     num_rows.times do |i|
-      loc = display_sequence[i]
-      is_finish = i == display_sequence.size - 1
+      is_finish = i == num_rows - 1
       label = is_finish ? "FIN" : "#{i + 1}"
 
       y_pos = pdf.cursor
@@ -137,9 +152,12 @@ class TimecardPdfService
       pdf.text_box label, at: [0, y_pos], width: num_col, height: row_height,
                    size: 24, style: :bold, valign: :center
 
-      # Location name — top of right column
-      pdf.text_box loc[:name], at: [right_x, y_pos - 2], width: right_width,
-                   size: 14, style: :bold, color: "333333"
+      # Location name — top of right column (only for routed cards)
+      if route
+        loc = display_sequence[i]
+        pdf.text_box loc[:name], at: [right_x, y_pos - 2], width: right_width,
+                     size: 14, style: :bold, color: "333333"
+      end
 
       # TIME IN / TIME OUT boxes below location name
       box_y = y_pos - 20
